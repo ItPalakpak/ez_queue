@@ -1,0 +1,627 @@
+================================================================================
+  EZQUEUE — FLUTTER & DART DESIGN SYSTEM GUIDE
+  Mobile Queue Management System  |  v1.0
+  Supports Android  •  iOS  •  Tablet
+================================================================================
+
+
+================================================================================
+  1. OVERVIEW
+================================================================================
+
+EZQueue is a cross-platform mobile queueing system built with Flutter and Dart.
+This guide defines the complete design system — from color tokens and typography
+to component behavior and responsive layout rules — ensuring a consistent user
+experience across all mobile phones and tablets.
+
+PROJECT STACK
+--------------------------------------------------------------------------------
+Layer                   Technology
+--------------------------------------------------------------------------------
+Framework               Flutter 3.x (Dart 3.x)
+State Management        Riverpod / Bloc
+Navigation              GoRouter
+Minimum SDK             Android 5.0 (API 21) / iOS 13
+Tablet Support          Adaptive layouts via LayoutBuilder
+Font Package            google_fonts (Inter + JetBrains Mono)
+--------------------------------------------------------------------------------
+
+
+================================================================================
+  2. COLOR SYSTEM
+================================================================================
+
+EZQueue supports five themes. Each theme has a light and dark variant.
+The recommended default is the Pure & Bold theme (Option 3), which serves as
+the universal base for all environments.
+
+
+2.1 PURE & BOLD — UNIVERSAL (RECOMMENDED)
+--------------------------------------------------------------------------------
+Element                 Light Mode          Dark Mode
+--------------------------------------------------------------------------------
+Background              #FFFFFF             #111827
+Primary                 #111827             #F9FAFB
+Accent                  #2563EB             #3B82F6
+Surface                 #F5F7FF             #1F2937
+On Background           #111827             #F9FAFB
+--------------------------------------------------------------------------------
+
+// lib/theme/colors.dart
+class EZColors {
+  // Pure & Bold — Light
+  static const background     = Color(0xFFFFFFFF);
+  static const primary        = Color(0xFF111827);
+  static const accent         = Color(0xFF2563EB);
+  static const surface        = Color(0xFFF5F7FF);
+  static const onBackground   = Color(0xFF111827);
+
+  // Pure & Bold — Dark
+  static const backgroundDark = Color(0xFF111827);
+  static const primaryDark    = Color(0xFFF9FAFB);
+  static const accentDark     = Color(0xFF3B82F6);
+  static const surfaceDark    = Color(0xFF1F2937);
+  static const onBackgroundDk = Color(0xFFF9FAFB);
+}
+
+
+2.2 MODERN / TECHY THEME
+--------------------------------------------------------------------------------
+Element                 Value
+--------------------------------------------------------------------------------
+Background              #0D0F1A
+Primary                 #4D7FFF
+Accent                  #00E5C0
+Surface                 #1A1D2E
+Feel                    Geometric, dark, futuristic
+--------------------------------------------------------------------------------
+
+
+2.3 FRIENDLY / HUMAN THEME
+--------------------------------------------------------------------------------
+Element                 Value
+--------------------------------------------------------------------------------
+Background              #FFF8F2
+Primary                 #FF6B35
+Accent                  #FFD166
+Surface                 #FFF0E8
+Feel                    Warm, approachable, welcoming
+--------------------------------------------------------------------------------
+
+
+2.4 CORPORATE / MINIMAL THEME
+--------------------------------------------------------------------------------
+Element                 Value
+--------------------------------------------------------------------------------
+Background              #FFFFFF
+Primary                 #1E1E2E
+Accent                  #6C63FF
+Surface                 #F8F8FC
+Feel                    Clean, professional, enterprise
+--------------------------------------------------------------------------------
+
+
+2.5 PLAYFUL THEME
+--------------------------------------------------------------------------------
+Element                 Value
+--------------------------------------------------------------------------------
+Background              #1A0A2E
+Primary                 #FF4DAF
+Accent                  #B44FFF
+Surface                 #2D1045
+Feel                    Bold, energetic, eye-catching
+--------------------------------------------------------------------------------
+
+
+2.6 SEMANTIC / STATUS COLORS  (shared across all themes)
+--------------------------------------------------------------------------------
+Token                   Hex         Usage
+--------------------------------------------------------------------------------
+Success                 #10B981     Served / completed
+Warning                 #F59E0B     Attention needed
+Error                   #EF4444     Failed / cancelled
+Info                    #3B82F6     General information
+Queued                  #8B5CF6     Customer is in line
+Serving                 #10B981     Customer being served
+--------------------------------------------------------------------------------
+
+
+================================================================================
+  3. TYPOGRAPHY
+================================================================================
+
+Primary Font  : Inter  (via google_fonts)
+Mono Font     : JetBrains Mono  (queue numbers, ticket codes)
+
+
+3.1 FONT SCALE
+--------------------------------------------------------------------------------
+Style           Size    Weight          Usage
+--------------------------------------------------------------------------------
+Display         32sp    Inter Bold      Hero titles, splash screens
+Headline 1      28sp    Inter Bold      Page titles, section headers
+Headline 2      24sp    Inter SemiBold  Card headers, modal titles
+Title           20sp    Inter SemiBold  App bar title, list headers
+Body 1          16sp    Inter Regular   Primary body content
+Body 2          14sp    Inter Regular   Secondary text, descriptions
+Caption         12sp    Inter Medium    Labels, hints, timestamps
+Overline        10sp    Inter Medium    Category tags, status chips
+Queue Number    48sp    JetBrains Mono Bold   Queue number display
+Ticket Code     20sp    JetBrains Mono        Ticket ID, reference codes
+--------------------------------------------------------------------------------
+
+// lib/theme/typography.dart
+import 'package:google_fonts/google_fonts.dart';
+
+class EZTypography {
+  static TextTheme get textTheme => TextTheme(
+    displayLarge:   GoogleFonts.inter(fontSize: 32, fontWeight: FontWeight.w700),
+    headlineLarge:  GoogleFonts.inter(fontSize: 28, fontWeight: FontWeight.w700),
+    headlineMedium: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w600),
+    titleLarge:     GoogleFonts.inter(fontSize: 20, fontWeight: FontWeight.w600),
+    bodyLarge:      GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w400),
+    bodyMedium:     GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w400),
+    labelSmall:     GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w500),
+  );
+
+  // Queue-specific display
+  static TextStyle get queueNumber => GoogleFonts.jetBrainsMono(
+    fontSize: 48, fontWeight: FontWeight.w700,
+  );
+  static TextStyle get ticketCode => GoogleFonts.jetBrainsMono(
+    fontSize: 20, fontWeight: FontWeight.w400,
+  );
+}
+
+
+================================================================================
+  4. THEMEDATA SETUP IN FLUTTER
+================================================================================
+
+All five themes are implemented as ThemeData objects. The app uses a ThemeMode
+enum to switch between light and dark, and a custom AppTheme class to select
+between the five personality themes.
+
+
+4.1 THEME STRUCTURE
+--------------------------------------------------------------------------------
+
+// lib/theme/app_theme.dart
+enum AppThemeVariant { pureBold, techy, friendly, corporate, playful }
+
+class AppTheme {
+  static ThemeData light(AppThemeVariant v) {
+    final colors = _lightColors(v);
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.light(
+        background:  colors.background,
+        primary:     colors.primary,
+        secondary:   colors.accent,
+        surface:     colors.surface,
+      ),
+      textTheme: EZTypography.textTheme,
+      scaffoldBackgroundColor: colors.background,
+      appBarTheme: AppBarTheme(
+        backgroundColor: colors.background,
+        foregroundColor: colors.primary,
+        elevation: 0,
+      ),
+    );
+  }
+
+  static ThemeData dark(AppThemeVariant v) {
+    final colors = _darkColors(v);
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      colorScheme: ColorScheme.dark(
+        background:  colors.background,
+        primary:     colors.primary,
+        secondary:   colors.accent,
+        surface:     colors.surface,
+      ),
+      textTheme: EZTypography.textTheme,
+    );
+  }
+}
+
+
+================================================================================
+  5. SPACING & LAYOUT SYSTEM
+================================================================================
+
+EZQueue uses an 8pt base grid. All spacing, padding, and margin values must
+be multiples of 4.
+
+
+5.1 SPACING SCALE
+--------------------------------------------------------------------------------
+Token       Value   Usage
+--------------------------------------------------------------------------------
+space2      2px     Micro gaps between inline elements
+space4      4px     Icon-to-label gap, tight lists
+space8      8px     Card internal padding (small)
+space12     12px    Chip padding, small gaps
+space16     16px    Standard padding, list item spacing
+space24     24px    Card padding, section separation
+space32     32px    Large section gaps
+space48     48px    Hero sections, screen top padding
+space64     64px    Extra large spacing
+--------------------------------------------------------------------------------
+
+// lib/theme/spacing.dart
+class EZSpacing {
+  static const double xs    = 4;
+  static const double sm    = 8;
+  static const double md    = 16;
+  static const double lg    = 24;
+  static const double xl    = 32;
+  static const double xxl   = 48;
+  static const double xxxl  = 64;
+
+  // Border radii
+  static const double radiusSm   = 6;
+  static const double radiusMd   = 12;
+  static const double radiusLg   = 20;
+  static const double radiusFull = 999;
+}
+
+
+5.2 RESPONSIVE BREAKPOINTS
+--------------------------------------------------------------------------------
+Breakpoint  Width       Layout
+--------------------------------------------------------------------------------
+compact     < 600px     Phone portrait — single column
+medium      600-840px   Phone landscape / small tablet — two columns
+expanded    > 840px     Tablet — sidebar + content layout
+--------------------------------------------------------------------------------
+
+// lib/utils/responsive.dart
+class Responsive {
+  static bool isCompact(BuildContext ctx) =>
+    MediaQuery.of(ctx).size.width < 600;
+
+  static bool isMedium(BuildContext ctx) {
+    final w = MediaQuery.of(ctx).size.width;
+    return w >= 600 && w < 840;
+  }
+
+  static bool isExpanded(BuildContext ctx) =>
+    MediaQuery.of(ctx).size.width >= 840;
+
+  static int gridColumns(BuildContext ctx) {
+    if (isExpanded(ctx)) return 3;
+    if (isMedium(ctx))   return 2;
+    return 1;
+  }
+}
+
+
+================================================================================
+  6. CORE UI COMPONENTS
+================================================================================
+
+6.1 QUEUE TICKET CARD
+--------------------------------------------------------------------------------
+Element         Typography              Color
+--------------------------------------------------------------------------------
+Queue Number    JetBrains Mono Bold 48sp   Accent color
+Status Badge    Overline 10sp uppercase    Semantic color
+Wait Time       Body 2 14sp                Muted text
+Counter Name    Title 20sp                 Primary text
+Card Background Surface color             Elevation: 2
+Border Radius   12px (radiusMd)
+--------------------------------------------------------------------------------
+
+// lib/widgets/queue_ticket_card.dart
+class QueueTicketCard extends StatelessWidget {
+  final String queueNumber;
+  final String status;   // 'queued' | 'serving' | 'done'
+  final int estimatedMinutes;
+  final String counterName;
+
+  const QueueTicketCard({
+    required this.queueNumber,
+    required this.status,
+    required this.estimatedMinutes,
+    required this.counterName,
+    super.key,
+  });
+
+  Color _statusColor(BuildContext ctx) {
+    return switch(status) {
+      'serving' => const Color(0xFF10B981),
+      'queued'  => const Color(0xFF8B5CF6),
+      _         => const Color(0xFF6B7280),
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(EZSpacing.radiusMd),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(EZSpacing.lg),
+        child: Column(children: [
+          Text(queueNumber, style: EZTypography.queueNumber),
+          StatusBadge(status: status, color: _statusColor(context)),
+          Text('~$estimatedMinutes min wait'),
+          Text(counterName),
+        ]),
+      ),
+    );
+  }
+}
+
+
+6.2 STATUS BADGE
+--------------------------------------------------------------------------------
+Status      Color                   Meaning
+--------------------------------------------------------------------------------
+Queued      #8B5CF6  (Purple)       Customer is in line
+Serving     #10B981  (Green)        Customer is now being served
+Done        #6B7280  (Gray)         Transaction complete
+Skipped     #F59E0B  (Amber)        Customer missed their turn
+Cancelled   #EF4444  (Red)          Ticket was cancelled
+--------------------------------------------------------------------------------
+
+
+6.3 QUEUE PROGRESS BAR
+
+A horizontal progress indicator showing the customer's position in the queue.
+Uses the accent color fill on a surface background.
+
+LinearProgressIndicator(
+  value: currentPosition / totalInQueue,
+  backgroundColor: Theme.of(context).colorScheme.surface,
+  valueColor: AlwaysStoppedAnimation<Color>(
+    Theme.of(context).colorScheme.secondary,
+  ),
+  borderRadius: BorderRadius.circular(EZSpacing.radiusFull),
+  minHeight: 8,
+)
+
+
+6.4 PRIMARY BUTTON
+--------------------------------------------------------------------------------
+Property        Value
+--------------------------------------------------------------------------------
+Height          48dp minimum (touch target)
+Border Radius   12px (radiusMd)
+Background      Accent color
+Text Style      Body 1, SemiBold, white
+Disabled BG     50% opacity of accent
+Padding         16px horizontal, 12px vertical
+--------------------------------------------------------------------------------
+
+// lib/widgets/ez_button.dart
+class EZButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+
+  const EZButton({
+    required this.label,
+    this.onPressed,
+    this.isLoading = false,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(EZSpacing.radiusMd),
+          ),
+        ),
+        child: isLoading
+          ? const SizedBox(height:20, width:20,
+              child: CircularProgressIndicator(strokeWidth:2))
+          : Text(label),
+      ),
+    );
+  }
+}
+
+
+================================================================================
+  7. NAVIGATION STRUCTURE
+================================================================================
+
+EZQueue uses GoRouter for declarative, URL-based navigation. The app has two
+distinct navigation patterns depending on screen size.
+
+
+7.1 PHONE NAVIGATION — Bottom Navigation Bar
+--------------------------------------------------------------------------------
+Tab         Icon            Route           Description
+--------------------------------------------------------------------------------
+Home        Home icon       /home           Queue dashboard
+My Queue    Queue icon      /my-queue       Active ticket view
+History     History icon    /history        Past queue records
+Settings    Settings icon   /settings       App preferences & theme
+--------------------------------------------------------------------------------
+
+
+7.2 TABLET NAVIGATION — Side Rail
+
+On tablets (expanded breakpoint), replace BottomNavigationBar with a
+NavigationRail or NavigationDrawer on the left. Content takes the remaining
+space.
+
+// lib/shell/app_shell.dart
+Widget build(BuildContext context) {
+  final isTablet = Responsive.isExpanded(context);
+  return Scaffold(
+    body: Row(
+      children: [
+        if (isTablet)
+          NavigationRail(
+            destinations: navDestinations,
+            selectedIndex: currentIndex,
+            onDestinationSelected: (i) => onNavTap(i, context),
+            labelType: NavigationRailLabelType.all,
+          ),
+        Expanded(child: child),  // GoRouter outlet
+      ],
+    ),
+    bottomNavigationBar: isTablet ? null : BottomNavigationBar(
+      items: navDestinations,
+      currentIndex: currentIndex,
+      onTap: (i) => onNavTap(i, context),
+    ),
+  );
+}
+
+
+================================================================================
+  8. ICONOGRAPHY
+================================================================================
+
+Icon Set: Material Symbols (variable font)
+Package : material_symbols_icons
+Default Size: 24dp  |  Ticket Display: 32dp  |  Minimum Interactive: 20dp
+
+--------------------------------------------------------------------------------
+Icon Name                       Usage
+--------------------------------------------------------------------------------
+queue                           Queue list view
+confirmation_number             Ticket / booking
+person_raised_hand              Join queue action
+transfer_within_a_station       Transfer or move queue
+check_circle                    Served / completed
+schedule                        Wait time / ETA
+notifications                   Queue call alerts
+counter_1 / counter_2           Service counter numbers
+cancel                          Cancel / leave queue
+swap_horiz                      Counter transfer
+--------------------------------------------------------------------------------
+
+
+================================================================================
+  9. MOTION & ANIMATION
+================================================================================
+
+--------------------------------------------------------------------------------
+Event                   Duration    Curve       Usage
+--------------------------------------------------------------------------------
+Appear / fade in        250ms       easeOut     Card entry, screen transitions
+Exit / fade out         200ms       easeIn      Dismissal, removal
+Position shift          300ms       easeInOut   Queue position change
+Status change           400ms       easeInOut   Badge color transition
+Queue number update     600ms       easeInOut   Number counter animation
+Pull to refresh         System      —           Queue list refresh
+--------------------------------------------------------------------------------
+
+// Queue number counting animation
+AnimatedSwitcher(
+  duration: const Duration(milliseconds: 600),
+  transitionBuilder: (child, animation) =>
+    ScaleTransition(scale: animation, child: child),
+  child: Text(
+    queueNumber,
+    key: ValueKey(queueNumber),
+    style: EZTypography.queueNumber,
+  ),
+)
+
+
+================================================================================
+  10. ACCESSIBILITY
+================================================================================
+
+--------------------------------------------------------------------------------
+Rule                    Requirement                     Notes
+--------------------------------------------------------------------------------
+Min touch target        48x48dp                         All tappable elements
+Color contrast          4.5:1 minimum                   WCAG AA compliance
+Font scaling            Support up to 1.5x system scale Never clamp text size
+Screen reader           Semantics() on custom widgets   TalkBack / VoiceOver
+Queue alerts            Haptic + audio + visual         When turn approaches
+Focus order             Top-to-bottom, left-to-right    All screens
+--------------------------------------------------------------------------------
+
+
+================================================================================
+  11. THEME SWITCHING & PERSISTENCE
+================================================================================
+
+Users can switch the personality theme and brightness mode from Settings.
+Preferences are persisted using shared_preferences.
+
+// lib/providers/theme_provider.dart  (Riverpod)
+final themeVariantProvider =
+  StateNotifierProvider<ThemeNotifier, AppThemeVariant>((ref) {
+    return ThemeNotifier();
+  });
+
+class ThemeNotifier extends StateNotifier<AppThemeVariant> {
+  ThemeNotifier() : super(AppThemeVariant.pureBold) {
+    _loadSavedTheme();
+  }
+
+  Future<void> setTheme(AppThemeVariant v) async {
+    state = v;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('app_theme', v.name);
+  }
+
+  Future<void> _loadSavedTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('app_theme');
+    if (saved != null) {
+      state = AppThemeVariant.values.firstWhere(
+        (v) => v.name == saved,
+        orElse: () => AppThemeVariant.pureBold,
+      );
+    }
+  }
+}
+
+
+================================================================================
+  12. RECOMMENDED PROJECT STRUCTURE
+================================================================================
+
+lib/
+  main.dart
+  app.dart                      // MaterialApp + GoRouter setup
+  theme/
+    app_theme.dart              // ThemeData builder per variant
+    colors.dart                 // Color tokens per theme
+    typography.dart             // TextTheme + custom styles
+    spacing.dart                // Spacing + radius constants
+  providers/
+    theme_provider.dart         // Theme state (Riverpod)
+    queue_provider.dart         // Queue data state
+  models/
+    queue_ticket.dart           // Ticket data model
+    counter.dart                // Service counter model
+  screens/
+    home/                       // Dashboard screen
+    my_queue/                   // Active ticket screen
+    history/                    // Past queues screen
+    settings/                   // Theme & preferences screen
+  widgets/
+    queue_ticket_card.dart      // Primary queue card
+    status_badge.dart           // Status indicator chip
+    ez_button.dart              // Primary action button
+    queue_progress_bar.dart     // Position progress bar
+  utils/
+    responsive.dart             // Breakpoint helpers
+    haptics.dart                // Haptic feedback utils
+
+
+================================================================================
+  EZQUEUE Design System Guide  •  v1.0  •  Flutter & Dart
+  Default Theme: Pure & Bold  |  Supports Phone & Tablet
+================================================================================
