@@ -13,6 +13,19 @@ import 'package:go_router/go_router.dart';
 class ConfirmationPage extends ConsumerWidget {
   const ConfirmationPage({super.key});
 
+  /// Returns the section header title for the department block.
+  /// Uses singular or plural form based on the number of selected services.
+  String _buildDepartmentSectionTitle(int serviceCount) {
+    final serviceWord = serviceCount == 1 ? 'Service' : 'Services';
+    return 'Department Selected and $serviceWord Availed';
+  }
+
+  /// Returns the inline label for the services row.
+  /// Uses singular or plural form based on the number of selected services.
+  String _buildServiceLabel(int serviceCount) {
+    return serviceCount == 1 ? 'Service Availed' : 'Services Availed';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final formData = ref.watch(queueFormProvider);
@@ -54,10 +67,12 @@ class ConfirmationPage extends ConsumerWidget {
                         // Department & Services
                         _buildInfoSection(
                           context,
-                          'Department & Services',
+                          _buildDepartmentSectionTitle(
+                            formData.services.length,
+                          ),
                           [
                             'Department: ${formData.department ?? 'Not selected'}',
-                            'Services: ${formData.services.isEmpty ? 'None' : formData.services.join(', ')}',
+                            '${_buildServiceLabel(formData.services.length)}: ${formData.services.isEmpty ? 'None' : formData.services.join(', ')}',
                           ],
                           '/department-selection',
                         ),
@@ -65,32 +80,23 @@ class ConfirmationPage extends ConsumerWidget {
                         const SizedBox(height: EZSpacing.lg),
 
                         // User Information
-                        _buildInfoSection(
-                          context,
-                          'User Information',
-                          [
-                            'User Type: ${formData.userType ?? 'Not selected'}',
-                            if (formData.idNumber != null)
-                              'ID Number: ${formData.idNumber}',
-                            if (formData.isPWD) 'PWD: Yes',
-                            if (formData.isPWD && formData.pwdSpecification != null)
-                              'PWD Specification: ${formData.pwdSpecification}',
-                          ],
-                          '/user-type-selection',
-                        ),
+                        _buildInfoSection(context, 'User Information', [
+                          'User Type: ${formData.userType ?? 'Not selected'}',
+                          if (formData.idNumber != null)
+                            'ID Number: ${formData.idNumber}',
+                          if (formData.isPWD) 'PWD: Yes',
+                          if (formData.isPWD &&
+                              formData.pwdSpecification != null)
+                            'PWD Specification: ${formData.pwdSpecification}',
+                        ], '/user-type-selection'),
 
                         const SizedBox(height: EZSpacing.lg),
 
                         // Personal Information
-                        _buildInfoSection(
-                          context,
-                          'Personal Information',
-                          [
-                            'Full Name: ${formData.fullName ?? 'Not provided'}',
-                            'Email: ${formData.email ?? 'Not provided'}',
-                          ],
-                          '/personal-information',
-                        ),
+                        _buildInfoSection(context, 'Personal Information', [
+                          'Full Name: ${formData.fullName ?? 'Not provided'}',
+                          'Email: ${formData.email ?? 'Not provided'}',
+                        ], '/personal-information'),
 
                         const SizedBox(height: EZSpacing.xxl),
 
@@ -99,7 +105,11 @@ class ConfirmationPage extends ConsumerWidget {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: formData.isComplete
-                                ? () => _handleGenerateTicket(context, ref, formData)
+                                ? () => _handleGenerateTicket(
+                                    context,
+                                    ref,
+                                    formData,
+                                  )
                                 : null,
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
@@ -112,16 +122,16 @@ class ConfirmationPage extends ConsumerWidget {
                                 ),
                               ),
                               minimumSize: const Size(double.infinity, 48),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.secondary,
-                              foregroundColor:
-                                  isDark ? Colors.white : Colors.black,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.secondary,
+                              foregroundColor: isDark
+                                  ? Colors.white
+                                  : Colors.black,
                             ),
                             child: Text(
                               'Generate Ticket',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
+                              style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(
                                     fontWeight: FontWeight.w600,
                                     color: isDark ? Colors.white : Colors.black,
@@ -157,11 +167,15 @@ class ConfirmationPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleLarge,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge,
+                    softWrap: true,
+                    overflow: TextOverflow.visible,
+                  ),
                 ),
                 TextButton(
                   onPressed: () => context.push(editRoute),
@@ -170,13 +184,15 @@ class ConfirmationPage extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: EZSpacing.md),
-            ...details.map((detail) => Padding(
-                  padding: const EdgeInsets.only(bottom: EZSpacing.xs),
-                  child: Text(
-                    detail,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                )),
+            ...details.map(
+              (detail) => Padding(
+                padding: const EdgeInsets.only(bottom: EZSpacing.xs),
+                child: Text(
+                  detail,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -190,8 +206,9 @@ class ConfirmationPage extends ConsumerWidget {
     dynamic formData,
   ) async {
     // Generate ticket number (sample - replace with actual generation logic)
-    final ticketNumber = 'Q${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-    
+    final ticketNumber =
+        'Q${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+
     // Calculate queue position (sample - replace with actual calculation)
     final queuePosition = 5; // Sample position
     final estimatedWaitMinutes = queuePosition * 3; // Sample calculation
@@ -221,4 +238,3 @@ class ConfirmationPage extends ConsumerWidget {
     }
   }
 }
-

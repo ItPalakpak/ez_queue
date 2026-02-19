@@ -24,6 +24,10 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
   final GlobalKey _ticketKey = GlobalKey();
   bool _isSaving = false;
 
+  String _buildServiceLabel(int serviceCount) {
+    return serviceCount == 1 ? 'Service Availed:' : 'Services Availed:';
+  }
+
   @override
   Widget build(BuildContext context) {
     final ticket = ref.watch(queueTicketProvider);
@@ -233,7 +237,11 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
             // Ticket Details
             _buildDetailRow(context, 'Department:', ticket.department),
             const SizedBox(height: EZSpacing.sm),
-            _buildDetailRow(context, 'Services:', ticket.services.join(', ')),
+            _buildDetailRow(
+              context,
+              _buildServiceLabel(ticket.services.length),
+              ticket.services.join(', '),
+            ),
             const SizedBox(height: EZSpacing.sm),
             _buildDetailRow(context, 'User Type:', ticket.userType),
             if (ticket.idNumber != null) ...[
