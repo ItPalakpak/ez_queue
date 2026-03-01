@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ez_queue/providers/theme_provider.dart';
 import 'package:ez_queue/theme/app_theme.dart';
 import 'package:ez_queue/theme/spacing.dart';
-import 'package:go_router/go_router.dart';
+import 'package:ez_queue/widgets/top_nav_bar.dart';
 
 /// Theme customizer page allowing users to select theme variant and mode.
 class ThemeCustomizerPage extends ConsumerWidget {
@@ -15,41 +15,57 @@ class ThemeCustomizerPage extends ConsumerWidget {
     final currentMode = ref.watch(themeModeProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Theme Customizer'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(EZSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Theme Variant Section
-            Text(
-              'Theme Style',
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: Column(
+        children: [
+          // Top navigation bar
+          const TopNavBar(showHomeButton: true),
+
+          // Main content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(EZSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Page title
+                  Text(
+                    'Theme Customizer',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: EZSpacing.xl),
+
+                  // Theme Variant Section
+                  Text(
+                    'Theme Style',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: EZSpacing.md),
+                  _buildThemeVariantSelector(context, ref, currentVariant),
+
+                  // Theme Mode Section (only for Pure & Bold)
+                  if (currentVariant == AppThemeVariant.pureBold) ...[
+                    const SizedBox(height: EZSpacing.xl),
+                    Text(
+                      'Theme Mode',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: EZSpacing.md),
+                    _buildThemeModeToggle(context, ref, currentMode),
+                  ],
+                  const SizedBox(height: EZSpacing.xxl),
+
+                  // Preview Section
+                  Text(
+                    'Preview',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: EZSpacing.md),
+                  _buildThemePreview(context, ref),
+                ],
+              ),
             ),
-            const SizedBox(height: EZSpacing.md),
-            _buildThemeVariantSelector(context, ref, currentVariant),
-
-            // Theme Mode Section (only for Pure & Bold)
-            if (currentVariant == AppThemeVariant.pureBold) ...[
-              const SizedBox(height: EZSpacing.xl),
-              Text('Theme Mode', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: EZSpacing.md),
-              _buildThemeModeToggle(context, ref, currentMode),
-            ],
-            const SizedBox(height: EZSpacing.xxl),
-
-            // Preview Section
-            Text('Preview', style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: EZSpacing.md),
-            _buildThemePreview(context, ref),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -5,6 +5,8 @@ import 'package:ez_queue/providers/theme_provider.dart';
 import 'package:ez_queue/screens/landing/landing_page.dart';
 import 'package:ez_queue/screens/theme_customizer/theme_customizer_page.dart';
 import 'package:ez_queue/screens/department_selection/department_selection_page.dart';
+import 'package:ez_queue/screens/service_selection/service_selection_page.dart';
+import 'package:ez_queue/screens/department_queue/department_queue_page.dart';
 import 'package:ez_queue/screens/user_type_selection/user_type_selection_page.dart';
 import 'package:ez_queue/screens/personal_information/personal_information_page.dart';
 import 'package:ez_queue/screens/confirmation/confirmation_page.dart';
@@ -28,6 +30,17 @@ final _router = GoRouter(
     GoRoute(
       path: '/department-selection',
       builder: (context, state) => const DepartmentSelectionPage(),
+    ),
+    GoRoute(
+      path: '/service-selection',
+      builder: (context, state) => const ServiceSelectionPage(),
+    ),
+    GoRoute(
+      path: '/department-queue',
+      builder: (context, state) {
+        final dept = state.uri.queryParameters['dept'] ?? 'Unknown';
+        return DepartmentQueuePage(department: dept);
+      },
     ),
     GoRoute(
       path: '/user-type-selection',

@@ -69,11 +69,24 @@ class PDFGenerator {
                   children: [
                     _buildDetailRow('Department:', ticket.department),
                     _buildDetailRow('Services:', ticket.services.join(', ')),
+                    if (ticket.purpose != null)
+                      _buildDetailRow('Purpose:', ticket.purpose!),
+                    if (ticket.items.isNotEmpty)
+                      _buildDetailRow(
+                        'Items:',
+                        ticket.items
+                            .map((item) => '${item.name} x${item.quantity}')
+                            .join(', '),
+                      ),
                     _buildDetailRow('User Type:', ticket.userType),
+                    if (ticket.courseProgram != null)
+                      _buildDetailRow('Course/Program:', ticket.courseProgram!),
                     if (ticket.idNumber != null)
                       _buildDetailRow('ID Number:', ticket.idNumber!),
                     _buildDetailRow('Full Name:', ticket.fullName),
                     _buildDetailRow('Email:', ticket.email),
+                    if (ticket.contactNumber != null)
+                      _buildDetailRow('Contact No.:', ticket.contactNumber!),
                     if (ticket.isPWD) _buildDetailRow('PWD:', 'Yes'),
                     if (ticket.isPWD && ticket.pwdSpecification != null)
                       _buildDetailRow(

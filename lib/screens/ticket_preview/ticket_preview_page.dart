@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -8,7 +9,8 @@ import 'package:ez_queue/providers/queue_ticket_provider.dart';
 import 'package:ez_queue/providers/theme_provider.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/app_logo.dart';
-import 'package:gal/gal.dart';
+import 'package:ez_queue/widgets/top_nav_bar.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:go_router/go_router.dart';
 
 /// Ticket preview page displaying the full ticket with QR code.
@@ -36,38 +38,38 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
 
     if (ticket == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Ticket Preview')),
-        body: const Center(
-          child: Text('No ticket found. Please generate a ticket first.'),
+        body: Column(
+          children: [
+            const TopNavBar(),
+            const Expanded(
+              child: Center(
+                child: Text('No ticket found. Please generate a ticket first.'),
+              ),
+            ),
+          ],
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Your Ticket'),
-        actions: [
-          IconButton(
-            icon: _isSaving
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.download),
-            onPressed: _isSaving ? null : () => _saveTicketAsImage(context),
-            tooltip: 'Save Ticket',
+      body: Column(
+        children: [
+          // Top navigation bar
+          const TopNavBar(),
+
+          // Main content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(EZSpacing.lg),
+              child: Center(
+                child: RepaintBoundary(
+                  key: _ticketKey,
+                  child: _buildTicketCard(context, ticket, isDark),
+                ),
+              ),
+            ),
           ),
         ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(EZSpacing.lg),
-        child: Center(
-          child: RepaintBoundary(
-            key: _ticketKey,
-            child: _buildTicketCard(context, ticket, isDark),
-          ),
-        ),
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
@@ -242,8 +244,30 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
               _buildServiceLabel(ticket.services.length),
               ticket.services.join(', '),
             ),
+            if (ticket.purpose != null) ...[
+              const SizedBox(height: EZSpacing.sm),
+              _buildDetailRow(context, 'Purpose:', ticket.purpose!),
+            ],
+            if (ticket.items.isNotEmpty) ...[
+              const SizedBox(height: EZSpacing.sm),
+              _buildDetailRow(
+                context,
+                'Items:',
+                ticket.items
+                    .map((item) => '${item.name} x${item.quantity}')
+                    .join(', '),
+              ),
+            ],
             const SizedBox(height: EZSpacing.sm),
             _buildDetailRow(context, 'User Type:', ticket.userType),
+            if (ticket.courseProgram != null) ...[
+              const SizedBox(height: EZSpacing.sm),
+              _buildDetailRow(
+                context,
+                'Course/Program:',
+                ticket.courseProgram!,
+              ),
+            ],
             if (ticket.idNumber != null) ...[
               const SizedBox(height: EZSpacing.sm),
               _buildDetailRow(context, 'ID Number:', ticket.idNumber!),
@@ -252,6 +276,10 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
             _buildDetailRow(context, 'Full Name:', ticket.fullName),
             const SizedBox(height: EZSpacing.sm),
             _buildDetailRow(context, 'Email:', ticket.email),
+            if (ticket.contactNumber != null) ...[
+              const SizedBox(height: EZSpacing.sm),
+              _buildDetailRow(context, 'Contact No.:', ticket.contactNumber!),
+            ],
             if (ticket.isPWD) ...[
               const SizedBox(height: EZSpacing.sm),
               _buildDetailRow(context, 'PWD:', 'Yes'),
@@ -259,7 +287,7 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
                 const SizedBox(height: EZSpacing.sm),
                 _buildDetailRow(
                   context,
-                  'PWD Specification:',
+                  'PWD Spec.:',
                   ticket.pwdSpecification!,
                 ),
               ],
@@ -298,7 +326,7 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: 120,
+          width: 130,
           child: Text(
             label,
             style: Theme.of(
@@ -313,7 +341,7 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
     );
   }
 
-  /// Save ticket as image to gallery.
+  /// Save ticket as image to device storage.
   Future<void> _saveTicketAsImage(BuildContext context) async {
     if (!mounted) return;
 
@@ -326,7 +354,6 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
     });
 
     try {
-      // Request permission if needed (gal handles this automatically on newer Android/iOS)
       // Capture the widget as an image
       final RenderRepaintBoundary? boundary =
           _ticketKey.currentContext?.findRenderObject()
@@ -347,16 +374,16 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
 
       final Uint8List pngBytes = byteData.buffer.asUint8List();
 
-      // Save to gallery (PNG format is widely supported)
-      await Gal.putImageBytes(pngBytes);
+      // Save to device storage using path_provider
+      final String filePath = await _saveImageToStorage(pngBytes);
 
       if (!mounted) return;
 
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Ticket saved to gallery successfully!'),
+        SnackBar(
+          content: Text('Ticket saved successfully!\n$filePath'),
           backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 3),
         ),
       );
     } catch (e) {
@@ -376,5 +403,34 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
         });
       }
     }
+  }
+
+  /// Save image bytes to device storage and return the file path.
+  Future<String> _saveImageToStorage(Uint8List imageBytes) async {
+    final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+    final String fileName = 'EZQueue_Ticket_$timestamp.png';
+
+    // Try to save to the Pictures directory on external storage (Android)
+    // or to the application documents directory as fallback
+    Directory? saveDir;
+
+    if (Platform.isAndroid) {
+      // On Android, save to /storage/emulated/0/Pictures/EZQueue/
+      final Directory extDir = Directory(
+        '/storage/emulated/0/Pictures/EZQueue',
+      );
+      if (!await extDir.exists()) {
+        await extDir.create(recursive: true);
+      }
+      saveDir = extDir;
+    } else {
+      // iOS / other platforms: use application documents directory
+      saveDir = await getApplicationDocumentsDirectory();
+    }
+
+    final File file = File('${saveDir.path}/$fileName');
+    await file.writeAsBytes(imageBytes);
+
+    return file.path;
   }
 }

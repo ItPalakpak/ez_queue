@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ez_queue/providers/theme_provider.dart';
 import 'package:ez_queue/theme/spacing.dart';
-import 'package:ez_queue/widgets/theme_customizer_button.dart';
+import 'package:ez_queue/widgets/top_nav_bar.dart';
 import 'package:go_router/go_router.dart';
 
 /// Landing page with EZQueue logo that adapts to theme mode.
@@ -116,8 +116,8 @@ class LandingPage extends ConsumerWidget {
               ],
             ),
           ),
-          // Theme customizer button at top right
-          const ThemeCustomizerButton(),
+          // Top navigation bar — no back button on landing page
+          const TopNavBar(showBackButton: false, showHomeButton: false),
         ],
       ),
     );
