@@ -5,6 +5,7 @@ import 'package:ez_queue/providers/queue_form_provider.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/top_nav_bar.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 
 /// Personal information page.
 /// Allows users to input their full name, email address, and contact number.
@@ -18,6 +19,9 @@ class PersonalInformationPage extends ConsumerStatefulWidget {
 
 class _PersonalInformationPageState
     extends ConsumerState<PersonalInformationPage> {
+  PhoneNumber _phoneNumber = PhoneNumber(
+    isoCode: 'PH',
+  ); // default to Philippines
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _contactNumberController =
@@ -189,9 +193,20 @@ class _PersonalInformationPageState
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: EZSpacing.md),
-                    TextFormField(
-                      controller: _contactNumberController,
-                      decoration: InputDecoration(
+                    InternationalPhoneNumberInput(
+                      onInputChanged: (PhoneNumber number) {
+                        _phoneNumber = number;
+                      },
+                      onInputValidated: (bool isValid) {
+                        // optional: track validity in real-time
+                      },
+                      selectorConfig: const SelectorConfig(
+                        selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
+                        showFlags: true,
+                      ),
+                      initialValue: _phoneNumber,
+                      textFieldController: _contactNumberController,
+                      inputDecoration: InputDecoration(
                         hintText: 'Enter your contact number',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(
@@ -201,16 +216,16 @@ class _PersonalInformationPageState
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
                       ),
-                      keyboardType: TextInputType.phone,
-                      textInputAction: TextInputAction.done,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter your contact number';
-                        }
-                        return null;
-                      },
+                      keyboardType: const TextInputType.numberWithOptions(
+                        signed: true,
+                        decimal: true,
+                      ),
+                      inputBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(EZSpacing.radiusMd),
+                      ),
+                      formatInput: true,
+                      autoValidateMode: AutovalidateMode.onUserInteraction,
                     ),
-
                     const SizedBox(height: EZSpacing.xxl),
 
                     // Continue button
@@ -263,7 +278,9 @@ class _PersonalInformationPageState
           .updatePersonalInfo(
             fullName: _fullNameController.text.trim(),
             email: _emailController.text.trim(),
-            contactNumber: _contactNumberController.text.trim(),
+            contactNumber:
+                _phoneNumber.phoneNumber ??
+                _contactNumberController.text.trim(), // saves as +639XXXXXXXXX
           );
 
       // Navigate to confirmation page
