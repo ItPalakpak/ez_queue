@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/top_nav_bar.dart';
+import 'package:go_router/go_router.dart';
 
 /// Department-specific queue display page (read-only).
 /// Shows the live queue status for a specific department.
@@ -53,6 +54,36 @@ class DepartmentQueuePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Department selector buttons
+                  Text(
+                    'Select Department',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: EZSpacing.md),
+                  Wrap(
+                    spacing: EZSpacing.sm,
+                    runSpacing: EZSpacing.sm,
+                    children: sampleData.keys.map((deptName) {
+                      final isSelected = deptName == department;
+                      return ChoiceChip(
+                        label: Text(deptName),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) {
+                            context.push(
+                              '/department-queue?dept=${Uri.encodeComponent(deptName)}',
+                            );
+                          }
+                        },
+                        selectedColor: Theme.of(context).colorScheme.secondary,
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.white : null,
+                          fontWeight: isSelected ? FontWeight.w600 : null,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: EZSpacing.xl),
                   // Page title with department
                   Text(
                     '$department Queue Status',
@@ -163,6 +194,40 @@ class DepartmentQueuePage extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: EZSpacing.xl),
+
+                  // Get A Ticket button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        context.push('/user-type-selection');
+                      },
+                      icon: const Icon(Icons.add_circle_outline),
+                      label: Text(
+                        'Get A Ticket',
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: EZSpacing.md,
+                          horizontal: EZSpacing.lg,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            EZSpacing.radiusMd,
+                          ),
+                        ),
+                        minimumSize: const Size(double.infinity, 48),
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.secondary,
                       ),
                     ),
                   ),

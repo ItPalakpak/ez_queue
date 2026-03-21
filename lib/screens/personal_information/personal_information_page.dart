@@ -283,8 +283,8 @@ class _PersonalInformationPageState
                 _contactNumberController.text.trim(), // saves as +639XXXXXXXXX
           );
 
-      // Navigate to confirmation page
-      context.push('/confirmation');
+      // Navigate to department selection page
+      context.push('/department-selection');
     }
   }
 }

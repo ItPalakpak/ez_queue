@@ -25,6 +25,53 @@ class LandingPage extends ConsumerWidget {
           SafeArea(
             child: Column(
               children: [
+                // Warning button positioned to the left of home button
+                Align(
+                  alignment: Alignment.topRight,
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        top: EZSpacing.sm,
+                        right:
+                            44, // Positioned like home button in other pages
+                      ),
+                      child: IconButton(
+                        onPressed: () {
+                          // Show reminder dialog on tap
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                                  const SizedBox(width: EZSpacing.sm),
+                                  const Text('Important Reminders'),
+                                ],
+                              ),
+                              content: const Text(
+                                '• You cannot create another queue in a department where you have an active queue\n\n'
+                                '• Always maintain an internet connection\n\n'
+                                '• Wait for notifications via email and this app for queue status updates',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  child: const Text('Got it'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.warning_amber_rounded),
+                        color: Colors.orange,
+                        tooltip: 'Important Reminders',
+                      ),
+                    ),
+                  ),
+                ),
                 // Main content
                 Expanded(
                   child: Center(
@@ -76,7 +123,7 @@ class LandingPage extends ConsumerWidget {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () {
-                                context.push('/department-selection');
+                                context.push('/user-type-selection');
                               },
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
@@ -97,7 +144,7 @@ class LandingPage extends ConsumerWidget {
                                     : Colors.black,
                               ),
                               child: Text(
-                                'Get Started',
+                                'Get A Ticket',
                                 style: Theme.of(context).textTheme.bodyLarge
                                     ?.copyWith(
                                       fontWeight: FontWeight.w600,
@@ -105,6 +152,46 @@ class LandingPage extends ConsumerWidget {
                                           ? Colors.white
                                           : Colors.black,
                                     ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: EZSpacing.md),
+
+                          // View Queue Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                context.push('/department-queue');
+                              },
+                              icon: const Icon(Icons.visibility),
+                              label: Text(
+                                'View Queue',
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.secondary,
+                                    ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: EZSpacing.md,
+                                  horizontal: EZSpacing.lg,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    EZSpacing.radiusMd,
+                                  ),
+                                ),
+                                minimumSize: const Size(double.infinity, 48),
+                                side: BorderSide(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.secondary,
+                                  width: 2,
+                                ),
                               ),
                             ),
                           ),

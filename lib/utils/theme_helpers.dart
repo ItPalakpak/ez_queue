@@ -31,7 +31,9 @@ class ThemeHelpers {
     final brightness = Theme.of(context).brightness;
     return ElevatedButton.styleFrom(
       backgroundColor: colorScheme.secondary,
-      foregroundColor: brightness == Brightness.dark ? Colors.white : Colors.black,
+      foregroundColor: brightness == Brightness.dark
+          ? Colors.white
+          : Colors.black,
     );
   }
 
@@ -42,7 +44,9 @@ class ThemeHelpers {
     final brightness = Theme.of(context).brightness;
     return FilledButton.styleFrom(
       backgroundColor: colorScheme.secondary,
-      foregroundColor: brightness == Brightness.dark ? Colors.white : Colors.black,
+      foregroundColor: brightness == Brightness.dark
+          ? Colors.white
+          : Colors.black,
     );
   }
 
@@ -93,5 +97,51 @@ class ThemeHelpers {
       fontWeight: fontWeight,
     );
   }
-}
 
+  /// Create an InputDecoration for dropdown fields with enhanced visuals.
+  /// Uses Roboto font and provides consistent styling across the app.
+  static InputDecoration dropdownInputDecoration({
+    required String labelText,
+    String? hintText,
+    Widget? prefixIcon,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixIcon: prefixIcon,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.red.shade700, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.white.withValues(alpha: 0.05),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      labelStyle: const TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+      hintStyle: const TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 15,
+        color: Colors.grey,
+      ),
+    );
+  }
+}

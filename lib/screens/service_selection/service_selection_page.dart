@@ -390,7 +390,7 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
           items: List<ServiceItem>.from(_items),
         );
 
-    // Navigate to user type selection page
-    context.push('/user-type-selection');
+    // Navigate to confirmation page
+    context.push('/confirmation');
   }
 }

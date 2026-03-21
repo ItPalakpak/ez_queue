@@ -4,6 +4,7 @@ import 'package:ez_queue/providers/theme_provider.dart';
 import 'package:ez_queue/providers/queue_form_provider.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/top_nav_bar.dart';
+import 'package:ez_queue/utils/theme_helpers.dart';
 import 'package:go_router/go_router.dart';
 
 /// User type selection page.
@@ -128,18 +129,21 @@ class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
                   const SizedBox(height: EZSpacing.md),
                   DropdownButtonFormField<String>(
                     initialValue: _selectedUserType,
-                    decoration: InputDecoration(
+                    decoration: ThemeHelpers.dropdownInputDecoration(
                       labelText: 'Select User Type',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(EZSpacing.radiusMd),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surface,
+                      hintText: 'Choose your user type',
+                      prefixIcon: const Icon(Icons.person_outline),
                     ),
                     items: _userTypes.map((type) {
                       return DropdownMenuItem<String>(
                         value: type,
-                        child: Text(type),
+                        child: Text(
+                          type,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            fontSize: 15,
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: (String? value) {
@@ -159,6 +163,12 @@ class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
                     },
                     hint: const Text('Choose your user type'),
                     isExpanded: true,
+                    dropdownColor: Theme.of(context).colorScheme.surface,
+                    menuMaxHeight: 300,
+                    icon: Icon(
+                      Icons.arrow_drop_down,
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
                   ),
 
                   // Course/Program combobox (shown for institution-affiliated types)
@@ -171,20 +181,21 @@ class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
                     const SizedBox(height: EZSpacing.md),
                     DropdownButtonFormField<String>(
                       initialValue: _selectedCourseProgram,
-                      decoration: InputDecoration(
+                      decoration: ThemeHelpers.dropdownInputDecoration(
                         labelText: 'Select Course/Program',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            EZSpacing.radiusMd,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
+                        hintText: 'Choose your course/program',
+                        prefixIcon: const Icon(Icons.school_outlined),
                       ),
                       items: _coursePrograms.map((course) {
                         return DropdownMenuItem<String>(
                           value: course,
-                          child: Text(course),
+                          child: Text(
+                            course,
+                            style: const TextStyle(
+                              fontFamily: 'Roboto',
+                              fontSize: 15,
+                            ),
+                          ),
                         );
                       }).toList(),
                       onChanged: (String? value) {
@@ -194,6 +205,12 @@ class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
                       },
                       hint: const Text('Choose your course/program'),
                       isExpanded: true,
+                      dropdownColor: Theme.of(context).colorScheme.surface,
+                      menuMaxHeight: 300,
+                      icon: Icon(
+                        Icons.arrow_drop_down,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
                     ),
                   ],
 
