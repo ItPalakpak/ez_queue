@@ -100,25 +100,50 @@ final appThemeProvider = Provider<ThemeData>((ref) {
   final mode = ref.watch(themeModeProvider);
   final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
   
-  // Determine if we should use dark theme
-  final useDark = switch (mode) {
-    ThemeMode.light => false,
-    ThemeMode.dark => true,
-    ThemeMode.system => brightness == Brightness.dark,
-  };
+  bool useDark;
+  
+  switch (variant) {
+    case AppThemeVariant.trailblazer:
+    case AppThemeVariant.techy:
+    case AppThemeVariant.playful:
+      useDark = true;
+      break;
+    case AppThemeVariant.friendly:
+    case AppThemeVariant.corporate:
+      useDark = false;
+      break;
+    case AppThemeVariant.pureBold:
+      useDark = switch (mode) {
+        ThemeMode.light => false,
+        ThemeMode.dark => true,
+        ThemeMode.system => brightness == Brightness.dark,
+      };
+      break;
+  }
 
   return useDark ? AppTheme.dark(variant) : AppTheme.light(variant);
 });
 
 /// Provider for current brightness based on theme mode.
 final brightnessProvider = Provider<Brightness>((ref) {
+  final variant = ref.watch(themeVariantProvider);
   final mode = ref.watch(themeModeProvider);
   final systemBrightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
   
-  return switch (mode) {
-    ThemeMode.light => Brightness.light,
-    ThemeMode.dark => Brightness.dark,
-    ThemeMode.system => systemBrightness,
-  };
+  switch (variant) {
+    case AppThemeVariant.trailblazer:
+    case AppThemeVariant.techy:
+    case AppThemeVariant.playful:
+      return Brightness.dark;
+    case AppThemeVariant.friendly:
+    case AppThemeVariant.corporate:
+      return Brightness.light;
+    case AppThemeVariant.pureBold:
+      return switch (mode) {
+        ThemeMode.light => Brightness.light,
+        ThemeMode.dark => Brightness.dark,
+        ThemeMode.system => systemBrightness,
+      };
+  }
 });
 

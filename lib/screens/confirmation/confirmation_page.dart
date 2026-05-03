@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ez_queue/providers/theme_provider.dart';
 import 'package:ez_queue/providers/queue_form_provider.dart';
 import 'package:ez_queue/providers/queue_ticket_provider.dart';
 import 'package:ez_queue/models/queue_ticket.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/top_nav_bar.dart';
+import 'package:ez_queue/widgets/ez_button.dart';
+import 'package:ez_queue/widgets/ez_card.dart';
+import 'package:ez_queue/services/device_token_manager.dart';
+import 'package:ez_queue/services/api_service.dart';
 import 'package:go_router/go_router.dart';
 
 /// Confirmation page where users can review and edit their details.
@@ -28,9 +31,6 @@ class ConfirmationPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final formData = ref.watch(queueFormProvider);
-    final brightness = ref.watch(brightnessProvider);
-    final isDark = brightness == Brightness.dark;
-
     return Scaffold(
       body: Column(
         children: [
@@ -44,12 +44,53 @@ class ConfirmationPage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Page title
-                  Text(
-                    'Review Your Details',
-                    style: Theme.of(context).textTheme.headlineMedium,
+                  // Step header - icon and text in one row
+                  Container(
+                    margin: const EdgeInsets.only(bottom: EZSpacing.xl),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Text('👁️', style: TextStyle(fontSize: 32)),
+                          ),
+                        ),
+                        const SizedBox(width: EZSpacing.lg),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Review Your Details',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineMedium,
+                              ),
+                              const SizedBox(height: EZSpacing.xs),
+                              Text(
+                                'Verify your information before generating ticket',
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.6),
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: EZSpacing.xl),
 
                   // Department & Services section
                   _buildInfoSection(
@@ -58,69 +99,57 @@ class ConfirmationPage extends ConsumerWidget {
                     [
                       'Department: ${formData.department ?? 'Not selected'}',
                       '${_buildServiceLabel(formData.services.length)}: ${formData.services.isEmpty ? 'None' : formData.services.join(', ')}',
-                      if (formData.purpose != null)
-                        'Purpose: ${formData.purpose}',
-                      if (formData.items.isNotEmpty)
-                        'Items: ${formData.items.map((item) => '${item.name} x${item.quantity}').join(', ')}',
                     ],
                     '/service-selection',
                   ),
 
                   const SizedBox(height: EZSpacing.lg),
 
-                  // User Information
-                  _buildInfoSection(context, 'User Information', [
+                  // Additional Details section
+                  _buildInfoSection(context, 'Additional Details', [
+                    if (formData.purpose != null)
+                      'Purpose: ${formData.purpose}'
+                    else
+                      'Purpose: Not specified',
+                    if (formData.items.isNotEmpty)
+                      'Items: ${formData.items.map((item) => '${item.name} x${item.quantity}').join(', ')}'
+                    else
+                      'Items: None',
+                  ], '/details-information'),
+
+                  const SizedBox(height: EZSpacing.lg),
+
+                  // User Information (Identity)
+                  _buildInfoSection(context, 'Identity Information', [
                     'User Type: ${formData.userType ?? 'Not selected'}',
+                    'Full Name: ${formData.fullName ?? 'Not provided'}',
                     if (formData.courseProgram != null)
                       'Course/Program: ${formData.courseProgram}',
                     if (formData.idNumber != null)
                       'ID Number: ${formData.idNumber}',
-                    if (formData.isPWD) 'PWD: Yes',
-                    if (formData.isPWD && formData.pwdSpecification != null)
-                      'PWD Specification: ${formData.pwdSpecification}',
-                  ], '/user-type-selection'),
+                  ], '/identity-information'),
 
                   const SizedBox(height: EZSpacing.lg),
 
-                  // Personal Information
-                  _buildInfoSection(context, 'Personal Information', [
-                    'Full Name: ${formData.fullName ?? 'Not provided'}',
+                  // Contact Information
+                  _buildInfoSection(context, 'Contact Information', [
                     'Email: ${formData.email ?? 'Not provided'}',
                     'Contact Number: ${formData.contactNumber ?? 'Not provided'}',
-                  ], '/personal-information'),
+                    if (formData.priorityWeight > 1) 'Priority: Priority Queue',
+                    if (formData.priorityWeight > 1 && formData.priorityIdNumber != null)
+                      'Priority ID: ${formData.priorityIdNumber}',
+                  ], '/contact-information'),
 
                   const SizedBox(height: EZSpacing.xxl),
 
                   // Generate Ticket button
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: EZButton(
                       onPressed: formData.isComplete
                           ? () => _handleGenerateTicket(context, ref, formData)
                           : null,
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: EZSpacing.md,
-                          horizontal: EZSpacing.lg,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            EZSpacing.radiusMd,
-                          ),
-                        ),
-                        minimumSize: const Size(double.infinity, 48),
-                        backgroundColor: Theme.of(
-                          context,
-                        ).colorScheme.secondary,
-                        foregroundColor: isDark ? Colors.white : Colors.black,
-                      ),
-                      child: Text(
-                        'Generate Ticket',
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : Colors.black,
-                        ),
-                      ),
+                      child: Text('Generate Ticket'),
                     ),
                   ),
                 ],
@@ -139,7 +168,8 @@ class ConfirmationPage extends ConsumerWidget {
     List<String> details,
     String editRoute,
   ) {
-    return Card(
+    return EZCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(EZSpacing.lg),
         child: Column(
@@ -184,40 +214,74 @@ class ConfirmationPage extends ConsumerWidget {
     WidgetRef ref,
     dynamic formData,
   ) async {
-    // Generate ticket number (sample - replace with actual generation logic)
-    final ticketNumber =
-        'Q${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-
-    // Calculate queue position (sample - replace with actual calculation)
-    final queuePosition = 5; // Sample position
-    final estimatedWaitMinutes = queuePosition * 3; // Sample calculation
-
-    // Create queue ticket
-    final ticket = QueueTicket(
-      ticketNumber: ticketNumber,
-      department: formData.department!,
-      services: formData.services,
-      purpose: formData.purpose,
-      items: formData.items,
-      userType: formData.userType!,
-      idNumber: formData.idNumber,
-      courseProgram: formData.courseProgram,
-      fullName: formData.fullName!,
-      email: formData.email!,
-      contactNumber: formData.contactNumber,
-      isPWD: formData.isPWD,
-      pwdSpecification: formData.pwdSpecification,
-      createdAt: DateTime.now(),
-      queuePosition: queuePosition,
-      estimatedWaitMinutes: estimatedWaitMinutes,
+    // Show loading overlay
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(child: CircularProgressIndicator());
+      },
     );
 
-    // Save ticket to provider
-    ref.read(queueTicketProvider.notifier).setTicket(ticket);
+    try {
+      String deviceToken = await DeviceTokenManager.getDeviceToken();
 
-    // Navigate to ticket preview page
-    if (context.mounted) {
-      context.push('/ticket-preview');
+
+      List<QueueTicket> generatedTickets = [];
+
+      for (int serviceId in formData.serviceIds) {
+        String? mappedUserType = formData.userType?.toLowerCase();
+        if (mappedUserType == 'faculty/staff') {
+          mappedUserType = 'faculty';
+        }
+
+        final payload = {
+          'department_id': formData.departmentId,
+          'service_id': serviceId,
+          'student_name': formData.fullName,
+          'user_type': mappedUserType,
+          if (formData.idNumber != null) 'student_id': formData.idNumber,
+          if (formData.idNumber != null) 'employee_id': formData.idNumber,
+          if (formData.contactNumber != null) 'phone': formData.contactNumber,
+          if (formData.email != null) 'email': formData.email,
+          if (formData.courseId != null) 'course_id': formData.courseId,
+          if (formData.purpose != null) 'purpose': formData.purpose,
+          'priority_weight': formData.priorityWeight,
+          'is_priority': formData.priorityWeight > 1,
+          if (formData.priorityIdNumber != null)
+            'priority_id_number': formData.priorityIdNumber,
+          'device_token': deviceToken,
+        };
+
+        final ticket = await apiService.createTicket(payload);
+        generatedTickets.add(ticket);
+      }
+
+      // Hide loading overlay
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Save tickets to provider
+      ref.read(queueTicketProvider.notifier).setTickets(generatedTickets);
+
+      // Navigate to ticket preview page
+      if (context.mounted) {
+        context.push('/ticket-preview');
+      }
+    } catch (e) {
+      // Hide loading overlay
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        // CHANGED: Show only user-friendly error message without technical details
+        final errorMessage = e.toString().replaceAll('Exception: ', '');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
     }
   }
 }

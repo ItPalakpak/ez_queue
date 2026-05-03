@@ -1,0 +1,25 @@
+﻿Analyzing ez_queue...                                           
+
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\cancel_queue\cancel_queue_page.dart:86:43 - deprecated_member_use
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\screens\service_selection\service_selection_page.dart:280:19 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\screens\service_selection\service_selection_page.dart:281:19 - deprecated_member_use
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\screens\user_type_selection\user_type_selection_page.dart:328:29 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\screens\user_type_selection\user_type_selection_page.dart:329:29 - deprecated_member_use
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\screens\user_type_selection\user_type_selection_page.dart:339:29 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\screens\user_type_selection\user_type_selection_page.dart:340:29 - deprecated_member_use
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre - lib\screens\user_type_selection\user_type_selection_page.dart:352:29 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre - lib\screens\user_type_selection\user_type_selection_page.dart:353:29 - deprecated_member_use
+   info - Don't invoke 'print' in production code - lib\services\api_service.dart:107:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\api_service.dart:113:7 - avoid_print
+   info - The imported package 'uuid' isn't a dependency of the importing package - lib\services\device_token_manager.dart:3:8 - depend_on_referenced_packages
+warning - Unused import: 'package:ez_queue/widgets/ez_card.dart' - lib\widgets\ez_card.dart:1:8 - unused_import
+   info - Constructors for public widgets should have a named 'key' parameter - lib\widgets\ez_card.dart:5:7 - use_key_in_widget_constructors
+  error - The final variable 'child' must be initialized - lib\widgets\ez_card.dart:6:16 - final_not_initialized
+  error - The final variable 'padding' must be initialized - lib\widgets\ez_card.dart:7:28 - final_not_initialized
+  error - Getters, setters and methods can't be declared to be 'const' - lib\widgets\ez_card.dart:9:3 - const_method
+   info - The variable name 'EZEZCard' isn't a lowerCamelCase identifier - lib\widgets\ez_card.dart:9:9 - non_constant_identifier_names
+  error - 'EZEZCard' must have a method body because 'EZCard' isn't abstract - lib\widgets\ez_card.dart:9:9 - concrete_class_with_abstract_member
+  error - Super parameters can only be used in non-redirecting generative constructors - lib\widgets\ez_card.dart:10:5 - invalid_super_formal_parameter_location
+  error - Initializing formal parameters can only be used in constructors - lib\widgets\ez_card.dart:11:5 - field_initializer_outside_constructor
+  error - Initializing formal parameters can only be used in constructors - lib\widgets\ez_card.dart:12:5 - field_initializer_outside_constructor
+

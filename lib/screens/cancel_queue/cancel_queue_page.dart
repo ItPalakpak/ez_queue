@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ez_queue/providers/queue_ticket_provider.dart';
 import 'package:ez_queue/providers/queue_form_provider.dart';
+import 'package:ez_queue/services/api_service.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/top_nav_bar.dart';
+import 'package:ez_queue/widgets/ez_button.dart';
+import 'package:ez_queue/widgets/ez_card.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ez_queue/widgets/ez_form_text_field.dart';
 
 /// Cancel queue page where users can provide a reason for cancellation.
 class CancelQueuePage extends ConsumerStatefulWidget {
@@ -26,7 +30,36 @@ class _CancelQueuePageState extends ConsumerState<CancelQueuePage> {
 
   @override
   Widget build(BuildContext context) {
-    final ticket = ref.watch(queueTicketProvider);
+    final tickets = ref.watch(queueTicketProvider);
+
+    if (tickets.isEmpty) {
+      return Scaffold(
+        body: Column(
+          children: [
+            // Top navigation bar
+            const TopNavBar(),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'No tickets to cancel.',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: EZSpacing.lg),
+                    EZButton(
+                      onPressed: () => context.go('/'),
+                      child: const Text('Go to Home'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Scaffold(
       body: Column(
@@ -51,34 +84,38 @@ class _CancelQueuePageState extends ConsumerState<CancelQueuePage> {
                     const SizedBox(height: EZSpacing.xl),
 
                     // Warning message
-                    Card(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.error.withValues(alpha: 0.1),
-                      child: Padding(
-                        padding: const EdgeInsets.all(EZSpacing.lg),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.warning,
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                            const SizedBox(width: EZSpacing.md),
-                            Expanded(
-                              child: Text(
-                                'Are you sure you want to cancel your queue?',
-                                style: Theme.of(context).textTheme.bodyLarge,
+                    EZCard(
+                      padding: EdgeInsets.zero,
+                      child: Container(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.error.withValues(alpha: 0.1),
+                        child: Padding(
+                          padding: const EdgeInsets.all(EZSpacing.lg),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.warning,
+                                color: Theme.of(context).colorScheme.error,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: EZSpacing.md),
+                              Expanded(
+                                child: Text(
+                                  'Are you sure you want to cancel your queue?',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
 
-                    if (ticket != null) ...[
+                    if (tickets.isNotEmpty) ...[
                       const SizedBox(height: EZSpacing.lg),
                       // Ticket information
-                      Card(
+                      EZCard(
+                        padding: EdgeInsets.zero,
                         child: Padding(
                           padding: const EdgeInsets.all(EZSpacing.lg),
                           child: Column(
@@ -89,17 +126,32 @@ class _CancelQueuePageState extends ConsumerState<CancelQueuePage> {
                                 style: Theme.of(context).textTheme.titleLarge,
                               ),
                               const SizedBox(height: EZSpacing.md),
-                              Text(
-                                'Ticket Number: ${ticket.ticketNumber}',
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              Text(
-                                'Department: ${ticket.department}',
-                                style: Theme.of(context).textTheme.bodyLarge,
-                              ),
-                              Text(
-                                'Position: ${ticket.queuePosition}',
-                                style: Theme.of(context).textTheme.bodyLarge,
+                              ...tickets.map(
+                                (ticket) => Column(
+                                  children: [
+                                    Text(
+                                      'Ticket Number: ${ticket.ticketNumber}',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge,
+                                    ),
+                                    Text(
+                                      'Department: ${ticket.departmentName}',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge,
+                                    ),
+                                    Text(
+                                      'Service: ${ticket.serviceName}',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge,
+                                    ),
+                                    if (tickets.length > 1 &&
+                                        tickets.last != ticket)
+                                      const Divider(height: EZSpacing.lg),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
@@ -115,19 +167,11 @@ class _CancelQueuePageState extends ConsumerState<CancelQueuePage> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: EZSpacing.md),
-                    TextFormField(
+                    EZFormTextField(
                       controller: _reasonController,
-                      decoration: InputDecoration(
-                        hintText: 'Please provide a reason for cancelling',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            EZSpacing.radiusMd,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                      ),
+                      hintText: 'Please provide a reason for cancelling',
                       maxLines: 5,
+                      maxLength: 500,
                       textInputAction: TextInputAction.done,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
@@ -142,30 +186,9 @@ class _CancelQueuePageState extends ConsumerState<CancelQueuePage> {
                     // Confirm cancellation button
                     SizedBox(
                       width: double.infinity,
-                      child: ElevatedButton(
+                      child: EZButton(
                         onPressed: () => _handleCancelQueue(context, ref),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: EZSpacing.md,
-                            horizontal: EZSpacing.lg,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              EZSpacing.radiusMd,
-                            ),
-                          ),
-                          minimumSize: const Size(double.infinity, 48),
-                          backgroundColor: Theme.of(context).colorScheme.error,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text(
-                          'Confirm Cancellation',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                        ),
+                        child: Text('Confirm Cancellation'),
                       ),
                     ),
 
@@ -174,25 +197,10 @@ class _CancelQueuePageState extends ConsumerState<CancelQueuePage> {
                     // Back button
                     SizedBox(
                       width: double.infinity,
-                      child: OutlinedButton(
+                      child: EZButton(
+                        isSecondary: true,
                         onPressed: () => context.pop(),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: EZSpacing.md,
-                            horizontal: EZSpacing.lg,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              EZSpacing.radiusMd,
-                            ),
-                          ),
-                          minimumSize: const Size(double.infinity, 48),
-                        ),
-                        child: Text(
-                          'Go Back',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
+                        child: Text('Go Back'),
                       ),
                     ),
                   ],
@@ -209,30 +217,57 @@ class _CancelQueuePageState extends ConsumerState<CancelQueuePage> {
   void _handleCancelQueue(BuildContext context, WidgetRef ref) {
     if (_formKey.currentState?.validate() ?? false) {
       final reason = _reasonController.text.trim();
+      final tickets = ref.read(queueTicketProvider);
 
       // Show confirmation dialog
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (dialogContext) => AlertDialog(
           title: const Text('Confirm Cancellation'),
           content: Text(
-            'Are you sure you want to cancel your queue?\n\n'
+            'Are you sure you want to cancel ${tickets.length == 1 ? "this ticket" : "all ${tickets.length} tickets"}? This action cannot be undone.\n\n'
             'Reason: $reason',
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('No'),
             ),
             TextButton(
-              onPressed: () {
-                // Clear ticket from provider
-                ref.read(queueTicketProvider.notifier).clearTicket();
+              onPressed: () async {
+                // CHANGED: actual API call to cancel each ticket with reason
+                final apiService = ApiService();
+                String? errorMessage;
 
-                // Clear form data
+                try {
+                  for (final ticket in tickets) {
+                    await apiService.cancelTicket(ticket.id, reason);
+                  }
+                } catch (e) {
+                  errorMessage = e.toString().replaceFirst('Exception: ', '');
+                }
+
+                if (!dialogContext.mounted) return;
+                Navigator.of(dialogContext).pop(); // Close the dialog
+
+                if (errorMessage != null) {
+                  ref.read(queueTicketProvider.notifier).clearTickets();
+                  ref.read(queueFormProvider.notifier).reset();
+
+                  if (context.mounted) {
+                    context.go('/');
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Cancellation failed: $errorMessage'),
+                        backgroundColor: Theme.of(context).colorScheme.error,
+                      ),
+                    );
+                  }
+                  return;
+                }
+
+                ref.read(queueTicketProvider.notifier).clearTickets();
                 ref.read(queueFormProvider.notifier).reset();
-
-                Navigator.of(context).pop();
 
                 // Navigate back to landing page
                 if (context.mounted) {

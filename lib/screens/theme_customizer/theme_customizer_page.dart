@@ -4,6 +4,7 @@ import 'package:ez_queue/providers/theme_provider.dart';
 import 'package:ez_queue/theme/app_theme.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/top_nav_bar.dart';
+import 'package:ez_queue/widgets/ez_card.dart';
 
 /// Theme customizer page allowing users to select theme variant and mode.
 class ThemeCustomizerPage extends ConsumerWidget {
@@ -84,7 +85,8 @@ class ThemeCustomizerPage extends ConsumerWidget {
       currentIndex = 2;
     }
 
-    return Card(
+    return EZCard(
+      padding: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(EZSpacing.sm),
         child: Row(
@@ -196,6 +198,7 @@ class ThemeCustomizerPage extends ConsumerWidget {
       (AppThemeVariant.friendly, 'Friendly / Human', 'Warm, approachable'),
       (AppThemeVariant.corporate, 'Corporate / Minimal', 'Clean, professional'),
       (AppThemeVariant.playful, 'Playful', 'Bold, energetic'),
+      (AppThemeVariant.trailblazer, 'Trailblazer', 'Navy, gold, elegant'),
     ];
 
     return Column(
@@ -203,23 +206,23 @@ class ThemeCustomizerPage extends ConsumerWidget {
         final (variantEnum, title, description) = variant;
         final isSelected = currentVariant == variantEnum;
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: EZSpacing.sm),
-          color: isSelected
-              ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.1)
-              : null,
-          child: ListTile(
-            title: Text(title),
-            subtitle: Text(description),
-            trailing: isSelected
-                ? Icon(
-                    Icons.check_circle,
-                    color: Theme.of(context).colorScheme.secondary,
-                  )
-                : null,
-            onTap: () {
-              ref.read(themeVariantProvider.notifier).setTheme(variantEnum);
-            },
+        return Padding(
+          padding: const EdgeInsets.only(bottom: EZSpacing.md),
+          child: EZCard(
+            padding: EdgeInsets.zero,
+            child: ListTile(
+              title: Text(title),
+              subtitle: Text(description),
+              trailing: isSelected
+                  ? Icon(
+                      Icons.check_circle,
+                      color: Theme.of(context).colorScheme.secondary,
+                    )
+                  : null,
+              onTap: () {
+                ref.read(themeVariantProvider.notifier).setTheme(variantEnum);
+              },
+            ),
           ),
         );
       }).toList(),
@@ -249,6 +252,9 @@ class ThemeCustomizerPage extends ConsumerWidget {
       case AppThemeVariant.playful:
         // Playful uses dark logo
         return 'assets/photos/logo_for_dark_mode_no_bg.png';
+      case AppThemeVariant.trailblazer:
+        // Trailblazer uses dark logo
+        return 'assets/photos/logo_for_dark_mode_no_bg.png';
     }
   }
 
@@ -260,7 +266,8 @@ class ThemeCustomizerPage extends ConsumerWidget {
     final isDark = brightness == Brightness.dark;
     final logoPath = _getLogoPathForVariant(currentVariant, brightness);
 
-    return Card(
+    return EZCard(
+      padding: EdgeInsets.zero,
       child: Container(
         padding: const EdgeInsets.all(EZSpacing.lg),
         decoration: BoxDecoration(

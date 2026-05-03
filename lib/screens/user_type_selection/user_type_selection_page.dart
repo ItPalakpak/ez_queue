@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:ez_queue/providers/theme_provider.dart';
+import 'package:go_router/go_router.dart';
+
 import 'package:ez_queue/providers/queue_form_provider.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/top_nav_bar.dart';
-import 'package:ez_queue/utils/theme_helpers.dart';
-import 'package:go_router/go_router.dart';
+import 'package:ez_queue/widgets/ez_card.dart';
 
-/// User type selection page.
-/// Allows users to select their type via combobox, select course/program,
-/// enter ID number with dynamic placeholder, and specify PWD status.
+/// User type selection page - Card based layout matching React Kiosk.
+/// Step 1: Select user type via visual cards with icons.
 class UserTypeSelectionPage extends ConsumerStatefulWidget {
   const UserTypeSelectionPage({super.key});
 
@@ -18,305 +17,106 @@ class UserTypeSelectionPage extends ConsumerStatefulWidget {
       _UserTypeSelectionPageState();
 }
 
-class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
-  String? _selectedUserType;
-  String? _selectedCourseProgram;
-  bool _isPWD = false;
-  final TextEditingController _pwdSpecificationController =
-      TextEditingController();
-  final TextEditingController _idNumberController = TextEditingController();
+/// User type data model matching React kiosk structure.
+class _UserType {
+  final String id;
+  final String icon;
+  final String label;
+  final String description;
 
-  /// Available user types.
-  static const List<String> _userTypes = [
-    'Outsider',
-    'Student',
-    'Staff',
-    'Faculty',
-    'Alumni',
+  const _UserType({
+    required this.id,
+    required this.icon,
+    required this.label,
+    required this.description,
+  });
+}
+
+class _UserTypeSelectionPageState
+    extends ConsumerState<UserTypeSelectionPage> {
+  /// Available user types matching React kiosk.
+  static const List<_UserType> _userTypes = [
+    _UserType(
+      id: 'student',
+      icon: '🎓',
+      label: 'Student',
+      description: 'Currently enrolled student',
+    ),
+    _UserType(
+      id: 'alumni',
+      icon: '👔',
+      label: 'Alumni',
+      description: 'Graduated alumni',
+    ),
+    _UserType(
+      id: 'faculty',
+      icon: '🧑\u200d🏫',
+      label: 'Faculty/Staff',
+      description: 'Faculty or staff member',
+    ),
+    _UserType(
+      id: 'visitor',
+      icon: '👥',
+      label: 'Visitor',
+      description: 'Guest or visitor',
+    ),
   ];
-
-  /// Available course/program abbreviations.
-  static const List<String> _coursePrograms = [
-    'BSIT',
-    'BSSW',
-    'BSCE',
-    'BSA',
-    'BSBA',
-    'BSED',
-    'BEED',
-    'BSCRIM',
-  ];
-
-  /// Check if selected user type requires ID number.
-  bool get _requiresIdNumber {
-    return _selectedUserType != null &&
-        ['Student', 'Faculty', 'Staff', 'Alumni'].contains(_selectedUserType);
-  }
-
-  /// Check if selected user type requires course/program.
-  bool get _requiresCourseProgram {
-    return _selectedUserType != null &&
-        ['Student', 'Faculty', 'Staff', 'Alumni'].contains(_selectedUserType);
-  }
-
-  /// Get dynamic placeholder text for ID number based on user type.
-  String get _idNumberHintText {
-    return switch (_selectedUserType) {
-      'Student' => 'Please enter your student ID of this institution',
-      'Faculty' => 'Please enter your faculty ID of this institution',
-      'Staff' => 'Please enter your staff ID of this institution',
-      'Alumni' => 'Please enter your alumni ID of this institution',
-      _ => 'Enter your institution ID number',
-    };
-  }
-
-  @override
-  void dispose() {
-    _pwdSpecificationController.dispose();
-    _idNumberController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    // Load saved data from provider
-    final formData = ref.watch(queueFormProvider);
-    if (formData.userType != null && _selectedUserType == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          setState(() {
-            _selectedUserType = formData.userType;
-            _selectedCourseProgram = formData.courseProgram;
-            _isPWD = formData.isPWD;
-            if (formData.idNumber != null) {
-              _idNumberController.text = formData.idNumber!;
-            }
-            if (formData.pwdSpecification != null) {
-              _pwdSpecificationController.text = formData.pwdSpecification!;
-            }
-          });
-        }
-      });
-    }
-    final brightness = ref.watch(brightnessProvider);
-    final isDark = brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       body: Column(
         children: [
-          // Top navigation bar
           const TopNavBar(),
-
-          // Main content
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(EZSpacing.lg),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Page title
-                  Text(
-                    'User Information',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                  const SizedBox(height: EZSpacing.xl),
-
-                  // User type combobox
-                  Text(
-                    'User Type',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: EZSpacing.md),
-                  DropdownButtonFormField<String>(
-                    initialValue: _selectedUserType,
-                    decoration: ThemeHelpers.dropdownInputDecoration(
-                      labelText: 'Select User Type',
-                      hintText: 'Choose your user type',
-                      prefixIcon: const Icon(Icons.person_outline),
-                    ),
-                    items: _userTypes.map((type) {
-                      return DropdownMenuItem<String>(
-                        value: type,
-                        child: Text(
-                          type,
-                          style: const TextStyle(
-                            fontFamily: 'Roboto',
-                            fontSize: 15,
+                  // Step header - matches React kiosk style
+                  Container(
+                    margin: const EdgeInsets.only(bottom: EZSpacing.xl),
+                    child: Column(
+                      children: [
+                        // Icon
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
                           ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (String? value) {
-                      setState(() {
-                        _selectedUserType = value;
-                        // Clear ID and course when switching to Outsider
-                        if (![
-                          'Student',
-                          'Faculty',
-                          'Staff',
-                          'Alumni',
-                        ].contains(value)) {
-                          _idNumberController.clear();
-                          _selectedCourseProgram = null;
-                        }
-                      });
-                    },
-                    hint: const Text('Choose your user type'),
-                    isExpanded: true,
-                    dropdownColor: Theme.of(context).colorScheme.surface,
-                    menuMaxHeight: 300,
-                    icon: Icon(
-                      Icons.arrow_drop_down,
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                  ),
-
-                  // Course/Program combobox (shown for institution-affiliated types)
-                  if (_requiresCourseProgram) ...[
-                    const SizedBox(height: EZSpacing.xxl),
-                    Text(
-                      'Course / Program',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: EZSpacing.md),
-                    DropdownButtonFormField<String>(
-                      initialValue: _selectedCourseProgram,
-                      decoration: ThemeHelpers.dropdownInputDecoration(
-                        labelText: 'Select Course/Program',
-                        hintText: 'Choose your course/program',
-                        prefixIcon: const Icon(Icons.school_outlined),
-                      ),
-                      items: _coursePrograms.map((course) {
-                        return DropdownMenuItem<String>(
-                          value: course,
-                          child: Text(
-                            course,
-                            style: const TextStyle(
-                              fontFamily: 'Roboto',
-                              fontSize: 15,
+                          child: Center(
+                            child: Text(
+                              '🏷️',
+                              style: TextStyle(fontSize: 32),
                             ),
                           ),
-                        );
-                      }).toList(),
-                      onChanged: (String? value) {
-                        setState(() {
-                          _selectedCourseProgram = value;
-                        });
-                      },
-                      hint: const Text('Choose your course/program'),
-                      isExpanded: true,
-                      dropdownColor: Theme.of(context).colorScheme.surface,
-                      menuMaxHeight: 300,
-                      icon: Icon(
-                        Icons.arrow_drop_down,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                    ),
-                  ],
-
-                  // ID Number input (only shown for Student, Faculty, Staff, Alumni)
-                  if (_requiresIdNumber) ...[
-                    const SizedBox(height: EZSpacing.xxl),
-                    Text(
-                      'ID Number',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: EZSpacing.md),
-                    TextField(
-                      controller: _idNumberController,
-                      decoration: InputDecoration(
-                        hintText: _idNumberHintText,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            EZSpacing.radiusMd,
+                        ),
+                        const SizedBox(height: EZSpacing.lg),
+                        // Title
+                        Text(
+                          'Who are you?',
+                          style: theme.textTheme.headlineMedium,
+                        ),
+                        const SizedBox(height: EZSpacing.sm),
+                        // Subtitle
+                        Text(
+                          'Select your user type to continue',
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                      ),
-                      keyboardType: TextInputType.text,
-                      textInputAction: TextInputAction.next,
-                    ),
-                  ],
-
-                  const SizedBox(height: EZSpacing.xxl),
-
-                  // PWD checkbox
-                  Card(
-                    child: CheckboxListTile(
-                      title: const Text('Person with Disability (PWD)'),
-                      value: _isPWD,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          _isPWD = value ?? false;
-                          if (!_isPWD) {
-                            _pwdSpecificationController.clear();
-                          }
-                        });
-                      },
-                      controlAffinity: ListTileControlAffinity.leading,
+                      ],
                     ),
                   ),
 
-                  // PWD specification input (only shown when PWD is checked)
-                  if (_isPWD) ...[
-                    const SizedBox(height: EZSpacing.lg),
-                    Text(
-                      'PWD Specification',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: EZSpacing.md),
-                    TextField(
-                      controller: _pwdSpecificationController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter your disability specification',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            EZSpacing.radiusMd,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                      ),
-                      maxLines: 3,
-                      textInputAction: TextInputAction.done,
-                    ),
-                  ],
-
-                  if (_selectedUserType != null) ...[
-                    const SizedBox(height: EZSpacing.xxl),
-                    // Continue button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _handleContinue,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: EZSpacing.md,
-                            horizontal: EZSpacing.lg,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              EZSpacing.radiusMd,
-                            ),
-                          ),
-                          minimumSize: const Size(double.infinity, 48),
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.secondary,
-                          foregroundColor: isDark ? Colors.white : Colors.black,
-                        ),
-                        child: Text(
-                          'Continue',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? Colors.white : Colors.black,
-                              ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  // User type cards grid
+                  _buildUserTypeGrid(context),
                 ],
               ),
             ),
@@ -326,66 +126,108 @@ class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
     );
   }
 
-  /// Handle continue button press.
-  void _handleContinue() {
-    if (_selectedUserType == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please select a user type.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-      return;
-    }
+  /// Build the user type selection cards in a grid layout.
+  Widget _buildUserTypeGrid(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth > 600 ? 2 : 1;
 
-    if (_requiresIdNumber && _idNumberController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please enter your institution ID number.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-      return;
-    }
-
-    if (_requiresCourseProgram && _selectedCourseProgram == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please select your course/program.'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-      return;
-    }
-
-    if (_isPWD && _pwdSpecificationController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text(
-            'Please specify your disability if you selected PWD.',
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: 3.5,
+            crossAxisSpacing: EZSpacing.md,
+            mainAxisSpacing: EZSpacing.md,
           ),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
-      return;
-    }
+          itemCount: _userTypes.length,
+          itemBuilder: (context, index) {
+            final userType = _userTypes[index];
+            return _buildUserTypeCard(context, userType);
+          },
+        );
+      },
+    );
+  }
 
-    // Save user type information to state
+  /// Build individual user type card.
+  Widget _buildUserTypeCard(BuildContext context, _UserType userType) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    return GestureDetector(
+      onTap: () => _handleSelect(userType.id),
+      child: EZCard(
+        padding: const EdgeInsets.all(EZSpacing.md),
+        child: Row(
+          children: [
+            // Icon
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  userType.icon,
+                  style: const TextStyle(fontSize: 28),
+                ),
+              ),
+            ),
+            const SizedBox(width: EZSpacing.md),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    userType.label,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: EZSpacing.xs),
+                  Text(
+                    userType.description,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Arrow
+            Icon(
+              Icons.chevron_right,
+              color: colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Handle user type selection.
+  void _handleSelect(String userTypeId) {
+    // Convert to proper display format for storage
+    final displayUserType = switch (userTypeId) {
+      'student' => 'Student',
+      'alumni' => 'Alumni',
+      'faculty' => 'Faculty/Staff',
+      'visitor' => 'Visitor',
+      _ => userTypeId,
+    };
+
+    // Save user type to state
     ref
         .read(queueFormProvider.notifier)
-        .updateUserType(
-          userType: _selectedUserType!,
-          idNumber: _idNumberController.text.trim().isEmpty
-              ? null
-              : _idNumberController.text.trim(),
-          courseProgram: _selectedCourseProgram,
-          isPWD: _isPWD,
-          pwdSpecification: _pwdSpecificationController.text.trim().isEmpty
-              ? null
-              : _pwdSpecificationController.text.trim(),
-        );
+        .updateUserType(userType: displayUserType);
 
-    // Navigate to personal information page
-    context.push('/personal-information');
+    // Navigate to identity information page
+    context.push('/identity-information');
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "199836324547",
+    "project_id": "ezqueue-ustp",
+    "storage_bucket": "ezqueue-ustp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199836324547:android:41efb57b1fa4f1c3614876",
+        "android_client_info": {
+          "package_name": "com.ez_queue.ez_queue"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBZ_9cSksYa0xfB-A_X_lwtthRfortYoZs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

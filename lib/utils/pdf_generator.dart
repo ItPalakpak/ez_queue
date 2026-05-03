@@ -9,114 +9,118 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:ez_queue/models/queue_ticket.dart';
+import 'package:flutter/services.dart' show rootBundle; // Added for rootBundle
 
 /// Utility class for generating PDF tickets with QR codes.
 class PDFGenerator {
   /// Generate and display PDF ticket.
-  static Future<void> generateTicketPDF(QueueTicket ticket) async {
+  static Future<void> generateTicketPDF(List<QueueTicket> tickets) async {
     final pdf = pw.Document();
 
-    // Generate QR code data
-    final qrData = ticket.ticketNumber;
+    final robotoRegular = pw.Font.ttf(await rootBundle.load('assets/fonts/Roboto-Regular.ttf'));
+    final robotoBold = pw.Font.ttf(await rootBundle.load('assets/fonts/Roboto-Bold.ttf'));
 
-    // Create QR code image
-    final qrImage = await _generateQRCodeImage(qrData);
+    // Load fonts instead
+    // (logo unused in this version)
 
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              // Header
-              pw.Text(
-                'EZQueue Ticket',
-                style: pw.TextStyle(
-                  fontSize: 24,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 20),
+    for (var ticket in tickets) {
+      // Generate QR code data
+      final qrData = ticket.ticketNumber;
 
-              // QR Code
-              if (qrImage != null)
-                pw.Center(
-                  child: pw.Image(
-                    pw.MemoryImage(qrImage),
-                    width: 200.0,
-                    height: 200.0,
+      // Create QR code image
+      final qrImage = await _generateQRCodeImage(qrData);
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
+              children: [
+                // Header
+                pw.Text(
+                  'EZQueue Ticket',
+                  style: pw.TextStyle(
+                    fontSize: 24,
+                    fontWeight: pw.FontWeight.bold,
                   ),
                 ),
-              pw.SizedBox(height: 20),
+                pw.SizedBox(height: 20),
 
-              // Ticket Number
-              pw.Text(
-                'Ticket Number: ${ticket.ticketNumber}',
-                style: pw.TextStyle(
-                  fontSize: 18,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 20),
+                // QR Code
+                if (qrImage != null)
+                  pw.Center(
+                    child: pw.Image(
+                      pw.MemoryImage(qrImage),
+                      width: 200.0,
+                      height: 200.0,
+                    ),
+                  ),
+                pw.SizedBox(height: 20),
 
-              // Details
-              pw.Container(
-                padding: const pw.EdgeInsets.all(16),
-                decoration: pw.BoxDecoration(border: pw.Border.all()),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    _buildDetailRow('Department:', ticket.department),
-                    _buildDetailRow('Services:', ticket.services.join(', ')),
-                    if (ticket.purpose != null)
-                      _buildDetailRow('Purpose:', ticket.purpose!),
-                    if (ticket.items.isNotEmpty)
-                      _buildDetailRow(
-                        'Items:',
-                        ticket.items
-                            .map((item) => '${item.name} x${item.quantity}')
-                            .join(', '),
-                      ),
-                    _buildDetailRow('User Type:', ticket.userType),
-                    if (ticket.courseProgram != null)
-                      _buildDetailRow('Course/Program:', ticket.courseProgram!),
-                    if (ticket.idNumber != null)
-                      _buildDetailRow('ID Number:', ticket.idNumber!),
-                    _buildDetailRow('Full Name:', ticket.fullName),
-                    _buildDetailRow('Email:', ticket.email),
-                    if (ticket.contactNumber != null)
-                      _buildDetailRow('Contact No.:', ticket.contactNumber!),
-                    if (ticket.isPWD) _buildDetailRow('PWD:', 'Yes'),
-                    if (ticket.isPWD && ticket.pwdSpecification != null)
-                      _buildDetailRow(
-                        'PWD Specification:',
-                        ticket.pwdSpecification!,
-                      ),
-                    _buildDetailRow(
-                      'Queue Position:',
-                      '${ticket.queuePosition}',
-                    ),
-                    _buildDetailRow(
-                      'Estimated Wait:',
-                      '${ticket.estimatedWaitMinutes} minutes',
-                    ),
-                    _buildDetailRow(
-                      'Date:',
-                      '${ticket.createdAt.day}/${ticket.createdAt.month}/${ticket.createdAt.year}',
-                    ),
-                    _buildDetailRow(
-                      'Time:',
-                      '${ticket.createdAt.hour.toString().padLeft(2, '0')}:${ticket.createdAt.minute.toString().padLeft(2, '0')}',
-                    ),
-                  ],
+                // Ticket Number
+                pw.Text(
+                  'Ticket Number: ${ticket.ticketNumber}',
+                  style: pw.TextStyle(
+                    fontSize: 18,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+                pw.SizedBox(height: 20),
+
+                // Details
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(16),
+                  decoration: pw.BoxDecoration(border: pw.Border.all()),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      _buildPdfDetailRow('Department:', ticket.departmentName, robotoRegular, robotoBold),
+                      pw.SizedBox(height: 5),
+                      _buildPdfDetailRow('Service Availed:', ticket.serviceName, robotoRegular, robotoBold),
+                      if (ticket.purpose != null) ...[
+                        pw.SizedBox(height: 5),
+                        _buildPdfDetailRow('Purpose:', ticket.purpose!, robotoRegular, robotoBold),
+                      ],
+                      pw.SizedBox(height: 5),
+                      _buildPdfDetailRow('User Type:', ticket.userType, robotoRegular, robotoBold),
+                      if (ticket.course != null) ...[
+                        pw.SizedBox(height: 5),
+                        _buildPdfDetailRow('Course/Program:', ticket.course!, robotoRegular, robotoBold),
+                      ],
+                      if (ticket.studentId != null || ticket.employeeId != null) ...[
+                        pw.SizedBox(height: 5),
+                        _buildPdfDetailRow('ID Number:', ticket.studentId ?? ticket.employeeId ?? '', robotoRegular, robotoBold),
+                      ],
+                      pw.SizedBox(height: 5),
+                      _buildPdfDetailRow('Full Name:', ticket.studentName, robotoRegular, robotoBold),
+                      pw.SizedBox(height: 5),
+                      _buildPdfDetailRow('Email:', ticket.email ?? '', robotoRegular, robotoBold),
+                      if (ticket.phone != null) ...[
+                        pw.SizedBox(height: 5),
+                        _buildPdfDetailRow('Contact No.:', ticket.phone!, robotoRegular, robotoBold),
+                      ],
+                      if (ticket.isPriority) ...[
+                        pw.SizedBox(height: 5),
+                        _buildPdfDetailRow('Priority Queue:', 'Yes', robotoRegular, robotoBold),
+                      ],
+                      pw.SizedBox(height: 15),
+
+                      pw.Divider(color: PdfColors.grey400),
+                      pw.SizedBox(height: 15),
+
+                      _buildPdfDetailRow('Date:', '${ticket.createdAt.day}/${ticket.createdAt.month}/${ticket.createdAt.year}', robotoRegular, robotoBold),
+                      pw.SizedBox(height: 5),
+                      _buildPdfDetailRow('Time:', '${ticket.createdAt.hour.toString().padLeft(2, '0')}:${ticket.createdAt.minute.toString().padLeft(2, '0')}', robotoRegular, robotoBold),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+    }
 
     // Try to show PDF preview, fallback to saving and sharing if printing is not available
     try {
@@ -129,14 +133,14 @@ class PDFGenerator {
         final pdfBytes = await pdf.save();
         final directory = await getApplicationDocumentsDirectory();
         final file = File(
-          '${directory.path}/EZQueue_Ticket_${ticket.ticketNumber}.pdf',
+          '${directory.path}/EZQueue_Tickets_${tickets.first.ticketNumber}.pdf',
         );
         await file.writeAsBytes(pdfBytes);
 
         // Share the PDF file
         await Share.shareXFiles([
           XFile(file.path),
-        ], text: 'Your EZQueue Ticket: ${ticket.ticketNumber}');
+        ], text: 'Your EZQueue Tickets: ${tickets.map((t) => t.ticketNumber).join(', ')}');
       } catch (shareError) {
         throw Exception(
           'Unable to generate PDF. Please rebuild the app: flutter clean && flutter pub get && flutter run. Error: $e',
@@ -146,9 +150,14 @@ class PDFGenerator {
   }
 
   /// Build a detail row in the PDF.
-  static pw.Widget _buildDetailRow(String label, String value) {
+  static pw.Widget _buildPdfDetailRow(
+    String label,
+    String value,
+    pw.Font regularFont,
+    pw.Font boldFont,
+  ) {
     return pw.Padding(
-      padding: const pw.EdgeInsets.only(bottom: 8),
+      padding: const pw.EdgeInsets.only(bottom: 5),
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
@@ -156,10 +165,15 @@ class PDFGenerator {
             width: 120,
             child: pw.Text(
               label,
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(font: boldFont, fontWeight: pw.FontWeight.bold),
             ),
           ),
-          pw.Expanded(child: pw.Text(value)),
+          pw.Expanded(
+            child: pw.Text(
+              value,
+              style: pw.TextStyle(font: regularFont),
+            ),
+          ),
         ],
       ),
     );

@@ -109,29 +109,86 @@ class ThemeHelpers {
       labelText: labelText,
       hintText: hintText,
       prefixIcon: prefixIcon,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade400, width: 1.5),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.blue.shade700, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.red.shade700, width: 2),
-      ),
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      // CHANGED: suppress inline error text — errors are shown below the field
+      errorStyle: const TextStyle(fontSize: 0, height: 0),
+      errorBorder: InputBorder.none,
+      focusedErrorBorder: InputBorder.none,
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.05),
+      fillColor: Colors.transparent,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      labelStyle: const TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+      hintStyle: const TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 15,
+        color: Colors.grey,
+      ),
+    );
+  }
+
+  /// Create a generic InputDecoration for text fields with enhanced visuals.
+  /// Pass [maxLength] and [currentLength] to show an inline character counter
+  /// on the same line as the input (as a suffix), instead of Flutter's default
+  /// below-field counter.
+  static InputDecoration textInputDecoration({
+    String? hintText,
+    String? labelText,
+    Widget? prefixIcon,
+    EdgeInsetsGeometry? contentPadding,
+    int? maxLength,
+    int? currentLength,
+    Widget? extraSuffix,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      hintText: hintText,
+      prefixIcon: prefixIcon,
+
+      // Suppress Flutter's default below-field counter entirely.
+      counterText: '',
+
+      // Render the count inline on the right side of the input row.
+      suffixIcon: (maxLength != null || extraSuffix != null)
+          ? Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (maxLength != null)
+                    Text(
+                      '${currentLength ?? 0}/$maxLength',
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  if (maxLength != null && extraSuffix != null)
+                    const SizedBox(width: 8),
+                  if (extraSuffix != null) extraSuffix,
+                ],
+              ),
+            )
+          : null,
+
+      // CHANGED: suppress inline error text — errors are shown below the field
+      errorStyle: const TextStyle(fontSize: 0, height: 0),
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      errorBorder: InputBorder.none,
+      focusedErrorBorder: InputBorder.none,
+      filled: true,
+      fillColor: Colors.transparent,
+      contentPadding:
+          contentPadding ??
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       labelStyle: const TextStyle(
         fontFamily: 'Roboto',
         fontSize: 15,

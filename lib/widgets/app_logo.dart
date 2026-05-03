@@ -42,6 +42,9 @@ class AppLogo extends ConsumerWidget {
       case AppThemeVariant.playful:
         // Playful uses dark logo
         return 'assets/photos/logo_for_dark_mode_no_bg.png';
+      case AppThemeVariant.trailblazer:
+        // Trailblazer uses dark logo
+        return 'assets/photos/logo_for_dark_mode_no_bg.png';
     }
   }
 

@@ -10,6 +10,8 @@ import 'package:ez_queue/providers/theme_provider.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/app_logo.dart';
 import 'package:ez_queue/widgets/top_nav_bar.dart';
+import 'package:ez_queue/widgets/ez_button.dart';
+import 'package:ez_queue/widgets/ez_card.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,17 +28,13 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
   final GlobalKey _ticketKey = GlobalKey();
   bool _isSaving = false;
 
-  String _buildServiceLabel(int serviceCount) {
-    return serviceCount == 1 ? 'Service Availed:' : 'Services Availed:';
-  }
-
   @override
   Widget build(BuildContext context) {
-    final ticket = ref.watch(queueTicketProvider);
+    final tickets = ref.watch(queueTicketProvider);
     final brightness = ref.watch(brightnessProvider);
     final isDark = brightness == Brightness.dark;
 
-    if (ticket == null) {
+    if (tickets.isEmpty) {
       return Scaffold(
         body: Column(
           children: [
@@ -64,7 +62,14 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
               child: Center(
                 child: RepaintBoundary(
                   key: _ticketKey,
-                  child: _buildTicketCard(context, ticket, isDark),
+                  child: Column(
+                    children: tickets
+                        .map((t) => Padding(
+                              padding: const EdgeInsets.only(bottom: EZSpacing.lg),
+                              child: _buildTicketCard(context, t, isDark),
+                            ))
+                        .toList(),
+                  ),
                 ),
               ),
             ),
@@ -79,22 +84,10 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
             children: [
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton(
+                child: EZButton(
                   onPressed: _isSaving
                       ? null
                       : () => _saveTicketAsImage(context),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: EZSpacing.md,
-                      horizontal: EZSpacing.lg,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(EZSpacing.radiusMd),
-                    ),
-                    minimumSize: const Size(double.infinity, 48),
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                    foregroundColor: isDark ? Colors.white : Colors.black,
-                  ),
                   child: _isSaving
                       ? const SizedBox(
                           height: 20,
@@ -111,14 +104,7 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
                           children: [
                             const Icon(Icons.download),
                             const SizedBox(width: EZSpacing.sm),
-                            Text(
-                              'Save Ticket',
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: isDark ? Colors.white : Colors.black,
-                                  ),
-                            ),
+                            Text('Save Ticket'),
                           ],
                         ),
                 ),
@@ -126,24 +112,10 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
               const SizedBox(height: EZSpacing.md),
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton(
+                child: EZButton(
+                  isSecondary: true,
                   onPressed: () => context.push('/queue-display'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: EZSpacing.md,
-                      horizontal: EZSpacing.lg,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(EZSpacing.radiusMd),
-                    ),
-                    minimumSize: const Size(double.infinity, 48),
-                  ),
-                  child: Text(
-                    'View Queue Status',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: Text('View Queue Status'),
                 ),
               ),
             ],
@@ -155,11 +127,37 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
 
   /// Build the ticket card widget.
   Widget _buildTicketCard(BuildContext context, dynamic ticket, bool isDark) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(EZSpacing.radiusLg),
-      ),
+    // Construct QR data to match React kiosk format
+    final List<String> qrDataArr = [];
+    qrDataArr.add('Ticket: ${ticket.ticketNumber}');
+    qrDataArr.add('Name: ${ticket.studentName}');
+    
+    final String userTypeLower = ticket.userType.toLowerCase();
+    final String? ticketIdNumber = ticket.studentId ?? ticket.employeeId;
+    
+    if (userTypeLower == 'student' && ticket.studentId != null && ticket.studentId!.isNotEmpty) {
+      qrDataArr.add('Student ID: ${ticket.studentId}');
+    }
+    if (userTypeLower == 'alumni' && ticket.studentId != null && ticket.studentId!.isNotEmpty) {
+      qrDataArr.add('Alumni ID: ${ticket.studentId}');
+    }
+    if (userTypeLower == 'faculty' && ticket.employeeId != null && ticket.employeeId!.isNotEmpty) {
+      qrDataArr.add('Staff/Faculty ID: ${ticket.employeeId}');
+    }
+    if (ticket.phone != null && ticket.phone!.isNotEmpty) {
+      qrDataArr.add('Phone: ${ticket.phone}');
+    }
+    if (ticket.email != null && ticket.email!.isNotEmpty) {
+      qrDataArr.add('Email: ${ticket.email}');
+    }
+    if (ticket.course != null && ticket.course!.isNotEmpty) {
+      qrDataArr.add('Course: ${ticket.course}');
+    }
+
+    final String qrData = qrDataArr.join('\n');
+
+    return EZCard(
+      padding: EdgeInsets.zero,
       child: Container(
         width: double.infinity,
         constraints: const BoxConstraints(maxWidth: 600),
@@ -190,7 +188,7 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
                 borderRadius: BorderRadius.circular(EZSpacing.radiusMd),
               ),
               child: QrImageView(
-                data: ticket.ticketNumber,
+                data: qrData,
                 version: QrVersions.auto,
                 size: 200.0,
                 errorCorrectionLevel: QrErrorCorrectLevel.L,
@@ -237,60 +235,42 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
             const SizedBox(height: EZSpacing.xl),
 
             // Ticket Details
-            _buildDetailRow(context, 'Department:', ticket.department),
+            _buildDetailRow(context, 'Department:', ticket.departmentName),
             const SizedBox(height: EZSpacing.sm),
             _buildDetailRow(
               context,
-              _buildServiceLabel(ticket.services.length),
-              ticket.services.join(', '),
+              'Service Availed:',
+              ticket.serviceName,
             ),
             if (ticket.purpose != null) ...[
               const SizedBox(height: EZSpacing.sm),
               _buildDetailRow(context, 'Purpose:', ticket.purpose!),
             ],
-            if (ticket.items.isNotEmpty) ...[
-              const SizedBox(height: EZSpacing.sm),
-              _buildDetailRow(
-                context,
-                'Items:',
-                ticket.items
-                    .map((item) => '${item.name} x${item.quantity}')
-                    .join(', '),
-              ),
-            ],
             const SizedBox(height: EZSpacing.sm),
             _buildDetailRow(context, 'User Type:', ticket.userType),
-            if (ticket.courseProgram != null) ...[
+            if (ticket.course != null) ...[
               const SizedBox(height: EZSpacing.sm),
               _buildDetailRow(
                 context,
                 'Course/Program:',
-                ticket.courseProgram!,
+                ticket.course!,
               ),
             ],
-            if (ticket.idNumber != null) ...[
+            if (ticketIdNumber != null) ...[
               const SizedBox(height: EZSpacing.sm),
-              _buildDetailRow(context, 'ID Number:', ticket.idNumber!),
+              _buildDetailRow(context, 'ID Number:', ticketIdNumber),
             ],
             const SizedBox(height: EZSpacing.sm),
-            _buildDetailRow(context, 'Full Name:', ticket.fullName),
+            _buildDetailRow(context, 'Full Name:', ticket.studentName),
             const SizedBox(height: EZSpacing.sm),
-            _buildDetailRow(context, 'Email:', ticket.email),
-            if (ticket.contactNumber != null) ...[
+            _buildDetailRow(context, 'Email:', ticket.email ?? ''),
+            if (ticket.phone != null) ...[
               const SizedBox(height: EZSpacing.sm),
-              _buildDetailRow(context, 'Contact No.:', ticket.contactNumber!),
+              _buildDetailRow(context, 'Contact No.:', ticket.phone!),
             ],
-            if (ticket.isPWD) ...[
+            if (ticket.isPriority) ...[
               const SizedBox(height: EZSpacing.sm),
-              _buildDetailRow(context, 'PWD:', 'Yes'),
-              if (ticket.pwdSpecification != null) ...[
-                const SizedBox(height: EZSpacing.sm),
-                _buildDetailRow(
-                  context,
-                  'PWD Spec.:',
-                  ticket.pwdSpecification!,
-                ),
-              ],
+              _buildDetailRow(context, 'Priority Queue:', 'Yes'),
             ],
             const SizedBox(height: EZSpacing.xl),
 

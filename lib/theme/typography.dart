@@ -6,37 +6,37 @@ class EZTypography {
   /// Main text theme using Roboto font.
   static TextTheme get textTheme => TextTheme(
     displayLarge: TextStyle(
-      fontFamily: 'Roboto',
+      fontFamily: 'Syne',
       fontSize: 32,
       fontWeight: FontWeight.w700,
     ),
     headlineLarge: TextStyle(
-      fontFamily: 'Roboto',
+      fontFamily: 'Syne',
       fontSize: 28,
       fontWeight: FontWeight.w700,
     ),
     headlineMedium: TextStyle(
-      fontFamily: 'Roboto',
+      fontFamily: 'Syne',
       fontSize: 24,
       fontWeight: FontWeight.w600,
     ),
     titleLarge: TextStyle(
-      fontFamily: 'Roboto',
+      fontFamily: 'Syne',
       fontSize: 20,
       fontWeight: FontWeight.w600,
     ),
     bodyLarge: TextStyle(
-      fontFamily: 'Roboto',
+      fontFamily: 'DM Sans',
       fontSize: 16,
       fontWeight: FontWeight.w400,
     ),
     bodyMedium: TextStyle(
-      fontFamily: 'Roboto',
+      fontFamily: 'DM Sans',
       fontSize: 14,
       fontWeight: FontWeight.w400,
     ),
     labelSmall: TextStyle(
-      fontFamily: 'Roboto',
+      fontFamily: 'DM Sans',
       fontSize: 12,
       fontWeight: FontWeight.w500,
     ),
