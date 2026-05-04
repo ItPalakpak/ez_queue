@@ -11,11 +11,12 @@ final apiDepartmentsProvider = FutureProvider<List<ApiDepartment>>((ref) async {
 // CHANGED: StreamProvider polls every 5 s so service changes are reflected
 // in real-time — matches the React frontend polling pattern.
 // autoDispose stops polling when no page is watching.
+// CHANGED: family param includes optional courseId for course-based filtering.
 final apiServicesProvider = StreamProvider.autoDispose
-    .family<ApiServicesResponse, int>((ref, departmentId) async* {
+    .family<ApiServicesResponse, ({int departmentId, int? courseId})>((ref, params) async* {
       while (true) {
         try {
-          yield await apiService.getServices(departmentId);
+          yield await apiService.getServices(params.departmentId, courseId: params.courseId);
         } catch (_) {
           // Skip failed fetch; keep last emitted value and retry next interval
         }

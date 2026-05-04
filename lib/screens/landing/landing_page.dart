@@ -241,6 +241,20 @@ class LandingPage extends ConsumerWidget {
                                   child: const Text('Get A Ticket'),
                                 ),
                               ),
+                              // CHANGED: show rate limit info so users know the queueing frequency limit
+                              Padding(
+                                padding: const EdgeInsets.only(top: EZSpacing.xs),
+                                child: settingsAsync.maybeWhen(
+                                  data: (s) => Text(
+                                    'Limited to ${s.remoteRateLimitMax} ticket${s.remoteRateLimitMax == 1 ? '' : 's'} per ${s.remoteRateLimitDecayMinutes} min per device',
+                                    textAlign: TextAlign.center,
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
+                                    ),
+                                  ),
+                                  orElse: () => const SizedBox.shrink(),
+                                ),
+                              ),
                               const SizedBox(height: EZSpacing.sm),
                             ],
 
@@ -278,6 +292,13 @@ class LandingPage extends ConsumerWidget {
                                         .onSurface
                                         .withValues(alpha: 0.8),
                                   ),
+                            ),
+                            const SizedBox(height: EZSpacing.xs),
+                            Text(
+                              'Enter the tracking code from your ticket',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                              ),
                             ),
                             const SizedBox(height: EZSpacing.sm),
                             _TrackTicketForm(),
@@ -352,29 +373,35 @@ class _TrackTicketFormState extends State<_TrackTicketForm> {
                       if (barcode.rawValue != null) {
                         Navigator.of(context).pop();
                         String rawValue = barcode.rawValue!.trim();
-                        // Parse ticket number from various prefixes
-                        String ticketNumber = rawValue;
-                        final prefixes = [
-                          'TICKET:',
-                          'Ticket:',
-                          'Queue Ticket:',
-                        ];
-                        for (final prefix in prefixes) {
-                          if (rawValue.toUpperCase().startsWith(
-                            prefix.toUpperCase(),
-                          )) {
-                            // Get text after prefix and take only the first word (ticket code)
-                            final afterPrefix = rawValue
-                                .substring(prefix.length)
-                                .trim();
-                            ticketNumber = afterPrefix
-                                .split(RegExp(r'\s+'))
-                                .first;
+                        // CHANGED: Parse tracking token from QR data
+                        String trackingToken = '';
+                        // Look for 'Tracking: XXXXXXXX' line in multi-line QR data
+                        for (final line in rawValue.split('\n')) {
+                          final trimmed = line.trim();
+                          if (trimmed.toUpperCase().startsWith('TRACKING:')) {
+                            trackingToken = trimmed
+                                .substring('TRACKING:'.length)
+                                .trim()
+                                .toUpperCase();
                             break;
                           }
                         }
+                        // Fallback: if QR is just an 8-char token string
+                        if (trackingToken.isEmpty && RegExp(r'^[A-HJ-NP-Z2-9]{8}$').hasMatch(rawValue.toUpperCase())) {
+                          trackingToken = rawValue.toUpperCase();
+                        }
+                        if (trackingToken.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('No tracking code found in QR code.'),
+                              backgroundColor: Theme.of(context).colorScheme.error,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return;
+                        }
                         setState(() {
-                          _controller.text = ticketNumber.toUpperCase();
+                          _controller.text = trackingToken;
                         });
                         // Auto-trigger track after short delay
                         Future.delayed(const Duration(milliseconds: 300), () {
@@ -404,16 +431,16 @@ class _TrackTicketFormState extends State<_TrackTicketForm> {
   }
 
   void _handleTrack() async {
-    final ticketNumber = _controller.text.trim().toUpperCase();
-    if (ticketNumber.isEmpty) return;
+    final trackingToken = _controller.text.trim().toUpperCase();
+    if (trackingToken.isEmpty) return;
 
     setState(() => _isLoading = true);
 
     try {
-      // CHANGED: Also get the local device token so we can link track tickets
+      // CHANGED: Look up by tracking_token and link device for push notifications
       String deviceToken = await DeviceTokenManager.getDeviceToken();
-      final ticketData = await apiService.findTicketByNumber(
-        ticketNumber,
+      final ticketData = await apiService.findTicketByToken(
+        trackingToken,
         deviceToken: deviceToken,
       );
 
@@ -468,9 +495,10 @@ class _TrackTicketFormState extends State<_TrackTicketForm> {
                 child: TextField(
                   controller: _controller,
                   decoration: ThemeHelpers.textInputDecoration(
-                    hintText: 'e.g. REG-CEN-001',
+                    // CHANGED: Updated hint to show tracking token format
+                    hintText: 'e.g. K7N3P2XR',
                     contentPadding: const EdgeInsets.all(EZSpacing.md),
-                    maxLength: 30,
+                    maxLength: 8,
                     currentLength: _currentLength,
                     extraSuffix: IconButton(
                       onPressed: _showQRScanner,
@@ -493,7 +521,7 @@ class _TrackTicketFormState extends State<_TrackTicketForm> {
                   textInputAction: TextInputAction.search,
                   onSubmitted: (_) => _handleTrack(),
                   textCapitalization: TextCapitalization.characters,
-                  maxLength: 30,
+                  maxLength: 8,
                 ),
               ),
             ],

@@ -19,6 +19,7 @@ class QueueTicket {
   final bool isPriority;
   final String status;
   final DateTime createdAt;
+  final String? trackingToken;
 
   const QueueTicket({
     required this.id,
@@ -40,6 +41,7 @@ class QueueTicket {
     required this.isPriority,
     required this.status,
     required this.createdAt,
+    this.trackingToken,
   });
 
   factory QueueTicket.fromJson(Map<String, dynamic> json) {
@@ -63,6 +65,7 @@ class QueueTicket {
       isPriority: json['is_priority'] == 1 || json['is_priority'] == true,
       status: json['status'] ?? 'waiting',
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']).toLocal() : DateTime.now(),
+      trackingToken: json['tracking_token'],
     );
   }
 }

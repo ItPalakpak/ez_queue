@@ -94,6 +94,9 @@ class ApiSettings {
   final String systemStatusMessage;
   final String? systemStatusTimestamp;
   final bool mobileUrlConfigEnabled;
+  // CHANGED: rate limiting config exposed from admin settings
+  final int remoteRateLimitMax;
+  final int remoteRateLimitDecayMinutes;
 
   ApiSettings({
     this.enablePriority = true,
@@ -102,6 +105,8 @@ class ApiSettings {
     this.systemStatusMessage = '',
     this.systemStatusTimestamp,
     this.mobileUrlConfigEnabled = false,
+    this.remoteRateLimitMax = 5,
+    this.remoteRateLimitDecayMinutes = 10,
   });
 
   factory ApiSettings.fromJson(Map<String, dynamic> json) {
@@ -118,6 +123,11 @@ class ApiSettings {
       mobileUrlConfigEnabled:
           json['mobile_url_config_enabled'] == '1' ||
           json['mobile_url_config_enabled'] == true,
+      // CHANGED: parse rate limit settings with safe fallbacks
+      remoteRateLimitMax:
+          int.tryParse(json['remote_rate_limit_max']?.toString() ?? '') ?? 5,
+      remoteRateLimitDecayMinutes:
+          int.tryParse(json['remote_rate_limit_decay_minutes']?.toString() ?? '') ?? 10,
     );
   }
 }

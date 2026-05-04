@@ -41,13 +41,17 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
     final formData = ref.watch(queueFormProvider);
     final department = formData.department;
     final departmentId = formData.departmentId;
+    // CHANGED: pass courseId for course-based service filtering
+    final courseId = formData.courseId;
     if (departmentId == null) {
       return const Scaffold(
         body: Center(child: Text('Please select a department first.')),
       );
     }
 
-    final servicesAsync = ref.watch(apiServicesProvider(departmentId));
+    final servicesAsync = ref.watch(
+      apiServicesProvider((departmentId: departmentId, courseId: courseId)),
+    );
     // CHANGED: allowMultiple now comes from the services API response directly
     final allowMultiple = servicesAsync.value?.allowMultipleServices ?? false;
 

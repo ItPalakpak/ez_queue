@@ -31,11 +31,14 @@ class ApiService {
   }
 
   // CHANGED: fixed parsing — API returns {data: {services: [...], allow_multiple_services: bool}}
-  Future<ApiServicesResponse> getServices(int departmentId) async {
+  // CHANGED: added optional courseId for course-based service filtering
+  Future<ApiServicesResponse> getServices(int departmentId, {int? courseId}) async {
     try {
-      final response = await _client.get(
-        Uri.parse('${ApiConfig.baseUrl}${ApiConfig.services(departmentId)}'),
-      );
+      var uri = Uri.parse('${ApiConfig.baseUrl}${ApiConfig.services(departmentId)}');
+      if (courseId != null) {
+        uri = uri.replace(queryParameters: {'course_id': courseId.toString()});
+      }
+      final response = await _client.get(uri);
       if (response.statusCode == 200) {
         final Map<String, dynamic> body = json.decode(response.body);
         final Map<String, dynamic> data = Map<String, dynamic>.from(
@@ -196,14 +199,14 @@ class ApiService {
     }
   }
 
-  // CHANGED: added findTicketByNumber for landing page lookup
-  Future<Map<String, dynamic>> findTicketByNumber(
-    String ticketNumber, {
+  // CHANGED: look up ticket by tracking_token instead of ticket_number
+  Future<Map<String, dynamic>> findTicketByToken(
+    String trackingToken, {
     String? deviceToken,
   }) async {
     try {
       var uri = Uri.parse(
-        '${ApiConfig.baseUrl}/kiosk/tickets/number/$ticketNumber',
+        '${ApiConfig.baseUrl}/kiosk/tickets/track/$trackingToken',
       );
       if (deviceToken != null && deviceToken.isNotEmpty) {
         uri = uri.replace(queryParameters: {'device_token': deviceToken});

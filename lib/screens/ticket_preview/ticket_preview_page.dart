@@ -153,6 +153,10 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
     if (ticket.course != null && ticket.course!.isNotEmpty) {
       qrDataArr.add('Course: ${ticket.course}');
     }
+    // CHANGED: Append tracking token to QR data for secure ticket lookup
+    if (ticket.trackingToken != null && ticket.trackingToken!.isNotEmpty) {
+      qrDataArr.add('Tracking: ${ticket.trackingToken}');
+    }
 
     final String qrData = qrDataArr.join('\n');
 
@@ -224,6 +228,41 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
                 ),
               ),
             ),
+            const SizedBox(height: EZSpacing.md),
+
+            // Tracking Token
+            if (ticket.trackingToken != null && ticket.trackingToken!.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: EZSpacing.lg,
+                  vertical: EZSpacing.sm,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(EZSpacing.radiusMd),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'TRACKING CODE',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    const SizedBox(height: EZSpacing.xs),
+                    Text(
+                      ticket.trackingToken!,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 3.0,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const SizedBox(height: EZSpacing.xl),
 
             // Divider
