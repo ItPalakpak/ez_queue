@@ -96,6 +96,14 @@ class QueueFormNotifier extends StateNotifier<QueueFormData> {
     state = state.copyWith(purpose: purpose, items: items ?? state.items);
   }
 
+  /// Update document selections and extra details.
+  void updateDocumentSelections({
+    required List<Map<String, dynamic>> selections,
+    required Map<String, dynamic> extraDetails,
+  }) {
+    state = state.copyWith(selections: selections, extraDetails: extraDetails);
+  }
+
   /// Reset form data.
   void reset() {
     state = const QueueFormData();

@@ -208,34 +208,51 @@ class _DetailsInformationPageState
                   const SizedBox(height: EZSpacing.md),
                   _buildItemsSection(),
 
-                  const SizedBox(height: EZSpacing.xxl),
-
-                  // Navigation buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 1,
-                        child: EZButton(
-                          isSecondary: true,
-                          onPressed: () => context.pop(),
-                          child: const Text('Back'),
-                        ),
-                      ),
-                      const SizedBox(width: EZSpacing.md),
-                      Expanded(
-                        flex: 2,
-                        child: EZButton(
-                          onPressed: _handleContinue,
-                          child: const Text('Continue'),
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(EZSpacing.lg),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: EZButton(
+                      isSecondary: true,
+                      onPressed: () => context.pop(),
+                      child: const Text('Back'),
+                    ),
+                  ),
+                  const SizedBox(width: EZSpacing.md),
+                  Expanded(
+                    flex: 2,
+                    child: EZButton(
+                      onPressed: _handleContinue,
+                      child: const Text('Continue'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

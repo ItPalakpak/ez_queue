@@ -28,10 +28,17 @@ class ThemeCustomizerPage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Page title
-                  Text(
-                    'Theme Customizer',
-                    style: Theme.of(context).textTheme.headlineMedium,
+                  // Page title and Theme Mode
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Theme Customizer',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      if (currentVariant == AppThemeVariant.pureBold)
+                        _buildSmallThemeModeToggle(context, ref, currentMode),
+                    ],
                   ),
                   const SizedBox(height: EZSpacing.xl),
 
@@ -42,17 +49,6 @@ class ThemeCustomizerPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: EZSpacing.md),
                   _buildThemeVariantSelector(context, ref, currentVariant),
-
-                  // Theme Mode Section (only for Pure & Bold)
-                  if (currentVariant == AppThemeVariant.pureBold) ...[
-                    const SizedBox(height: EZSpacing.xl),
-                    Text(
-                      'Theme Mode',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: EZSpacing.md),
-                    _buildThemeModeToggle(context, ref, currentMode),
-                  ],
                   const SizedBox(height: EZSpacing.xxl),
 
                   // Preview Section
@@ -71,68 +67,52 @@ class ThemeCustomizerPage extends ConsumerWidget {
     );
   }
 
-  /// Build 3-state theme mode toggle button (Light/System/Dark).
-  Widget _buildThemeModeToggle(
+  /// Build compact 3-state theme mode toggle button (Light/System/Dark).
+  Widget _buildSmallThemeModeToggle(
     BuildContext context,
     WidgetRef ref,
     ThemeMode currentMode,
   ) {
-    // Determine current state index (0: Light, 1: System, 2: Dark)
-    int currentIndex = 0;
-    if (currentMode == ThemeMode.system) {
-      currentIndex = 1;
-    } else if (currentMode == ThemeMode.dark) {
-      currentIndex = 2;
-    }
-
-    return EZCard(
-      padding: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.all(EZSpacing.sm),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildModeToggleSegment(
-                context,
-                ref,
-                ThemeMode.light,
-                'Light',
-                Icons.light_mode,
-                currentIndex == 0,
-              ),
-            ),
-            Expanded(
-              child: _buildModeToggleSegment(
-                context,
-                ref,
-                ThemeMode.system,
-                'System',
-                Icons.brightness_auto,
-                currentIndex == 1,
-              ),
-            ),
-            Expanded(
-              child: _buildModeToggleSegment(
-                context,
-                ref,
-                ThemeMode.dark,
-                'Dark',
-                Icons.dark_mode,
-                currentIndex == 2,
-              ),
-            ),
-          ],
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildSmallSegment(
+            context,
+            ref,
+            ThemeMode.light,
+            Icons.light_mode,
+            currentMode == ThemeMode.light,
+          ),
+          _buildSmallSegment(
+            context,
+            ref,
+            ThemeMode.system,
+            Icons.brightness_auto,
+            currentMode == ThemeMode.system,
+          ),
+          _buildSmallSegment(
+            context,
+            ref,
+            ThemeMode.dark,
+            Icons.dark_mode,
+            currentMode == ThemeMode.dark,
+          ),
+        ],
       ),
     );
   }
 
-  /// Build individual toggle segment.
-  Widget _buildModeToggleSegment(
+  /// Build individual compact toggle segment.
+  Widget _buildSmallSegment(
     BuildContext context,
     WidgetRef ref,
     ThemeMode mode,
-    String label,
     IconData icon,
     bool isSelected,
   ) {
@@ -143,44 +123,21 @@ class ThemeCustomizerPage extends ConsumerWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(
-          vertical: EZSpacing.md,
-          horizontal: EZSpacing.sm,
+          vertical: 6,
+          horizontal: 10,
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).colorScheme.secondary
+              ? Theme.of(context).colorScheme.primary
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(EZSpacing.radiusSm),
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected
-                  ? (Theme.of(context).brightness == Brightness.dark
-                        ? Colors.white
-                        : Colors.black)
-                  : Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-            const SizedBox(height: EZSpacing.xs),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isSelected
-                    ? (Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : Colors.black)
-                    : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.6),
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
+        child: Icon(
+          icon,
+          size: 18,
+          color: isSelected
+              ? Theme.of(context).colorScheme.onPrimary
+              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
         ),
       ),
     );

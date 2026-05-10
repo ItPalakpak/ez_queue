@@ -27,6 +27,8 @@ class QueueFormData {
   final String? contactNumber;
   final int priorityWeight;
   final List<int> disabledDepartments;
+  final List<Map<String, dynamic>> selections;
+  final Map<String, dynamic> extraDetails;
 
   const QueueFormData({
     this.departmentId,
@@ -47,6 +49,8 @@ class QueueFormData {
     this.contactNumber,
     this.priorityWeight = 1,
     this.disabledDepartments = const [],
+    this.selections = const [],
+    this.extraDetails = const {},
   });
 
   /// Create a copy with updated fields.
@@ -69,6 +73,8 @@ class QueueFormData {
     String? contactNumber,
     int? priorityWeight,
     List<int>? disabledDepartments,
+    List<Map<String, dynamic>>? selections,
+    Map<String, dynamic>? extraDetails,
   }) {
     return QueueFormData(
       departmentId: departmentId ?? this.departmentId,
@@ -89,6 +95,8 @@ class QueueFormData {
       contactNumber: contactNumber ?? this.contactNumber,
       priorityWeight: priorityWeight ?? this.priorityWeight,
       disabledDepartments: disabledDepartments ?? this.disabledDepartments,
+      selections: selections ?? this.selections,
+      extraDetails: extraDetails ?? this.extraDetails,
     );
   }
 

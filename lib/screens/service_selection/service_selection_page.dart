@@ -5,6 +5,7 @@ import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/top_nav_bar.dart';
 import 'package:ez_queue/widgets/ez_button.dart';
 import 'package:ez_queue/widgets/ez_card.dart';
+import 'package:ez_queue/screens/service_selection/document_selection_page.dart';
 import 'package:ez_queue/providers/api_providers.dart';
 import 'package:ez_queue/models/api_models.dart';
 import 'package:go_router/go_router.dart';
@@ -169,23 +170,45 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
                     ),
                   ),
 
-                  if (_selectedServiceIds.isNotEmpty) ...[
-                    const SizedBox(height: EZSpacing.xxl),
-                    // Continue button
-                    SizedBox(
-                      width: double.infinity,
-                      child: EZButton(
-                        onPressed: _handleContinue,
-                        child: Text('Continue'),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
           ),
         ],
       ),
+      bottomNavigationBar: _selectedServiceIds.isNotEmpty
+          ? Container(
+              padding: const EdgeInsets.all(EZSpacing.lg),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    servicesAsync.when(
+                      data: (response) => SizedBox(
+                        width: double.infinity,
+                        child: EZButton(
+                          onPressed: () => _handleContinue(response.services),
+                          child: const Text('Continue'),
+                        ),
+                      ),
+                      loading: () => const SizedBox.shrink(),
+                      error: (e, st) => const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : null,
     );
   }
 
@@ -245,9 +268,11 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
                     ),
                     leading: Radio<int>(
                       value: service.id,
+                      // ignore: deprecated_member_use
                       groupValue: _selectedServiceIds.isNotEmpty
                           ? _selectedServiceIds.first
                           : null,
+                      // ignore: deprecated_member_use
                       onChanged: (int? value) {
                         if (value != null) {
                           setState(() {
@@ -275,7 +300,7 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
   }
 
   /// Handle continue button press.
-  void _handleContinue() {
+  void _handleContinue(List<ApiQueueService> availableServices) {
     if (_selectedServiceIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -292,12 +317,38 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
         .map((id) => _serviceNames[id] ?? 'Unknown Service')
         .toList();
 
-    // Save service selection to state (purpose and items will be set on Details page)
+    // Check if any selected service has documents
+    final selectedServices = availableServices
+        .where((s) => selectedIds.contains(s.id))
+        .toList();
+    
+    final hasDocuments = selectedServices.any((s) => s.documents.isNotEmpty);
+
+    final currentServiceIds = ref.read(queueFormProvider).serviceIds;
+    final isDifferentService = currentServiceIds.length != selectedIds.length || 
+        !currentServiceIds.every((id) => selectedIds.contains(id));
+
+    // Save service selection to state
     ref
         .read(queueFormProvider.notifier)
         .updateServiceInfo(serviceIds: selectedIds, services: selectedNames);
+        
+    // Clear old document selections if the service changed, to avoid stale data
+    if (isDifferentService) {
+      ref.read(queueFormProvider.notifier).updateDocumentSelections(selections: [], extraDetails: {});
+    }
 
-    // Navigate to details information page
-    context.push('/details-information');
+    if (hasDocuments) {
+      // Navigate to document selection
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DocumentSelectionPage(services: selectedServices),
+        ),
+      );
+    } else {
+      // Navigate to details information page
+      context.push('/details-information');
+    }
   }
 }

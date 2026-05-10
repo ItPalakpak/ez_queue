@@ -103,6 +103,41 @@ class ConfirmationPage extends ConsumerWidget {
                     '/service-selection',
                   ),
 
+                  if (formData.selections.isNotEmpty) ...[
+                    const SizedBox(height: EZSpacing.lg),
+                    _buildInfoSection(
+                      context,
+                      'Credentials Request Details',
+                      [
+                        'Requestor: ${formData.extraDetails['is_authorized_person'] == true ? 'Authorized Person' : 'Owner'}',
+                        if (formData.extraDetails['is_authorized_person'] == true)
+                          'Requirements: ${[
+                            if (formData.extraDetails['has_authorization_letter'] == true) 'Auth Letter',
+                            if (formData.extraDetails['has_owner_id_photocopy'] == true) 'Owner ID',
+                            if (formData.extraDetails['has_authorized_person_id'] == true) 'Proxy ID',
+                          ].join(', ')}',
+                        if (formData.extraDetails['date_of_graduation'] != null && formData.extraDetails['date_of_graduation'].toString().isNotEmpty)
+                          'Graduated: ${formData.extraDetails['date_of_graduation']}'
+                        else
+                          'Last Attended: ${formData.extraDetails['last_semester_attended'] ?? '-'} / ${formData.extraDetails['last_sy_attended'] ?? '-'}',
+                        'Cleared: ${formData.extraDetails['is_cleared'] == true ? 'Yes' : 'No'}',
+                        if (formData.extraDetails['purposes'] != null && (formData.extraDetails['purposes'] as List).isNotEmpty)
+                          'Purposes: ${(formData.extraDetails['purposes'] as List).join(', ')}',
+                        'Documents Selected:',
+                        ...formData.selections.map((sel) {
+                          final docName = sel['document_name'] ?? 'Unknown Document';
+                          final subText = sel['subselection_name'] != null ? ' - ${sel['subselection_name']}' : '';
+                          final periodParts = [];
+                          if (sel['semester'] != null) periodParts.add(sel['semester']);
+                          if (sel['academic_year_name'] != null) periodParts.add(sel['academic_year_name']);
+                          final periodText = periodParts.isNotEmpty ? ' (${periodParts.join(' / ')})' : '';
+                          return '  • $docName$subText$periodText';
+                        }),
+                      ],
+                      '/service-selection', // Route back to service selection to edit documents
+                    ),
+                  ],
+
                   const SizedBox(height: EZSpacing.lg),
 
                   // Additional Details section
@@ -140,23 +175,40 @@ class ConfirmationPage extends ConsumerWidget {
                       'Priority ID: ${formData.priorityIdNumber}',
                   ], '/contact-information'),
 
-                  const SizedBox(height: EZSpacing.xxl),
-
-                  // Generate Ticket button
-                  SizedBox(
-                    width: double.infinity,
-                    child: EZButton(
-                      onPressed: formData.isComplete
-                          ? () => _handleGenerateTicket(context, ref, formData)
-                          : null,
-                      child: Text('Generate Ticket'),
-                    ),
-                  ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(EZSpacing.lg),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: EZButton(
+                  onPressed: formData.isComplete
+                      ? () => _handleGenerateTicket(context, ref, formData)
+                      : null,
+                  child: const Text('Generate Ticket'),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -251,6 +303,8 @@ class ConfirmationPage extends ConsumerWidget {
           if (formData.priorityIdNumber != null)
             'priority_id_number': formData.priorityIdNumber,
           'device_token': deviceToken,
+          if (formData.selections.isNotEmpty) 'selections': formData.selections,
+          if (formData.extraDetails.isNotEmpty) 'extra_details': formData.extraDetails,
         };
 
         final ticket = await apiService.createTicket(payload);

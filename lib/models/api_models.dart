@@ -32,12 +32,83 @@ class ApiDepartment {
   }
 }
 
+class ApiDocumentSubselection {
+  final int id;
+  final String name;
+  final bool requiresAcademicPeriod;
+
+  ApiDocumentSubselection({
+    required this.id,
+    required this.name,
+    this.requiresAcademicPeriod = false,
+  });
+
+  factory ApiDocumentSubselection.fromJson(Map<String, dynamic> json) {
+    return ApiDocumentSubselection(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+      requiresAcademicPeriod: json['requires_academic_period'] == 1 || json['requires_academic_period'] == true,
+    );
+  }
+}
+
+class ApiServiceDocument {
+  final int id;
+  final String name;
+  final List<ApiDocumentSubselection> subselections;
+
+  ApiServiceDocument({
+    required this.id,
+    required this.name,
+    this.subselections = const [],
+  });
+
+  factory ApiServiceDocument.fromJson(Map<String, dynamic> json) {
+    final subs = json['subselections'] as List<dynamic>? ?? [];
+    return ApiServiceDocument(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+      subselections: subs.map((e) => ApiDocumentSubselection.fromJson(e as Map<String, dynamic>)).toList(),
+    );
+  }
+}
+
+class ApiAcademicYear {
+  final int id;
+  final String name;
+
+  ApiAcademicYear({required this.id, required this.name});
+
+  factory ApiAcademicYear.fromJson(Map<String, dynamic> json) {
+    return ApiAcademicYear(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+    );
+  }
+}
+
+class ApiServicePurpose {
+  final int id;
+  final String name;
+
+  ApiServicePurpose({required this.id, required this.name});
+
+  factory ApiServicePurpose.fromJson(Map<String, dynamic> json) {
+    return ApiServicePurpose(
+      id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
+      name: json['name']?.toString() ?? '',
+    );
+  }
+}
+
 class ApiQueueService {
   final int id;
   final int departmentId;
   final String name;
   final String? description;
   final int estimatedMinutes;
+  final List<ApiServiceDocument> documents;
+  final List<ApiServicePurpose> purposes;
 
   ApiQueueService({
     required this.id,
@@ -45,9 +116,14 @@ class ApiQueueService {
     required this.name,
     this.description,
     required this.estimatedMinutes,
+    this.documents = const [],
+    this.purposes = const [],
   });
 
   factory ApiQueueService.fromJson(Map<String, dynamic> json) {
+    final docs = json['documents'] as List<dynamic>? ?? [];
+    final purps = json['purposes'] as List<dynamic>? ?? [];
+    
     return ApiQueueService(
       id: json['id'] is int
           ? json['id']
@@ -60,6 +136,8 @@ class ApiQueueService {
       estimatedMinutes: json['estimated_minutes'] is int
           ? json['estimated_minutes']
           : int.tryParse(json['estimated_minutes']?.toString() ?? '0') ?? 0,
+      documents: docs.map((e) => ApiServiceDocument.fromJson(e as Map<String, dynamic>)).toList(),
+      purposes: purps.map((e) => ApiServicePurpose.fromJson(e as Map<String, dynamic>)).toList(),
     );
   }
 }
