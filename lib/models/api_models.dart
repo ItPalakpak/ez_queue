@@ -175,6 +175,7 @@ class ApiSettings {
   // CHANGED: rate limiting config exposed from admin settings
   final int remoteRateLimitMax;
   final int remoteRateLimitDecayMinutes;
+  final Map<String, dynamic>? academicSettings;
 
   ApiSettings({
     this.enablePriority = true,
@@ -185,6 +186,7 @@ class ApiSettings {
     this.mobileUrlConfigEnabled = false,
     this.remoteRateLimitMax = 5,
     this.remoteRateLimitDecayMinutes = 10,
+    this.academicSettings,
   });
 
   factory ApiSettings.fromJson(Map<String, dynamic> json) {
@@ -206,6 +208,7 @@ class ApiSettings {
           int.tryParse(json['remote_rate_limit_max']?.toString() ?? '') ?? 5,
       remoteRateLimitDecayMinutes:
           int.tryParse(json['remote_rate_limit_decay_minutes']?.toString() ?? '') ?? 10,
+      academicSettings: json['academic_settings'] as Map<String, dynamic>?,
     );
   }
 }

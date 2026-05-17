@@ -24,6 +24,8 @@ class QueueFormData {
   final String? priorityIdNumber;
   final String? fullName;
   final String? email;
+  final String? yearLevel;
+  final String? standing;
   final String? contactNumber;
   final int priorityWeight;
   final List<int> disabledDepartments;
@@ -46,6 +48,8 @@ class QueueFormData {
     this.priorityIdNumber,
     this.fullName,
     this.email,
+    this.yearLevel,
+    this.standing,
     this.contactNumber,
     this.priorityWeight = 1,
     this.disabledDepartments = const [],
@@ -70,6 +74,8 @@ class QueueFormData {
     String? priorityIdNumber,
     String? fullName,
     String? email,
+    String? yearLevel,
+    String? standing,
     String? contactNumber,
     int? priorityWeight,
     List<int>? disabledDepartments,
@@ -92,6 +98,8 @@ class QueueFormData {
       priorityIdNumber: priorityIdNumber ?? this.priorityIdNumber,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
+      yearLevel: yearLevel ?? this.yearLevel,
+      standing: standing ?? this.standing,
       contactNumber: contactNumber ?? this.contactNumber,
       priorityWeight: priorityWeight ?? this.priorityWeight,
       disabledDepartments: disabledDepartments ?? this.disabledDepartments,

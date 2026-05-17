@@ -121,7 +121,9 @@ class ConfirmationPage extends ConsumerWidget {
                         else
                           'Last Attended: ${formData.extraDetails['last_semester_attended'] ?? '-'} / ${formData.extraDetails['last_sy_attended'] ?? '-'}',
                         'Cleared: ${formData.extraDetails['is_cleared'] == true ? 'Yes' : 'No'}',
-                        if (formData.extraDetails['purposes'] != null && (formData.extraDetails['purposes'] as List).isNotEmpty)
+                        if (formData.extraDetails['purposes_display'] != null && (formData.extraDetails['purposes_display'] as List).isNotEmpty)
+                          'Purposes: ${(formData.extraDetails['purposes_display'] as List).join(', ')}'
+                        else if (formData.extraDetails['purposes'] != null && (formData.extraDetails['purposes'] as List).isNotEmpty)
                           'Purposes: ${(formData.extraDetails['purposes'] as List).join(', ')}',
                         'Documents Selected:',
                         ...formData.selections.map((sel) {
@@ -136,21 +138,21 @@ class ConfirmationPage extends ConsumerWidget {
                       ],
                       '/service-selection', // Route back to service selection to edit documents
                     ),
+                  ] else ...[
+                    const SizedBox(height: EZSpacing.lg),
+
+                    // Additional Details section
+                    _buildInfoSection(context, 'Additional Details', [
+                      if (formData.purpose != null)
+                        'Purpose: ${formData.purpose}'
+                      else
+                        'Purpose: Not specified',
+                      if (formData.items.isNotEmpty)
+                        'Items: ${formData.items.map((item) => '${item.name} x${item.quantity}').join(', ')}'
+                      else
+                        'Items: None',
+                    ], '/details-information'),
                   ],
-
-                  const SizedBox(height: EZSpacing.lg),
-
-                  // Additional Details section
-                  _buildInfoSection(context, 'Additional Details', [
-                    if (formData.purpose != null)
-                      'Purpose: ${formData.purpose}'
-                    else
-                      'Purpose: Not specified',
-                    if (formData.items.isNotEmpty)
-                      'Items: ${formData.items.map((item) => '${item.name} x${item.quantity}').join(', ')}'
-                    else
-                      'Items: None',
-                  ], '/details-information'),
 
                   const SizedBox(height: EZSpacing.lg),
 
@@ -160,6 +162,10 @@ class ConfirmationPage extends ConsumerWidget {
                     'Full Name: ${formData.fullName ?? 'Not provided'}',
                     if (formData.courseProgram != null)
                       'Course/Program: ${formData.courseProgram}',
+                    if (formData.yearLevel != null)
+                      'Year Level: ${formData.yearLevel}',
+                    if (formData.standing != null)
+                      'Standing: ${formData.standing}',
                     if (formData.idNumber != null)
                       'ID Number: ${formData.idNumber}',
                   ], '/identity-information'),
@@ -304,7 +310,12 @@ class ConfirmationPage extends ConsumerWidget {
             'priority_id_number': formData.priorityIdNumber,
           'device_token': deviceToken,
           if (formData.selections.isNotEmpty) 'selections': formData.selections,
-          if (formData.extraDetails.isNotEmpty) 'extra_details': formData.extraDetails,
+          if (formData.extraDetails.isNotEmpty || formData.yearLevel != null || formData.standing != null)
+            'extra_details': {
+              ...formData.extraDetails,
+              if (formData.yearLevel != null) 'year_level': formData.yearLevel,
+              if (formData.standing != null) 'standing': formData.standing,
+            },
         };
 
         final ticket = await apiService.createTicket(payload);

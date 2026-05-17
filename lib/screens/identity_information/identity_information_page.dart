@@ -34,6 +34,8 @@ class _IdentityInformationPageState
 
   int? _selectedCourseId;
   String? _selectedCourseProgram;
+  String? _selectedYearLevel;
+  String? _selectedStanding;
 
   @override
   void initState() {
@@ -325,7 +327,28 @@ class _IdentityInformationPageState
       });
     }
 
+    if (formData.yearLevel != null && _selectedYearLevel == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _selectedYearLevel = formData.yearLevel;
+          });
+        }
+      });
+    }
+
+    if (formData.standing != null && _selectedStanding == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _selectedStanding = formData.standing;
+          });
+        }
+      });
+    }
+
     final coursesAsync = ref.watch(apiCoursesProvider);
+    final settingsAsync = ref.watch(apiSettingsProvider);
 
     return Scaffold(
       body: Stack(
@@ -584,6 +607,108 @@ class _IdentityInformationPageState
                           const SizedBox(height: EZSpacing.xxl),
                         ],
 
+                        // Year Level and Standing for Students
+                        if (userType == 'Student') ...[
+                          settingsAsync.when(
+                            data: (settings) {
+                              final academicSettings = settings.academicSettings;
+                              if (academicSettings == null) {
+                                return const SizedBox.shrink();
+                              }
+
+                              final format = (academicSettings['year_level_format'] as String? ?? 'normal').toLowerCase();
+                              List<String> yearLevels;
+                              if (format == 'numerals') {
+                                yearLevels = ['I', 'II', 'III', 'IV'];
+                              } else if (format == 'title') {
+                                yearLevels = ['Freshman', 'Sophomore', 'Junior', 'Senior'];
+                              } else {
+                                yearLevels = ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+                              }
+
+                              final requireStanding = academicSettings['require_standing'] == true || academicSettings['require_standing'] == 1 || academicSettings['require_standing'] == '1';
+                              final standingsList = (academicSettings['standings'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Year Level',
+                                    style: Theme.of(context).textTheme.titleLarge,
+                                  ),
+                                  const SizedBox(height: EZSpacing.md),
+                                  EZInputField(
+                                    child: DropdownButtonFormField<String>(
+                                      value: _selectedYearLevel,
+                                      decoration: ThemeHelpers.dropdownInputDecoration(
+                                        labelText: 'Year Level',
+                                        hintText: '-- Select Year Level --',
+                                      ),
+                                      items: [
+                                        const DropdownMenuItem<String>(
+                                          value: null,
+                                          child: Text('-- Select Year Level --'),
+                                        ),
+                                        ...yearLevels.map((yl) => DropdownMenuItem<String>(
+                                          value: yl,
+                                          child: Text(yl),
+                                        )),
+                                      ],
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _selectedYearLevel = value;
+                                        });
+                                      },
+                                      isExpanded: true,
+                                      dropdownColor: Theme.of(context).colorScheme.surface,
+                                      icon: Icon(Icons.arrow_drop_down, color: Theme.of(context).colorScheme.secondary),
+                                    ),
+                                  ),
+                                  const SizedBox(height: EZSpacing.xxl),
+
+                                  if (requireStanding && standingsList.isNotEmpty) ...[
+                                    Text(
+                                      'Standing',
+                                      style: Theme.of(context).textTheme.titleLarge,
+                                    ),
+                                    const SizedBox(height: EZSpacing.md),
+                                    EZInputField(
+                                      child: DropdownButtonFormField<String>(
+                                        value: _selectedStanding,
+                                        decoration: ThemeHelpers.dropdownInputDecoration(
+                                          labelText: 'Standing',
+                                          hintText: '-- Select Standing --',
+                                        ),
+                                        items: [
+                                          const DropdownMenuItem<String>(
+                                            value: null,
+                                            child: Text('-- Select Standing --'),
+                                          ),
+                                          ...standingsList.map((s) => DropdownMenuItem<String>(
+                                            value: s,
+                                            child: Text(s),
+                                          )),
+                                        ],
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedStanding = value;
+                                          });
+                                        },
+                                        isExpanded: true,
+                                        dropdownColor: Theme.of(context).colorScheme.surface,
+                                        icon: Icon(Icons.arrow_drop_down, color: Theme.of(context).colorScheme.secondary),
+                                      ),
+                                    ),
+                                    const SizedBox(height: EZSpacing.xxl),
+                                  ],
+                                ],
+                              );
+                            },
+                            loading: () => const SizedBox.shrink(),
+                            error: (_, __) => const SizedBox.shrink(),
+                          ),
+                        ],
+
                         // Navigation buttons
                         Row(
                           children: [
@@ -642,6 +767,8 @@ class _IdentityInformationPageState
                 : _idNumberController.text.trim(),
             courseId: _selectedCourseId,
             courseProgram: _selectedCourseProgram,
+            yearLevel: _selectedYearLevel,
+            standing: _selectedStanding,
           );
 
       context.push('/contact-information');

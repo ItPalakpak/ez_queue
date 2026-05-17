@@ -53,12 +53,16 @@ class QueueFormNotifier extends StateNotifier<QueueFormData> {
     String? idNumber,
     int? courseId,
     String? courseProgram,
+    String? yearLevel,
+    String? standing,
   }) {
     state = state.copyWith(
       fullName: fullName,
       idNumber: idNumber,
       courseId: courseId,
       courseProgram: courseProgram,
+      yearLevel: yearLevel,
+      standing: standing,
     );
   }
 

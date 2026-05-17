@@ -44,7 +44,8 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   };
 
   List<Map<String, dynamic>> _selections = [];
-  List<String> _selectedPurposes = [];
+  List<Map<String, dynamic>> _previousSelections = [];
+  List<dynamic> _selectedPurposes = [];
   bool _isOthersChecked = false;
   String _customPurpose = '';
 
@@ -63,7 +64,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
       if (_extraDetails['purposes'] != null) {
         final List<dynamic> p = _extraDetails['purposes'];
         for (var item in p) {
-          if (item is String) {
+          if (item is String || item is int) {
             _selectedPurposes.add(item);
           }
         }
@@ -73,6 +74,10 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
         if (_customPurpose.isNotEmpty) {
           _isOthersChecked = true;
         }
+      }
+      if (_extraDetails['previous_selections'] != null) {
+        final List<dynamic> ps = _extraDetails['previous_selections'];
+        _previousSelections = List<Map<String, dynamic>>.from(ps.map((e) => Map<String, dynamic>.from(e as Map)));
       }
     }
   }
@@ -107,6 +112,21 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     setState(() {
       _extraDetails[key] = value;
     });
+  }
+
+  Future<void> _selectDate(BuildContext context, String key) async {
+    final DateTime initialDate = DateTime.now();
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+    );
+    if (picked != null && mounted) {
+      final formattedDate =
+          "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      _handleExtraChange(key, formattedDate);
+    }
   }
 
   void _handleDocumentToggle(ApiServiceDocument doc) {
@@ -174,6 +194,59 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     });
   }
 
+  void _handlePreviousDocumentToggle(ApiServiceDocument doc) {
+    setState(() {
+      final exists = _previousSelections.any((s) => s['service_document_id'] == doc.id);
+      if (exists) {
+        _previousSelections.removeWhere((s) => s['service_document_id'] == doc.id);
+      } else {
+        _previousSelections.add({
+          'service_document_id': doc.id,
+          'document_name': doc.name,
+          'document_subselection_id': null,
+          'subselection_name': null,
+        });
+      }
+    });
+  }
+
+  void _handlePreviousSubselectionToggle(
+    int docId,
+    int subId,
+    String subName,
+    bool checked,
+  ) {
+    setState(() {
+      if (checked || !_allowMultipleSubselections) {
+        if (!_allowMultipleSubselections) {
+          _previousSelections.removeWhere((s) => s['service_document_id'] == docId);
+        } else {
+          _previousSelections.removeWhere((s) => s['service_document_id'] == docId && s['document_subselection_id'] == null);
+        }
+        
+        final doc = widget.services.expand((s) => s.documents).firstWhere((d) => d.id == docId);
+        _previousSelections.add({
+          'service_document_id': docId,
+          'document_name': doc.name,
+          'document_subselection_id': subId,
+          'subselection_name': subName,
+        });
+      } else {
+        _previousSelections.removeWhere((s) => s['service_document_id'] == docId && s['document_subselection_id'] == subId);
+        final hasOtherSubselections = _previousSelections.any((s) => s['service_document_id'] == docId);
+        if (!hasOtherSubselections) {
+          final doc = widget.services.expand((s) => s.documents).firstWhere((d) => d.id == docId);
+          _previousSelections.add({
+            'service_document_id': docId,
+            'document_name': doc.name,
+            'document_subselection_id': null,
+            'subselection_name': null,
+          });
+        }
+      }
+    });
+  }
+
   void _handlePeriodChange(int docId, int subId, String field, dynamic value) {
     setState(() {
       final index = _selections.indexWhere(
@@ -194,13 +267,13 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     });
   }
 
-  void _handlePurposeToggle(String purposeName, bool selected) {
+  void _handlePurposeToggle(dynamic purposeValue, bool selected) {
     setState(() {
       if (selected) {
-        if (!_selectedPurposes.contains(purposeName))
-          _selectedPurposes.add(purposeName);
+        if (!_selectedPurposes.contains(purposeValue))
+          _selectedPurposes.add(purposeValue);
       } else {
-        _selectedPurposes.remove(purposeName);
+        _selectedPurposes.remove(purposeValue);
       }
     });
   }
@@ -212,14 +285,45 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   }
 
   void _proceed() {
+    final uniquePurposesMap = <int, ApiServicePurpose>{};
+    for (var service in widget.services) {
+      for (var p in service.purposes) {
+        uniquePurposesMap[p.id] = p;
+      }
+    }
+    final uniquePurposes = uniquePurposesMap.values.toList();
+
     final List<dynamic> finalPurposes = List.from(_selectedPurposes);
+    final List<String> finalPurposesDisplay = _selectedPurposes.map((p) {
+      if (p is int) {
+        try {
+          final purposeObj = uniquePurposes.firstWhere((up) => up.id == p);
+          return purposeObj.name;
+        } catch (_) {
+          return p.toString();
+        }
+      }
+      return p.toString();
+    }).toList();
+
     if (_customPurpose.trim().isNotEmpty && _isOthersChecked) {
       finalPurposes.add(_customPurpose.trim());
+      finalPurposesDisplay.add(_customPurpose.trim());
     }
+
+    final prevDetailsStr = _previousSelections.map((s) {
+      if (s['subselection_name'] != null) {
+        return '${s['document_name']} - ${s['subselection_name']}';
+      }
+      return s['document_name'];
+    }).join(', ');
 
     final updatedExtraDetails = Map<String, dynamic>.from(_extraDetails);
     updatedExtraDetails['purposes'] = finalPurposes;
+    updatedExtraDetails['purposes_display'] = finalPurposesDisplay;
     updatedExtraDetails['custom_purpose'] = _customPurpose;
+    updatedExtraDetails['previous_request_details'] = prevDetailsStr;
+    updatedExtraDetails['previous_selections'] = _previousSelections;
 
     ref
         .read(queueFormProvider.notifier)
@@ -266,7 +370,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                 children: [
                   _buildReminderSection(),
                   const SizedBox(height: EZSpacing.lg),
-                  _buildPart1Section(),
+                  _buildPart1Section(uniqueDocs),
                   const SizedBox(height: EZSpacing.lg),
                   _buildPart2Section(uniqueDocs),
                   if (uniquePurposes.isNotEmpty) ...[
@@ -392,7 +496,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
       );
   }
 
-  Widget _buildPart1Section() {
+  Widget _buildPart1Section(List<ApiServiceDocument> uniqueDocs) {
     return EZCard(
       child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,10 +508,13 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
             const SizedBox(height: 16),
             EZInputField(
               child: TextField(
+                readOnly: true,
+                onTap: () => _selectDate(context, 'date_of_graduation'),
                 decoration: ThemeHelpers.textInputDecoration(
-                  labelText: 'If a graduate, Date of Graduation (YYYY-MM-DD)',
+                  labelText: 'If a graduate, Date of Graduation',
+                ).copyWith(
+                  suffixIcon: const Icon(Icons.calendar_today),
                 ),
-                onChanged: (val) => _handleExtraChange('date_of_graduation', val),
                 controller: TextEditingController(
                   text: _extraDetails['date_of_graduation']?.toString() ?? '',
                 ),
@@ -490,28 +597,77 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
             ),
             if (_extraDetails['already_requested_before'] == true) ...[
               const SizedBox(height: 8),
-              EZInputField(
-                child: TextField(
-                  decoration: ThemeHelpers.textInputDecoration(
-                    labelText: 'If yes, please specify',
-                  ),
-                  onChanged: (val) =>
-                      _handleExtraChange('previous_request_details', val),
-                  controller: TextEditingController(
-                    text:
-                        _extraDetails['previous_request_details']?.toString() ??
-                        '',
-                  ),
-                ),
+              const Text(
+                'If yes, please specify the document(s):',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
+              const SizedBox(height: 8),
+              ...uniqueDocs.map((doc) {
+                final docSelections = _previousSelections.where(
+                  (s) => s['service_document_id'] == doc.id,
+                ).toList();
+                final isSelected = docSelections.isNotEmpty;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CheckboxListTile(
+                      title: Text(
+                        doc.name,
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      value: isSelected,
+                      onChanged: (val) => _handlePreviousDocumentToggle(doc),
+                    ),
+                    if (isSelected && doc.subselections.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8, left: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: doc.subselections.map((sub) {
+                            final subSelectionIndex = docSelections.indexWhere((s) => s['document_subselection_id'] == sub.id);
+                            final isSubSelected = subSelectionIndex != -1;
+                            final subSelection = isSubSelected ? docSelections[subSelectionIndex] : null;
+                            return _allowMultipleSubselections
+                                ? CheckboxListTile(
+                                    title: Text(sub.name),
+                                    value: isSubSelected,
+                                    onChanged: (val) => _handlePreviousSubselectionToggle(
+                                      doc.id,
+                                      sub.id,
+                                      sub.name,
+                                      val ?? false,
+                                    ),
+                                  )
+                                : RadioListTile<int>(
+                                    title: Text(sub.name),
+                                    value: sub.id,
+                                    // ignore: deprecated_member_use
+                                    groupValue: subSelection?['document_subselection_id'],
+                                    // ignore: deprecated_member_use
+                                    onChanged: (val) => _handlePreviousSubselectionToggle(
+                                      doc.id,
+                                      val ?? sub.id,
+                                      sub.name,
+                                      true,
+                                    ),
+                                  );
+                          }).toList(),
+                        ),
+                      ),
+                  ],
+                );
+              }).toList(),
               const SizedBox(height: 8),
               EZInputField(
                 child: TextField(
+                  readOnly: true,
+                  onTap: () => _selectDate(context, 'previous_request_date'),
                   decoration: ThemeHelpers.textInputDecoration(
-                    labelText: 'Date requested (YYYY-MM-DD)',
+                    labelText: 'Date requested',
+                  ).copyWith(
+                    suffixIcon: const Icon(Icons.calendar_today),
                   ),
-                  onChanged: (val) =>
-                      _handleExtraChange('previous_request_date', val),
                   controller: TextEditingController(
                     text:
                         _extraDetails['previous_request_date']?.toString() ?? '',
@@ -688,9 +844,9 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
             ...uniquePurposes.map((purpose) {
               return CheckboxListTile(
                 title: Text(purpose.name),
-                value: _selectedPurposes.contains(purpose.name),
+                value: _selectedPurposes.contains(purpose.id),
                 onChanged: (val) =>
-                    _handlePurposeToggle(purpose.name, val ?? false),
+                    _handlePurposeToggle(purpose.id, val ?? false),
                 controlAffinity: ListTileControlAffinity.leading,
               );
             }),
