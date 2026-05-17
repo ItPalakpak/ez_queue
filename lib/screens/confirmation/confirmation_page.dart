@@ -8,6 +8,7 @@ import 'package:ez_queue/widgets/top_nav_bar.dart';
 import 'package:ez_queue/widgets/ez_button.dart';
 import 'package:ez_queue/widgets/ez_card.dart';
 import 'package:ez_queue/services/device_token_manager.dart';
+import 'package:ez_queue/services/push_notification_service.dart';
 import 'package:ez_queue/services/api_service.dart';
 import 'package:go_router/go_router.dart';
 
@@ -193,7 +194,7 @@ class ConfirmationPage extends ConsumerWidget {
           color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -283,7 +284,11 @@ class ConfirmationPage extends ConsumerWidget {
 
     try {
       String deviceToken = await DeviceTokenManager.getDeviceToken();
+      String? fcmToken = await PushNotificationService.initializeAndGetToken();
 
+      if (fcmToken != null) {
+        PushNotificationService.listenForTokenRefresh(deviceToken);
+      }
 
       List<QueueTicket> generatedTickets = [];
 
@@ -309,6 +314,7 @@ class ConfirmationPage extends ConsumerWidget {
           if (formData.priorityIdNumber != null)
             'priority_id_number': formData.priorityIdNumber,
           'device_token': deviceToken,
+          'fcm_token': fcmToken,
           if (formData.selections.isNotEmpty) 'selections': formData.selections,
           if (formData.extraDetails.isNotEmpty || formData.yearLevel != null || formData.standing != null)
             'extra_details': {

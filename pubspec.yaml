@@ -70,7 +70,7 @@ dependencies:
   http: ^1.2.2
 
   # Firebase — dynamic server config (IP + tunnel URL resolution)
-  firebase_core: ^3.13.0
+  firebase_core: ^3.15.2
   cloud_firestore: ^5.6.0
 
   # WebSocket client for Laravel Reverb real-time notifications
@@ -82,6 +82,8 @@ dependencies:
 
   # UUID generation
   uuid: ^4.5.1
+  firebase_messaging: ^15.2.10
+  flutter_local_notifications: ^20.1.0
 
 dev_dependencies:
   flutter_test:

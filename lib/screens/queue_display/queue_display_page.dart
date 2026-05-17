@@ -134,49 +134,7 @@ class _QueueDisplayPageState extends ConsumerState<QueueDisplayPage> {
           Stack(
             children: [
               const TopNavBar(),
-              Align(
-                alignment: Alignment.topRight,
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                      top: EZSpacing.sm,
-                      right: 100,
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Row(
-                              children: [
-                                Icon(
-                                  Icons.warning_amber_rounded,
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                                const SizedBox(width: EZSpacing.sm),
-                                const Text('Important Reminders'),
-                              ],
-                            ),
-                            content: const Text(
-                              '• Always maintain an internet connection\n\n'
-                              '• Wait for notifications via email and this app for queue status updates',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text('Got it'),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.warning_amber_rounded),
-                      color: Colors.orange,
-                      tooltip: 'Important Reminders',
-                    ),
-                  ),
-                ),
-              ),
+
             ],
           ),
 

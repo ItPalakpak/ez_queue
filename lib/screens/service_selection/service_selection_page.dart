@@ -183,7 +183,7 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
                 color: Theme.of(context).colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -5),
                   ),
@@ -226,7 +226,7 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
       );
     }
 
-    return Column(
+    Widget content = Column(
       children: availableServices.map((service) {
         final isSelected = _selectedServiceIds.contains(service.id);
         return Padding(
@@ -268,21 +268,6 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
                     ),
                     leading: Radio<int>(
                       value: service.id,
-                      // ignore: deprecated_member_use
-                      groupValue: _selectedServiceIds.isNotEmpty
-                          ? _selectedServiceIds.first
-                          : null,
-                      // ignore: deprecated_member_use
-                      onChanged: (int? value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedServiceIds.clear();
-                            _serviceNames.clear();
-                            _selectedServiceIds.add(service.id);
-                            _serviceNames[service.id] = service.name;
-                          });
-                        }
-                      },
                     ),
                     onTap: () {
                       setState(() {
@@ -297,6 +282,28 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
         );
       }).toList(),
     );
+
+    if (!allowMultiple) {
+      return RadioGroup<int>(
+        groupValue: _selectedServiceIds.isNotEmpty
+            ? _selectedServiceIds.first
+            : null,
+        onChanged: (int? value) {
+          if (value != null) {
+            final service = availableServices.firstWhere((s) => s.id == value);
+            setState(() {
+              _selectedServiceIds.clear();
+              _serviceNames.clear();
+              _selectedServiceIds.add(service.id);
+              _serviceNames[service.id] = service.name;
+            });
+          }
+        },
+        child: content,
+      );
+    }
+    
+    return content;
   }
 
   /// Handle continue button press.

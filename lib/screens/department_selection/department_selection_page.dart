@@ -132,74 +132,75 @@ class _DepartmentSelectionPageState
                           child: Text('No departments available'),
                         );
                       }
-                      return Column(
-                        children: departments.map((department) {
-                          final isDisabled = formData.disabledDepartments
-                              .contains(department.id);
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                              bottom: EZSpacing.md,
-                            ),
-                            child: EZCard(
-                              padding: EdgeInsets.zero,
-                              child: RadioListTile<ApiDepartment>(
-                                title: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        department.name,
-                                        style: TextStyle(
-                                          color: isDisabled
-                                              ? Theme.of(context)
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.5)
-                                              : null,
-                                        ),
-                                      ),
-                                    ),
-                                    if (isDisabled)
-                                      Tooltip(
-                                        message:
-                                            'You already have an active queue in this department',
-                                        child: Icon(
-                                          Icons.block,
-                                          size: 16,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.error,
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                subtitle: department.description != null
-                                    ? Text(
-                                        department.description!,
-                                        style: TextStyle(
-                                          color: isDisabled
-                                              ? Theme.of(context)
-                                                    .colorScheme
-                                                    .onSurface
-                                                    .withValues(alpha: 0.4)
-                                              : null,
-                                        ),
-                                      )
-                                    : null,
-                                value: department,
-                                groupValue: _selectedDepartment,
-                                onChanged: isDisabled
-                                    ? null
-                                    : (ApiDepartment? value) {
-                                        if (value != null) {
-                                          _selectDepartment(value);
-                                        }
-                                      },
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
+                      return RadioGroup<ApiDepartment>(
+                        groupValue: _selectedDepartment,
+                        onChanged: (ApiDepartment? value) {
+                          if (value != null) {
+                            _selectDepartment(value);
+                          }
+                        },
+                        child: Column(
+                          children: departments.map((department) {
+                            final isDisabled = formData.disabledDepartments
+                                .contains(department.id);
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: EZSpacing.md,
                               ),
-                            ),
-                          );
-                        }).toList(),
+                              child: EZCard(
+                                padding: EdgeInsets.zero,
+                                child: RadioListTile<ApiDepartment>(
+                                  title: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          department.name,
+                                          style: TextStyle(
+                                            color: isDisabled
+                                                ? Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(alpha: 0.5)
+                                                : null,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isDisabled)
+                                        Tooltip(
+                                          message:
+                                              'You already have an active queue in this department',
+                                          child: Icon(
+                                            Icons.block,
+                                            size: 16,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.error,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  subtitle: department.description != null
+                                      ? Text(
+                                          department.description!,
+                                          style: TextStyle(
+                                            color: isDisabled
+                                                ? Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurface
+                                                      .withValues(alpha: 0.4)
+                                                : null,
+                                          ),
+                                        )
+                                      : null,
+                                  value: department,
+                                  enabled: !isDisabled,
+                                  controlAffinity:
+                                      ListTileControlAffinity.leading,
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       );
                     },
                     loading: () =>

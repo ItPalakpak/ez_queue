@@ -527,7 +527,7 @@ class _IdentityInformationPageState
                               }
                               return EZInputField(
                                 child: DropdownButtonFormField<int>(
-                                  value: effectiveCourseId,
+                                  initialValue: effectiveCourseId,
                                   decoration:
                                       ThemeHelpers.dropdownInputDecoration(
                                         labelText: 'Course / Program',
@@ -639,7 +639,7 @@ class _IdentityInformationPageState
                                   const SizedBox(height: EZSpacing.md),
                                   EZInputField(
                                     child: DropdownButtonFormField<String>(
-                                      value: _selectedYearLevel,
+                                      initialValue: _selectedYearLevel,
                                       decoration: ThemeHelpers.dropdownInputDecoration(
                                         labelText: 'Year Level',
                                         hintText: '-- Select Year Level --',
@@ -674,7 +674,7 @@ class _IdentityInformationPageState
                                     const SizedBox(height: EZSpacing.md),
                                     EZInputField(
                                       child: DropdownButtonFormField<String>(
-                                        value: _selectedStanding,
+                                        initialValue: _selectedStanding,
                                         decoration: ThemeHelpers.dropdownInputDecoration(
                                           labelText: 'Standing',
                                           hintText: '-- Select Standing --',

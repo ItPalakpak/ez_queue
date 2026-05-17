@@ -18,13 +18,21 @@ import 'package:ez_queue/screens/queue_display/queue_display_page.dart';
 import 'package:ez_queue/screens/cancel_queue/cancel_queue_page.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ez_queue/utils/api_config.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint("Handling a background message: ${message.messageId}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // CHANGED: Initialize Firebase before any Firestore calls
   await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {

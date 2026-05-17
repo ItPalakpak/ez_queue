@@ -389,7 +389,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
           color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, -5),
             ),
@@ -436,29 +436,25 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            RadioListTile<bool>(
-              title: const Text(
-                'A. If requested by the person himself/herself named in the document, a valid Identification (ID) card must be presented.',
-              ),
-              // ignore: deprecated_member_use
-              value: false,
-              // ignore: deprecated_member_use
+            RadioGroup<bool>(
               groupValue: _extraDetails['is_authorized_person'],
-              // ignore: deprecated_member_use
-              onChanged: (val) =>
-                  _handleExtraChange('is_authorized_person', val),
-            ),
-            RadioListTile<bool>(
-              title: const Text(
-                'B. If requested by an authorized person, the following items must be presented:',
+              onChanged: (val) => _handleExtraChange('is_authorized_person', val),
+              child: Column(
+                children: [
+                  RadioListTile<bool>(
+                    title: const Text(
+                      'A. If requested by the person himself/herself named in the document, a valid Identification (ID) card must be presented.',
+                    ),
+                    value: false,
+                  ),
+                  RadioListTile<bool>(
+                    title: const Text(
+                      'B. If requested by an authorized person, the following items must be presented:',
+                    ),
+                    value: true,
+                  ),
+                ],
               ),
-              // ignore: deprecated_member_use
-              value: true,
-              // ignore: deprecated_member_use
-              groupValue: _extraDetails['is_authorized_person'],
-              // ignore: deprecated_member_use
-              onChanged: (val) =>
-                  _handleExtraChange('is_authorized_person', val),
             ),
             if (_extraDetails['is_authorized_person'] == true) ...[
               Padding(
@@ -528,7 +524,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                 decoration: ThemeHelpers.textInputDecoration(
                   labelText: 'Semester',
                 ),
-                value:
+                initialValue:
                     _extraDetails['last_semester_attended']
                             ?.toString()
                             .isEmpty ??
@@ -556,7 +552,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                 decoration: ThemeHelpers.textInputDecoration(
                   labelText: 'School Year',
                 ),
-                value:
+                initialValue:
                     _extraDetails['last_sy_attended']?.toString().isEmpty ??
                         true
                     ? null
@@ -573,27 +569,26 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
             ),
             const SizedBox(height: 16),
             const Text('Already requested credential/s before?'),
-            Row(
-              children: [
-                Expanded(
-                  child: RadioListTile<bool>(
-                    title: const Text('YES'),
-                    value: true,
-                    groupValue: _extraDetails['already_requested_before'],
-                    onChanged: (val) =>
-                        _handleExtraChange('already_requested_before', val),
+            RadioGroup<bool>(
+              groupValue: _extraDetails['already_requested_before'],
+              onChanged: (val) =>
+                  _handleExtraChange('already_requested_before', val),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: RadioListTile<bool>(
+                      title: const Text('YES'),
+                      value: true,
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: RadioListTile<bool>(
-                    title: const Text('NO'),
-                    value: false,
-                    groupValue: _extraDetails['already_requested_before'],
-                    onChanged: (val) =>
-                        _handleExtraChange('already_requested_before', val),
+                  Expanded(
+                    child: RadioListTile<bool>(
+                      title: const Text('NO'),
+                      value: false,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             if (_extraDetails['already_requested_before'] == true) ...[
               const SizedBox(height: 8),
@@ -622,37 +617,48 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                     if (isSelected && doc.subselections.isNotEmpty)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8, left: 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: doc.subselections.map((sub) {
-                            final subSelectionIndex = docSelections.indexWhere((s) => s['document_subselection_id'] == sub.id);
-                            final isSubSelected = subSelectionIndex != -1;
-                            final subSelection = isSubSelected ? docSelections[subSelectionIndex] : null;
-                            return _allowMultipleSubselections
-                                ? CheckboxListTile(
-                                    title: Text(sub.name),
-                                    value: isSubSelected,
-                                    onChanged: (val) => _handlePreviousSubselectionToggle(
-                                      doc.id,
-                                      sub.id,
-                                      sub.name,
-                                      val ?? false,
-                                    ),
-                                  )
-                                : RadioListTile<int>(
-                                    title: Text(sub.name),
-                                    value: sub.id,
-                                    // ignore: deprecated_member_use
-                                    groupValue: subSelection?['document_subselection_id'],
-                                    // ignore: deprecated_member_use
-                                    onChanged: (val) => _handlePreviousSubselectionToggle(
-                                      doc.id,
-                                      val ?? sub.id,
-                                      sub.name,
-                                      true,
-                                    ),
-                                  );
-                          }).toList(),
+                        child: RadioGroup<int>(
+                          groupValue: docSelections.isNotEmpty
+                              ? docSelections.first['document_subselection_id']
+                              : null,
+                          onChanged: (val) {
+                            if (val != null) {
+                              final selectedSub = doc.subselections.firstWhere(
+                                (s) => s.id == val,
+                              );
+                              _handlePreviousSubselectionToggle(
+                                doc.id,
+                                val,
+                                selectedSub.name,
+                                true,
+                              );
+                            }
+                          },
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: doc.subselections.map((sub) {
+                              final subSelectionIndex = docSelections.indexWhere(
+                                (s) => s['document_subselection_id'] == sub.id,
+                              );
+                              final isSubSelected = subSelectionIndex != -1;
+                              return _allowMultipleSubselections
+                                  ? CheckboxListTile(
+                                      title: Text(sub.name),
+                                      value: isSubSelected,
+                                      onChanged: (val) =>
+                                          _handlePreviousSubselectionToggle(
+                                        doc.id,
+                                        sub.id,
+                                        sub.name,
+                                        val ?? false,
+                                      ),
+                                    )
+                                  : RadioListTile<int>(
+                                      title: Text(sub.name),
+                                      value: sub.id,
+                                    );
+                            }).toList(),
+                          ),
                         ),
                       ),
                   ],
@@ -677,17 +683,21 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
             ],
             const SizedBox(height: 16),
             const Text('Cleared?'),
-            RadioListTile<bool>(
-              title: const Text('Yes. (Attach clearance form)'),
-              value: true,
+            RadioGroup<bool>(
               groupValue: _extraDetails['is_cleared'],
               onChanged: (val) => _handleExtraChange('is_cleared', val),
-            ),
-            RadioListTile<bool>(
-              title: const Text('No. (Avail clearance form first)'),
-              value: false,
-              groupValue: _extraDetails['is_cleared'],
-              onChanged: (val) => _handleExtraChange('is_cleared', val),
+              child: Column(
+                children: [
+                  RadioListTile<bool>(
+                    title: const Text('Yes. (Attach clearance form)'),
+                    value: true,
+                  ),
+                  RadioListTile<bool>(
+                    title: const Text('No. (Avail clearance form first)'),
+                    value: false,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -724,41 +734,49 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                   if (isSelected && doc.subselections.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: doc.subselections.map((sub) {
-                          final subSelectionIndex = docSelections.indexWhere((s) => s['document_subselection_id'] == sub.id);
-                          final isSubSelected = subSelectionIndex != -1;
-                          final subSelection = isSubSelected ? docSelections[subSelectionIndex] : null;
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _allowMultipleSubselections
-                                  ? CheckboxListTile(
-                                      title: Text(sub.name),
-                                      value: isSubSelected,
-                                      onChanged: (val) => _handleSubselectionToggle(
-                                        doc.id,
-                                        sub.id,
-                                        sub.name,
-                                        sub.requiresAcademicPeriod,
-                                        val ?? false,
+                      child: RadioGroup<int>(
+                        groupValue: docSelections.isNotEmpty
+                            ? docSelections.first['document_subselection_id']
+                            : null,
+                        onChanged: (val) {
+                          if (val != null) {
+                            final selectedSub = doc.subselections.firstWhere(
+                              (s) => s.id == val,
+                            );
+                            _handleSubselectionToggle(
+                              doc.id,
+                              val,
+                              selectedSub.name,
+                              selectedSub.requiresAcademicPeriod,
+                              true,
+                            );
+                          }
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: doc.subselections.map((sub) {
+                            final subSelectionIndex = docSelections.indexWhere((s) => s['document_subselection_id'] == sub.id);
+                            final isSubSelected = subSelectionIndex != -1;
+                            final subSelection = isSubSelected ? docSelections[subSelectionIndex] : null;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _allowMultipleSubselections
+                                    ? CheckboxListTile(
+                                        title: Text(sub.name),
+                                        value: isSubSelected,
+                                        onChanged: (val) => _handleSubselectionToggle(
+                                          doc.id,
+                                          sub.id,
+                                          sub.name,
+                                          sub.requiresAcademicPeriod,
+                                          val ?? false,
+                                        ),
+                                      )
+                                    : RadioListTile<int>(
+                                        title: Text(sub.name),
+                                        value: sub.id,
                                       ),
-                                    )
-                                  : RadioListTile<int>(
-                                      title: Text(sub.name),
-                                      value: sub.id,
-                                      // ignore: deprecated_member_use
-                                      groupValue: subSelection?['document_subselection_id'],
-                                      // ignore: deprecated_member_use
-                                      onChanged: (val) => _handleSubselectionToggle(
-                                        doc.id,
-                                        val ?? sub.id,
-                                        sub.name,
-                                        sub.requiresAcademicPeriod,
-                                        true, // Radio selection is always checking it
-                                      ),
-                                    ),
                               if (isSubSelected && sub.requiresAcademicPeriod)
                                 Padding(
                                   padding: const EdgeInsets.only(left: 32),
@@ -770,7 +788,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                           decoration: ThemeHelpers.textInputDecoration(
                                             labelText: 'Academic Year',
                                           ),
-                                          value: subSelection!['academic_year_id'],
+                                          initialValue: subSelection!['academic_year_id'],
                                           items: _academics.map((ay) {
                                             return DropdownMenuItem(
                                               value: ay.id,
@@ -791,7 +809,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                           decoration: ThemeHelpers.textInputDecoration(
                                             labelText: 'Semester',
                                           ),
-                                          value: subSelection['semester'],
+                                          initialValue: subSelection['semester'],
                                         items: const [
                                           DropdownMenuItem(
                                             value: '1st Semester',
@@ -822,6 +840,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                         }).toList(),
                       ),
                     ),
+                  ),
                   const Divider(),
                 ],
               );

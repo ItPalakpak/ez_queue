@@ -1,6 +1,6 @@
-/// Duration formatting utility — Dart equivalent of the frontend's dateUtils.formatDuration.
-/// Converts a minute value into a human-readable duration string.
-/// Automatically selects the largest appropriate unit and only shows non-zero parts.
+// Duration formatting utility — Dart equivalent of the frontend's dateUtils.formatDuration.
+// Converts a minute value into a human-readable duration string.
+// Automatically selects the largest appropriate unit and only shows non-zero parts.
 
 const _durationUnits = <String, int>{
   'month': 43200, // 30 days

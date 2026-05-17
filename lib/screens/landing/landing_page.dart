@@ -12,6 +12,7 @@ import 'package:ez_queue/widgets/ez_input_field.dart';
 import 'package:ez_queue/services/api_service.dart';
 // CHANGED: import device token manager to link the tracked ticket to this device
 import 'package:ez_queue/services/device_token_manager.dart';
+import 'package:ez_queue/services/push_notification_service.dart';
 import 'package:ez_queue/utils/theme_helpers.dart';
 
 /// Landing page with EZQueue force that adapts to theme mode.
@@ -67,60 +68,7 @@ class LandingPage extends ConsumerWidget {
           SafeArea(
             child: Column(
               children: [
-                // Warning button positioned to the left of home button
-                Align(
-                  alignment: Alignment.topRight,
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.only(
-                        top: EZSpacing.sm,
-                        right: 44, // Positioned like home button in other pages
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            onPressed: () {
-                              // Show reminder dialog on tap
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.warning_amber_rounded,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.error,
-                                      ),
-                                      const SizedBox(width: EZSpacing.sm),
-                                      const Text('Important Reminders'),
-                                    ],
-                                  ),
-                                  content: const Text(
-                                    '• You cannot create another queue in a department where you have an active queue\n\n'
-                                    '• Always maintain an internet connection\n\n'
-                                    '• Wait for notifications via email and this app for queue status updates',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.of(context).pop(),
-                                      child: const Text('Got it'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.warning_amber_rounded),
-                            color: Colors.orange,
-                            tooltip: 'Important Reminders',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+
                 // Main content
                 Expanded(
                   child: Center(
@@ -439,9 +387,16 @@ class _TrackTicketFormState extends State<_TrackTicketForm> {
     try {
       // CHANGED: Look up by tracking_token and link device for push notifications
       String deviceToken = await DeviceTokenManager.getDeviceToken();
+      String? fcmToken = await PushNotificationService.initializeAndGetToken();
+      
+      if (fcmToken != null) {
+        PushNotificationService.listenForTokenRefresh(deviceToken);
+      }
+
       final ticketData = await apiService.findTicketByToken(
         trackingToken,
         deviceToken: deviceToken,
+        fcmToken: fcmToken,
       );
 
       if (!mounted) return;

@@ -203,13 +203,23 @@ class ApiService {
   Future<Map<String, dynamic>> findTicketByToken(
     String trackingToken, {
     String? deviceToken,
+    String? fcmToken,
   }) async {
     try {
       var uri = Uri.parse(
         '${ApiConfig.baseUrl}/kiosk/tickets/track/$trackingToken',
       );
+      
+      Map<String, String> queryParams = {};
       if (deviceToken != null && deviceToken.isNotEmpty) {
-        uri = uri.replace(queryParameters: {'device_token': deviceToken});
+        queryParams['device_token'] = deviceToken;
+      }
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        queryParams['fcm_token'] = fcmToken;
+      }
+      
+      if (queryParams.isNotEmpty) {
+        uri = uri.replace(queryParameters: queryParams);
       }
       final response = await _client.get(uri);
       final Map<String, dynamic> body = json.decode(response.body);
@@ -244,6 +254,24 @@ class ApiService {
       }
     } catch (e) {
       rethrow;
+    }
+  }
+
+  // CHANGED: added getActiveTicketsByDeviceToken to fetch active tickets for the tooltip
+  Future<List<Map<String, dynamic>>> getActiveTicketsByDeviceToken(String deviceToken) async {
+    try {
+      final response = await _client.get(
+        Uri.parse('${ApiConfig.baseUrl}/kiosk/tickets/device/$deviceToken'),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = json.decode(response.body);
+        final List<dynamic> data = body['data'] ?? [];
+        return data.cast<Map<String, dynamic>>();
+      } else {
+        throw Exception('Failed to load active tickets for device');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
     }
   }
 }

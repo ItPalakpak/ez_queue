@@ -105,7 +105,7 @@ class _DepartmentQueuePageState extends ConsumerState<DepartmentQueuePage> {
                       const SizedBox(height: EZSpacing.md),
                       EZInputField(
                         child: DropdownButtonFormField<int>(
-                          value: _selectedDepartmentId,
+                          initialValue: _selectedDepartmentId,
                           decoration: ThemeHelpers.dropdownInputDecoration(
                             labelText: 'Viewing Queue For',
                             prefixIcon: const Icon(Icons.business_outlined),
