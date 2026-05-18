@@ -330,6 +330,7 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
         .toList();
     
     final hasDocuments = selectedServices.any((s) => s.documents.isNotEmpty);
+    final hasFields = selectedServices.any((s) => s.fields.isNotEmpty);
 
     final currentServiceIds = ref.read(queueFormProvider).serviceIds;
     final isDifferentService = currentServiceIds.length != selectedIds.length || 
@@ -353,6 +354,9 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
           builder: (context) => DocumentSelectionPage(services: selectedServices),
         ),
       );
+    } else if (hasFields) {
+      // Navigate to dynamic fields
+      context.push('/dynamic-fields', extra: selectedServices);
     } else {
       // Navigate to details information page
       context.push('/details-information');

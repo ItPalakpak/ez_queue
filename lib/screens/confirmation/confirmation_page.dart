@@ -182,6 +182,23 @@ class ConfirmationPage extends ConsumerWidget {
                       'Priority ID: ${formData.priorityIdNumber}',
                   ], '/contact-information'),
 
+                  if (formData.customFields.isNotEmpty && formData.customFields.values.any((fields) => fields.isNotEmpty)) ...[
+                    const SizedBox(height: EZSpacing.lg),
+                    _buildInfoSection(
+                      context,
+                      'Additional Requirements',
+                      formData.customFields.entries.expand((entry) {
+                        return entry.value.entries
+                            .where((field) => field.value != null && field.value.toString().isNotEmpty)
+                            .map((field) {
+                          final key = field.key.split('_').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ');
+                          return '$key: ${field.value}';
+                        });
+                      }).toList(),
+                      '/dynamic-fields',
+                    ),
+                  ],
+
                 ],
               ),
             ),
@@ -316,6 +333,8 @@ class ConfirmationPage extends ConsumerWidget {
           'device_token': deviceToken,
           'fcm_token': fcmToken,
           if (formData.selections.isNotEmpty) 'selections': formData.selections,
+          if (formData.customFields.containsKey(serviceId))
+            'custom_fields': formData.customFields[serviceId],
           if (formData.extraDetails.isNotEmpty || formData.yearLevel != null || formData.standing != null)
             'extra_details': {
               ...formData.extraDetails,

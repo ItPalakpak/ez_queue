@@ -78,6 +78,42 @@ class ApiService {
     }
   }
 
+  // CHANGED: added getAcademics method
+  Future<List<ApiAcademicYear>> getAcademics() async {
+    try {
+      final response = await _client.get(
+        Uri.parse('${ApiConfig.baseUrl}/kiosk/academics'),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = json.decode(response.body);
+        final List<dynamic> data = body['data'] ?? [];
+        return data.map((json) => ApiAcademicYear.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load academics');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  // CHANGED: added getSubjects method
+  Future<List<ApiSubject>> getSubjects() async {
+    try {
+      final response = await _client.get(
+        Uri.parse('${ApiConfig.baseUrl}/kiosk/subjects'),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = json.decode(response.body);
+        final List<dynamic> data = body['data'] ?? [];
+        return data.map((json) => ApiSubject.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load subjects');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
   // CHANGED: added getSettings method
   Future<ApiSettings> getSettings() async {
     final response = await _client.get(

@@ -12,6 +12,7 @@ import 'package:ez_queue/widgets/ez_button.dart';
 import 'package:ez_queue/utils/theme_helpers.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/top_nav_bar.dart';
+import 'package:go_router/go_router.dart';
 
 class DocumentSelectionPage extends ConsumerStatefulWidget {
   final List<ApiQueueService> services;
@@ -257,7 +258,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
         if (field == 'academic_year_id') {
           final ay = _academics.firstWhere(
             (a) => a.id == value,
-            orElse: () => ApiAcademicYear(id: value, name: ''),
+            orElse: () => ApiAcademicYear(id: value, name: '', semester: ''),
           );
           _selections[index]['academic_year_name'] = ay.name.isNotEmpty
               ? ay.name
@@ -332,10 +333,15 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
           extraDetails: updatedExtraDetails,
         );
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const ConfirmationPage()),
-    );
+    final hasFields = widget.services.any((s) => s.fields.isNotEmpty);
+    if (hasFields) {
+      context.push('/dynamic-fields', extra: widget.services);
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ConfirmationPage()),
+      );
+    }
   }
 
   @override

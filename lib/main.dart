@@ -12,6 +12,7 @@ import 'package:ez_queue/screens/user_type_selection/user_type_selection_page.da
 import 'package:ez_queue/screens/identity_information/identity_information_page.dart';
 import 'package:ez_queue/screens/contact_information/contact_information_page.dart';
 import 'package:ez_queue/screens/details_information/details_information_page.dart';
+import 'package:ez_queue/screens/dynamic_fields/dynamic_fields_page.dart';
 import 'package:ez_queue/screens/confirmation/confirmation_page.dart';
 import 'package:ez_queue/screens/ticket_preview/ticket_preview_page.dart';
 import 'package:ez_queue/screens/queue_display/queue_display_page.dart';
@@ -84,6 +85,13 @@ final _router = GoRouter(
     GoRoute(
       path: '/details-information',
       builder: (context, state) => const DetailsInformationPage(),
+    ),
+    GoRoute(
+      path: '/dynamic-fields',
+      builder: (context, state) {
+        final services = state.extra as List<dynamic>? ?? [];
+        return DynamicFieldsPage(services: services.cast());
+      },
     ),
     GoRoute(
       path: '/confirmation',

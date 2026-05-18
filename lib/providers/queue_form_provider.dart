@@ -108,6 +108,11 @@ class QueueFormNotifier extends StateNotifier<QueueFormData> {
     state = state.copyWith(selections: selections, extraDetails: extraDetails);
   }
 
+  /// Update custom dynamic fields.
+  void updateCustomFields(Map<int, Map<String, dynamic>> customFields) {
+    state = state.copyWith(customFields: customFields);
+  }
+
   /// Reset form data.
   void reset() {
     state = const QueueFormData();
