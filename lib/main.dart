@@ -22,6 +22,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:ez_queue/utils/api_config.dart';
+import 'package:ez_queue/services/push_notification_service.dart';
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -137,6 +138,8 @@ class _EZQueueAppState extends ConsumerState<EZQueueApp> {
   void initState() {
     super.initState();
     GlobalQueueAlertManager().initialize(rootNavigatorKey);
+    // Request notification permissions immediately upon app startup
+    PushNotificationService.initializeAndGetToken();
   }
 
   @override

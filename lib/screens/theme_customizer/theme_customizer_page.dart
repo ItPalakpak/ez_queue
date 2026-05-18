@@ -23,42 +23,48 @@ class ThemeCustomizerPage extends ConsumerWidget {
 
           // Main content
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Page title and Theme Mode
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Theme Customizer',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                      if (currentVariant == AppThemeVariant.pureBold)
-                        _buildSmallThemeModeToggle(context, ref, currentMode),
-                    ],
-                  ),
-                  const SizedBox(height: EZSpacing.xl),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Page title and Theme Mode
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Theme Customizer',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        if (currentVariant == AppThemeVariant.pureBold)
+                          _buildSmallThemeModeToggle(context, ref, currentMode),
+                      ],
+                    ),
+                    const SizedBox(height: EZSpacing.xl),
 
-                  // Theme Variant Section
-                  Text(
-                    'Theme Style',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: EZSpacing.md),
-                  _buildThemeVariantSelector(context, ref, currentVariant),
-                  const SizedBox(height: EZSpacing.xxl),
+                    // Theme Variant Section
+                    Text(
+                      'Theme Style',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: EZSpacing.md),
+                    _buildThemeVariantSelector(context, ref, currentVariant),
+                    const SizedBox(height: EZSpacing.xxl),
 
-                  // Preview Section
-                  Text(
-                    'Preview',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: EZSpacing.md),
-                  _buildThemePreview(context, ref),
-                ],
+                    // Preview Section
+                    Text(
+                      'Preview',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: EZSpacing.md),
+                    _buildThemePreview(context, ref),
+                  ],
+                ),
               ),
             ),
           ),
@@ -122,10 +128,7 @@ class ThemeCustomizerPage extends ConsumerWidget {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(
-          vertical: 6,
-          horizontal: 10,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
         decoration: BoxDecoration(
           color: isSelected
               ? Theme.of(context).colorScheme.primary

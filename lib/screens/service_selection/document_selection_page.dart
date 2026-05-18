@@ -78,7 +78,9 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
       }
       if (_extraDetails['previous_selections'] != null) {
         final List<dynamic> ps = _extraDetails['previous_selections'];
-        _previousSelections = List<Map<String, dynamic>>.from(ps.map((e) => Map<String, dynamic>.from(e as Map)));
+        _previousSelections = List<Map<String, dynamic>>.from(
+          ps.map((e) => Map<String, dynamic>.from(e as Map)),
+        );
       }
     }
   }
@@ -149,7 +151,8 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     });
   }
 
-  final bool _allowMultipleSubselections = false; // Toggle this to enable multiple subselections per document
+  final bool _allowMultipleSubselections =
+      false; // Toggle this to enable multiple subselections per document
 
   void _handleSubselectionToggle(
     int docId,
@@ -163,10 +166,16 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
         if (!_allowMultipleSubselections) {
           _selections.removeWhere((s) => s['service_document_id'] == docId);
         } else {
-          _selections.removeWhere((s) => s['service_document_id'] == docId && s['document_subselection_id'] == null);
+          _selections.removeWhere(
+            (s) =>
+                s['service_document_id'] == docId &&
+                s['document_subselection_id'] == null,
+          );
         }
-        
-        final doc = widget.services.expand((s) => s.documents).firstWhere((d) => d.id == docId);
+
+        final doc = widget.services
+            .expand((s) => s.documents)
+            .firstWhere((d) => d.id == docId);
         _selections.add({
           'service_document_id': docId,
           'document_name': doc.name,
@@ -177,10 +186,18 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
           'semester': null,
         });
       } else {
-        _selections.removeWhere((s) => s['service_document_id'] == docId && s['document_subselection_id'] == subId);
-        final hasOtherSubselections = _selections.any((s) => s['service_document_id'] == docId);
+        _selections.removeWhere(
+          (s) =>
+              s['service_document_id'] == docId &&
+              s['document_subselection_id'] == subId,
+        );
+        final hasOtherSubselections = _selections.any(
+          (s) => s['service_document_id'] == docId,
+        );
         if (!hasOtherSubselections) {
-          final doc = widget.services.expand((s) => s.documents).firstWhere((d) => d.id == docId);
+          final doc = widget.services
+              .expand((s) => s.documents)
+              .firstWhere((d) => d.id == docId);
           _selections.add({
             'service_document_id': docId,
             'document_name': doc.name,
@@ -197,9 +214,13 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
 
   void _handlePreviousDocumentToggle(ApiServiceDocument doc) {
     setState(() {
-      final exists = _previousSelections.any((s) => s['service_document_id'] == doc.id);
+      final exists = _previousSelections.any(
+        (s) => s['service_document_id'] == doc.id,
+      );
       if (exists) {
-        _previousSelections.removeWhere((s) => s['service_document_id'] == doc.id);
+        _previousSelections.removeWhere(
+          (s) => s['service_document_id'] == doc.id,
+        );
       } else {
         _previousSelections.add({
           'service_document_id': doc.id,
@@ -220,12 +241,20 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     setState(() {
       if (checked || !_allowMultipleSubselections) {
         if (!_allowMultipleSubselections) {
-          _previousSelections.removeWhere((s) => s['service_document_id'] == docId);
+          _previousSelections.removeWhere(
+            (s) => s['service_document_id'] == docId,
+          );
         } else {
-          _previousSelections.removeWhere((s) => s['service_document_id'] == docId && s['document_subselection_id'] == null);
+          _previousSelections.removeWhere(
+            (s) =>
+                s['service_document_id'] == docId &&
+                s['document_subselection_id'] == null,
+          );
         }
-        
-        final doc = widget.services.expand((s) => s.documents).firstWhere((d) => d.id == docId);
+
+        final doc = widget.services
+            .expand((s) => s.documents)
+            .firstWhere((d) => d.id == docId);
         _previousSelections.add({
           'service_document_id': docId,
           'document_name': doc.name,
@@ -233,10 +262,18 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
           'subselection_name': subName,
         });
       } else {
-        _previousSelections.removeWhere((s) => s['service_document_id'] == docId && s['document_subselection_id'] == subId);
-        final hasOtherSubselections = _previousSelections.any((s) => s['service_document_id'] == docId);
+        _previousSelections.removeWhere(
+          (s) =>
+              s['service_document_id'] == docId &&
+              s['document_subselection_id'] == subId,
+        );
+        final hasOtherSubselections = _previousSelections.any(
+          (s) => s['service_document_id'] == docId,
+        );
         if (!hasOtherSubselections) {
-          final doc = widget.services.expand((s) => s.documents).firstWhere((d) => d.id == docId);
+          final doc = widget.services
+              .expand((s) => s.documents)
+              .firstWhere((d) => d.id == docId);
           _previousSelections.add({
             'service_document_id': docId,
             'document_name': doc.name,
@@ -251,7 +288,9 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   void _handlePeriodChange(int docId, int subId, String field, dynamic value) {
     setState(() {
       final index = _selections.indexWhere(
-        (s) => s['service_document_id'] == docId && s['document_subselection_id'] == subId,
+        (s) =>
+            s['service_document_id'] == docId &&
+            s['document_subselection_id'] == subId,
       );
       if (index != -1) {
         _selections[index][field] = value;
@@ -312,12 +351,14 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
       finalPurposesDisplay.add(_customPurpose.trim());
     }
 
-    final prevDetailsStr = _previousSelections.map((s) {
-      if (s['subselection_name'] != null) {
-        return '${s['document_name']} - ${s['subselection_name']}';
-      }
-      return s['document_name'];
-    }).join(', ');
+    final prevDetailsStr = _previousSelections
+        .map((s) {
+          if (s['subselection_name'] != null) {
+            return '${s['document_name']} - ${s['subselection_name']}';
+          }
+          return s['document_name'];
+        })
+        .join(', ');
 
     final updatedExtraDetails = Map<String, dynamic>.from(_extraDetails);
     updatedExtraDetails['purposes'] = finalPurposes;
@@ -369,21 +410,28 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
         children: [
           const TopNavBar(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildReminderSection(),
-                  const SizedBox(height: EZSpacing.lg),
-                  _buildPart1Section(uniqueDocs),
-                  const SizedBox(height: EZSpacing.lg),
-                  _buildPart2Section(uniqueDocs),
-                  if (uniquePurposes.isNotEmpty) ...[
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await _loadAcademics();
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildReminderSection(),
                     const SizedBox(height: EZSpacing.lg),
-                    _buildPart3Section(uniquePurposes),
+                    _buildPart1Section(uniqueDocs),
+                    const SizedBox(height: EZSpacing.lg),
+                    _buildPart2Section(uniqueDocs),
+                    if (uniquePurposes.isNotEmpty) ...[
+                      const SizedBox(height: EZSpacing.lg),
+                      _buildPart3Section(uniquePurposes),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),
@@ -435,295 +483,169 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   Widget _buildReminderSection() {
     return EZCard(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Reminder',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Reminder',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          RadioGroup<bool>(
+            groupValue: _extraDetails['is_authorized_person'],
+            onChanged: (val) => _handleExtraChange('is_authorized_person', val),
+            child: Column(
+              children: [
+                RadioListTile<bool>(
+                  title: const Text(
+                    'A. If requested by the person himself/herself named in the document, a valid Identification (ID) card must be presented.',
+                  ),
+                  value: false,
+                ),
+                RadioListTile<bool>(
+                  title: const Text(
+                    'B. If requested by an authorized person, the following items must be presented:',
+                  ),
+                  value: true,
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            RadioGroup<bool>(
-              groupValue: _extraDetails['is_authorized_person'],
-              onChanged: (val) => _handleExtraChange('is_authorized_person', val),
+          ),
+          if (_extraDetails['is_authorized_person'] == true) ...[
+            Padding(
+              padding: const EdgeInsets.only(left: 32),
               child: Column(
                 children: [
-                  RadioListTile<bool>(
-                    title: const Text(
-                      'A. If requested by the person himself/herself named in the document, a valid Identification (ID) card must be presented.',
-                    ),
-                    value: false,
+                  CheckboxListTile(
+                    title: const Text('Authorization letter'),
+                    value: _extraDetails['has_authorization_letter'],
+                    onChanged: (val) =>
+                        _handleExtraChange('has_authorization_letter', val),
                   ),
-                  RadioListTile<bool>(
+                  CheckboxListTile(
                     title: const Text(
-                      'B. If requested by an authorized person, the following items must be presented:',
+                      'Photocopy of valid ID of the authorizing person',
                     ),
-                    value: true,
+                    value: _extraDetails['has_owner_id_photocopy'],
+                    onChanged: (val) =>
+                        _handleExtraChange('has_owner_id_photocopy', val),
+                  ),
+                  CheckboxListTile(
+                    title: const Text(
+                      'Photocopy of valid ID of the authorized person',
+                    ),
+                    value: _extraDetails['has_authorized_person_id'],
+                    onChanged: (val) =>
+                        _handleExtraChange('has_authorized_person_id', val),
                   ),
                 ],
               ),
             ),
-            if (_extraDetails['is_authorized_person'] == true) ...[
-              Padding(
-                padding: const EdgeInsets.only(left: 32),
-                child: Column(
-                  children: [
-                    CheckboxListTile(
-                      title: const Text('Authorization letter'),
-                      value: _extraDetails['has_authorization_letter'],
-                      onChanged: (val) =>
-                          _handleExtraChange('has_authorization_letter', val),
-                    ),
-                    CheckboxListTile(
-                      title: const Text(
-                        'Photocopy of valid ID of the authorizing person',
-                      ),
-                      value: _extraDetails['has_owner_id_photocopy'],
-                      onChanged: (val) =>
-                          _handleExtraChange('has_owner_id_photocopy', val),
-                    ),
-                    CheckboxListTile(
-                      title: const Text(
-                        'Photocopy of valid ID of the authorized person',
-                      ),
-                      value: _extraDetails['has_authorized_person_id'],
-                      onChanged: (val) =>
-                          _handleExtraChange('has_authorized_person_id', val),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
-        ),
-      );
+        ],
+      ),
+    );
   }
 
   Widget _buildPart1Section(List<ApiServiceDocument> uniqueDocs) {
     return EZCard(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Part 1: Complete entries below',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            EZInputField(
-              child: TextField(
-                readOnly: true,
-                onTap: () => _selectDate(context, 'date_of_graduation'),
-                decoration: ThemeHelpers.textInputDecoration(
-                  labelText: 'If a graduate, Date of Graduation',
-                ).copyWith(
-                  suffixIcon: const Icon(Icons.calendar_today),
-                ),
-                controller: TextEditingController(
-                  text: _extraDetails['date_of_graduation']?.toString() ?? '',
-                ),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Part 1: Complete entries below',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          EZInputField(
+            child: TextField(
+              readOnly: true,
+              onTap: () => _selectDate(context, 'date_of_graduation'),
+              decoration: ThemeHelpers.textInputDecoration(
+                labelText: 'If a graduate, Date of Graduation',
+              ).copyWith(suffixIcon: const Icon(Icons.calendar_today)),
+              controller: TextEditingController(
+                text: _extraDetails['date_of_graduation']?.toString() ?? '',
               ),
             ),
-            const SizedBox(height: 16),
-            const Text('If not, state the Last Semester & SY of Attendance:'),
-            const SizedBox(height: 8),
-            EZInputField(
-              child: DropdownButtonFormField<String>(
-                decoration: ThemeHelpers.textInputDecoration(
-                  labelText: 'Semester',
-                ),
-                initialValue:
-                    _extraDetails['last_semester_attended']
-                            ?.toString()
-                            .isEmpty ??
-                        true
-                    ? null
-                    : _extraDetails['last_semester_attended'],
-                items: const [
-                  DropdownMenuItem(
-                    value: '1st Semester',
-                    child: Text('1st Semester'),
-                  ),
-                  DropdownMenuItem(
-                    value: '2nd Semester',
-                    child: Text('2nd Semester'),
-                  ),
-                  DropdownMenuItem(value: 'Summer', child: Text('Summer')),
-                ],
-                onChanged: (val) =>
-                    _handleExtraChange('last_semester_attended', val),
+          ),
+          const SizedBox(height: 16),
+          const Text('If not, state the Last Semester & SY of Attendance:'),
+          const SizedBox(height: 8),
+          EZInputField(
+            child: DropdownButtonFormField<String>(
+              decoration: ThemeHelpers.textInputDecoration(
+                labelText: 'Semester',
               ),
-            ),
-            const SizedBox(height: 16),
-            EZInputField(
-              child: DropdownButtonFormField<String>(
-                decoration: ThemeHelpers.textInputDecoration(
-                  labelText: 'School Year',
+              initialValue:
+                  _extraDetails['last_semester_attended']?.toString().isEmpty ??
+                      true
+                  ? null
+                  : _extraDetails['last_semester_attended'],
+              items: const [
+                DropdownMenuItem(
+                  value: '1st Semester',
+                  child: Text('1st Semester'),
                 ),
-                initialValue:
-                    _extraDetails['last_sy_attended']?.toString().isEmpty ??
-                        true
-                    ? null
-                    : _extraDetails['last_sy_attended'],
-                items: _academics.map((ay) {
-                  return DropdownMenuItem(
-                    value: ay.name,
-                    child: Text(ay.name),
-                  );
-                }).toList(),
-                onChanged: (val) =>
-                    _handleExtraChange('last_sy_attended', val),
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text('Already requested credential/s before?'),
-            RadioGroup<bool>(
-              groupValue: _extraDetails['already_requested_before'],
+                DropdownMenuItem(
+                  value: '2nd Semester',
+                  child: Text('2nd Semester'),
+                ),
+                DropdownMenuItem(value: 'Summer', child: Text('Summer')),
+              ],
               onChanged: (val) =>
-                  _handleExtraChange('already_requested_before', val),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile<bool>(
-                      title: const Text('YES'),
-                      value: true,
-                    ),
-                  ),
-                  Expanded(
-                    child: RadioListTile<bool>(
-                      title: const Text('NO'),
-                      value: false,
-                    ),
-                  ),
-                ],
-              ),
+                  _handleExtraChange('last_semester_attended', val),
             ),
-            if (_extraDetails['already_requested_before'] == true) ...[
-              const SizedBox(height: 8),
-              const Text(
-                'If yes, please specify the document(s):',
-                style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          EZInputField(
+            child: DropdownButtonFormField<String>(
+              decoration: ThemeHelpers.textInputDecoration(
+                labelText: 'School Year',
               ),
-              const SizedBox(height: 8),
-              ...uniqueDocs.map((doc) {
-                final docSelections = _previousSelections.where(
-                  (s) => s['service_document_id'] == doc.id,
-                ).toList();
-                final isSelected = docSelections.isNotEmpty;
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CheckboxListTile(
-                      title: Text(
-                        doc.name,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                      value: isSelected,
-                      onChanged: (val) => _handlePreviousDocumentToggle(doc),
-                    ),
-                    if (isSelected && doc.subselections.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8, left: 16),
-                        child: RadioGroup<int>(
-                          groupValue: docSelections.isNotEmpty
-                              ? docSelections.first['document_subselection_id']
-                              : null,
-                          onChanged: (val) {
-                            if (val != null) {
-                              final selectedSub = doc.subselections.firstWhere(
-                                (s) => s.id == val,
-                              );
-                              _handlePreviousSubselectionToggle(
-                                doc.id,
-                                val,
-                                selectedSub.name,
-                                true,
-                              );
-                            }
-                          },
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: doc.subselections.map((sub) {
-                              final subSelectionIndex = docSelections.indexWhere(
-                                (s) => s['document_subselection_id'] == sub.id,
-                              );
-                              final isSubSelected = subSelectionIndex != -1;
-                              return _allowMultipleSubselections
-                                  ? CheckboxListTile(
-                                      title: Text(sub.name),
-                                      value: isSubSelected,
-                                      onChanged: (val) =>
-                                          _handlePreviousSubselectionToggle(
-                                        doc.id,
-                                        sub.id,
-                                        sub.name,
-                                        val ?? false,
-                                      ),
-                                    )
-                                  : RadioListTile<int>(
-                                      title: Text(sub.name),
-                                      value: sub.id,
-                                    );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                  ],
-                );
+              initialValue:
+                  _extraDetails['last_sy_attended']?.toString().isEmpty ?? true
+                  ? null
+                  : _extraDetails['last_sy_attended'],
+              items: _academics.map((ay) {
+                return DropdownMenuItem(value: ay.name, child: Text(ay.name));
               }).toList(),
-              const SizedBox(height: 8),
-              EZInputField(
-                child: TextField(
-                  readOnly: true,
-                  onTap: () => _selectDate(context, 'previous_request_date'),
-                  decoration: ThemeHelpers.textInputDecoration(
-                    labelText: 'Date requested',
-                  ).copyWith(
-                    suffixIcon: const Icon(Icons.calendar_today),
-                  ),
-                  controller: TextEditingController(
-                    text:
-                        _extraDetails['previous_request_date']?.toString() ?? '',
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 16),
-            const Text('Cleared?'),
-            RadioGroup<bool>(
-              groupValue: _extraDetails['is_cleared'],
-              onChanged: (val) => _handleExtraChange('is_cleared', val),
-              child: Column(
-                children: [
-                  RadioListTile<bool>(
-                    title: const Text('Yes. (Attach clearance form)'),
+              onChanged: (val) => _handleExtraChange('last_sy_attended', val),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text('Already requested credential/s before?'),
+          RadioGroup<bool>(
+            groupValue: _extraDetails['already_requested_before'],
+            onChanged: (val) =>
+                _handleExtraChange('already_requested_before', val),
+            child: Row(
+              children: [
+                Expanded(
+                  child: RadioListTile<bool>(
+                    title: const Text('YES'),
                     value: true,
                   ),
-                  RadioListTile<bool>(
-                    title: const Text('No. (Avail clearance form first)'),
+                ),
+                Expanded(
+                  child: RadioListTile<bool>(
+                    title: const Text('NO'),
                     value: false,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
-  }
-
-  Widget _buildPart2Section(List<ApiServiceDocument> uniqueDocs) {
-    return EZCard(
-      child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+          ),
+          if (_extraDetails['already_requested_before'] == true) ...[
+            const SizedBox(height: 8),
             const Text(
-              'Part 2: Check document/s you need',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              'If yes, please specify the document(s):',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             ...uniqueDocs.map((doc) {
-              final docSelections = _selections.where(
-                (s) => s['service_document_id'] == doc.id,
-              ).toList();
+              final docSelections = _previousSelections
+                  .where((s) => s['service_document_id'] == doc.id)
+                  .toList();
               final isSelected = docSelections.isNotEmpty;
 
               return Column(
@@ -735,11 +657,11 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     value: isSelected,
-                    onChanged: (val) => _handleDocumentToggle(doc),
+                    onChanged: (val) => _handlePreviousDocumentToggle(doc),
                   ),
                   if (isSelected && doc.subselections.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.only(bottom: 8, left: 16),
                       child: RadioGroup<int>(
                         groupValue: docSelections.isNotEmpty
                             ? docSelections.first['document_subselection_id']
@@ -749,11 +671,10 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                             final selectedSub = doc.subselections.firstWhere(
                               (s) => s.id == val,
                             );
-                            _handleSubselectionToggle(
+                            _handlePreviousSubselectionToggle(
                               doc.id,
                               val,
                               selectedSub.name,
-                              selectedSub.requiresAcademicPeriod,
                               true,
                             );
                           }
@@ -761,28 +682,149 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: doc.subselections.map((sub) {
-                            final subSelectionIndex = docSelections.indexWhere((s) => s['document_subselection_id'] == sub.id);
+                            final subSelectionIndex = docSelections.indexWhere(
+                              (s) => s['document_subselection_id'] == sub.id,
+                            );
                             final isSubSelected = subSelectionIndex != -1;
-                            final subSelection = isSubSelected ? docSelections[subSelectionIndex] : null;
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _allowMultipleSubselections
-                                    ? CheckboxListTile(
-                                        title: Text(sub.name),
-                                        value: isSubSelected,
-                                        onChanged: (val) => _handleSubselectionToggle(
+                            return _allowMultipleSubselections
+                                ? CheckboxListTile(
+                                    title: Text(sub.name),
+                                    value: isSubSelected,
+                                    onChanged: (val) =>
+                                        _handlePreviousSubselectionToggle(
                                           doc.id,
                                           sub.id,
                                           sub.name,
-                                          sub.requiresAcademicPeriod,
                                           val ?? false,
                                         ),
-                                      )
-                                    : RadioListTile<int>(
-                                        title: Text(sub.name),
-                                        value: sub.id,
-                                      ),
+                                  )
+                                : RadioListTile<int>(
+                                    title: Text(sub.name),
+                                    value: sub.id,
+                                  );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            }).toList(),
+            const SizedBox(height: 8),
+            EZInputField(
+              child: TextField(
+                readOnly: true,
+                onTap: () => _selectDate(context, 'previous_request_date'),
+                decoration: ThemeHelpers.textInputDecoration(
+                  labelText: 'Date requested',
+                ).copyWith(suffixIcon: const Icon(Icons.calendar_today)),
+                controller: TextEditingController(
+                  text:
+                      _extraDetails['previous_request_date']?.toString() ?? '',
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          const Text('Cleared?'),
+          RadioGroup<bool>(
+            groupValue: _extraDetails['is_cleared'],
+            onChanged: (val) => _handleExtraChange('is_cleared', val),
+            child: Column(
+              children: [
+                RadioListTile<bool>(
+                  title: const Text('Yes. (Attach clearance form)'),
+                  value: true,
+                ),
+                RadioListTile<bool>(
+                  title: const Text('No. (Avail clearance form first)'),
+                  value: false,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPart2Section(List<ApiServiceDocument> uniqueDocs) {
+    return EZCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Part 2: Check document/s you need',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          ...uniqueDocs.map((doc) {
+            final docSelections = _selections
+                .where((s) => s['service_document_id'] == doc.id)
+                .toList();
+            final isSelected = docSelections.isNotEmpty;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CheckboxListTile(
+                  title: Text(
+                    doc.name,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  value: isSelected,
+                  onChanged: (val) => _handleDocumentToggle(doc),
+                ),
+                if (isSelected && doc.subselections.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: RadioGroup<int>(
+                      groupValue: docSelections.isNotEmpty
+                          ? docSelections.first['document_subselection_id']
+                          : null,
+                      onChanged: (val) {
+                        if (val != null) {
+                          final selectedSub = doc.subselections.firstWhere(
+                            (s) => s.id == val,
+                          );
+                          _handleSubselectionToggle(
+                            doc.id,
+                            val,
+                            selectedSub.name,
+                            selectedSub.requiresAcademicPeriod,
+                            true,
+                          );
+                        }
+                      },
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: doc.subselections.map((sub) {
+                          final subSelectionIndex = docSelections.indexWhere(
+                            (s) => s['document_subselection_id'] == sub.id,
+                          );
+                          final isSubSelected = subSelectionIndex != -1;
+                          final subSelection = isSubSelected
+                              ? docSelections[subSelectionIndex]
+                              : null;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _allowMultipleSubselections
+                                  ? CheckboxListTile(
+                                      title: Text(sub.name),
+                                      value: isSubSelected,
+                                      onChanged: (val) =>
+                                          _handleSubselectionToggle(
+                                            doc.id,
+                                            sub.id,
+                                            sub.name,
+                                            sub.requiresAcademicPeriod,
+                                            val ?? false,
+                                          ),
+                                    )
+                                  : RadioListTile<int>(
+                                      title: Text(sub.name),
+                                      value: sub.id,
+                                    ),
                               if (isSubSelected && sub.requiresAcademicPeriod)
                                 Padding(
                                   padding: const EdgeInsets.only(left: 32),
@@ -791,51 +833,57 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                       // ignore: deprecated_member_use
                                       EZInputField(
                                         child: DropdownButtonFormField<int>(
-                                          decoration: ThemeHelpers.textInputDecoration(
-                                            labelText: 'Academic Year',
-                                          ),
-                                          initialValue: subSelection!['academic_year_id'],
+                                          decoration:
+                                              ThemeHelpers.textInputDecoration(
+                                                labelText: 'Academic Year',
+                                              ),
+                                          initialValue:
+                                              subSelection!['academic_year_id'],
                                           items: _academics.map((ay) {
                                             return DropdownMenuItem(
                                               value: ay.id,
                                               child: Text(ay.name),
                                             );
                                           }).toList(),
-                                          onChanged: (val) => _handlePeriodChange(
-                                            doc.id,
-                                            sub.id,
-                                            'academic_year_id',
-                                            val,
-                                          ),
+                                          onChanged: (val) =>
+                                              _handlePeriodChange(
+                                                doc.id,
+                                                sub.id,
+                                                'academic_year_id',
+                                                val,
+                                              ),
                                         ),
                                       ),
                                       const SizedBox(height: 16),
                                       EZInputField(
                                         child: DropdownButtonFormField<String>(
-                                          decoration: ThemeHelpers.textInputDecoration(
-                                            labelText: 'Semester',
-                                          ),
-                                          initialValue: subSelection['semester'],
-                                        items: const [
-                                          DropdownMenuItem(
-                                            value: '1st Semester',
-                                            child: Text('1st Semester'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: '2nd Semester',
-                                            child: Text('2nd Semester'),
-                                          ),
-                                          DropdownMenuItem(
-                                            value: 'Summer',
-                                            child: Text('Summer'),
-                                          ),
-                                        ],
-                                        onChanged: (val) => _handlePeriodChange(
-                                          doc.id,
-                                          sub.id,
-                                          'semester',
-                                          val,
-                                        ),
+                                          decoration:
+                                              ThemeHelpers.textInputDecoration(
+                                                labelText: 'Semester',
+                                              ),
+                                          initialValue:
+                                              subSelection['semester'],
+                                          items: const [
+                                            DropdownMenuItem(
+                                              value: '1st Semester',
+                                              child: Text('1st Semester'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: '2nd Semester',
+                                              child: Text('2nd Semester'),
+                                            ),
+                                            DropdownMenuItem(
+                                              value: 'Summer',
+                                              child: Text('Summer'),
+                                            ),
+                                          ],
+                                          onChanged: (val) =>
+                                              _handlePeriodChange(
+                                                doc.id,
+                                                sub.id,
+                                                'semester',
+                                                val,
+                                              ),
                                         ),
                                       ),
                                     ],
@@ -847,72 +895,69 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                       ),
                     ),
                   ),
-                  const Divider(),
-                ],
-              );
-            }),
-          ],
-        ),
-      );
+                const Divider(),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
   }
 
   Widget _buildPart3Section(List<ApiServicePurpose> uniquePurposes) {
     return EZCard(
       child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Part 3: Please check the purpose of your request',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ...uniquePurposes.map((purpose) {
-              return CheckboxListTile(
-                title: Text(purpose.name),
-                value: _selectedPurposes.contains(purpose.id),
-                onChanged: (val) =>
-                    _handlePurposeToggle(purpose.id, val ?? false),
-                controlAffinity: ListTileControlAffinity.leading,
-              );
-            }),
-            CheckboxListTile(
-              title: const Text('Others (Specify)'),
-              value: _isOthersChecked,
-              onChanged: (val) {
-                setState(() {
-                  _isOthersChecked = val ?? false;
-                  if (!_isOthersChecked) {
-                    _customPurpose = '';
-                  }
-                });
-              },
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Part 3: Please check the purpose of your request',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          ...uniquePurposes.map((purpose) {
+            return CheckboxListTile(
+              title: Text(purpose.name),
+              value: _selectedPurposes.contains(purpose.id),
+              onChanged: (val) =>
+                  _handlePurposeToggle(purpose.id, val ?? false),
               controlAffinity: ListTileControlAffinity.leading,
-            ),
-            if (_isOthersChecked)
-              Padding(
-                padding: const EdgeInsets.only(
-                  left: 48,
-                  top: 8,
-                ),
-                child: EZInputField(
-                  child: TextField(
-                    decoration: ThemeHelpers.textInputDecoration(
-                      labelText: 'Specify other purpose',
-                    ),
-                    onChanged: _handleCustomPurposeChange,
-                    controller: TextEditingController.fromValue(
-                      TextEditingValue(
-                        text: _customPurpose,
-                        selection: TextSelection.collapsed(
-                          offset: _customPurpose.length,
-                        ),
+            );
+          }),
+          CheckboxListTile(
+            title: const Text('Others (Specify)'),
+            value: _isOthersChecked,
+            onChanged: (val) {
+              setState(() {
+                _isOthersChecked = val ?? false;
+                if (!_isOthersChecked) {
+                  _customPurpose = '';
+                }
+              });
+            },
+            controlAffinity: ListTileControlAffinity.leading,
+          ),
+          if (_isOthersChecked)
+            Padding(
+              padding: const EdgeInsets.only(left: 48, top: 8),
+              child: EZInputField(
+                child: TextField(
+                  decoration: ThemeHelpers.textInputDecoration(
+                    labelText: 'Specify other purpose',
+                  ),
+                  onChanged: _handleCustomPurposeChange,
+                  controller: TextEditingController.fromValue(
+                    TextEditingValue(
+                      text: _customPurpose,
+                      selection: TextSelection.collapsed(
+                        offset: _customPurpose.length,
                       ),
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
-      );
+            ),
+        ],
+      ),
+    );
   }
 }

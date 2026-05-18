@@ -71,144 +71,149 @@ class _DetailsInformationPageState
         children: [
           const TopNavBar(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Step header - icon and text in one row
-                  Container(
-                    margin: const EdgeInsets.only(bottom: EZSpacing.xl),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Step header - icon and text in one row
+                    Container(
+                      margin: const EdgeInsets.only(bottom: EZSpacing.xl),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Text('📝', style: TextStyle(fontSize: 32)),
+                            ),
                           ),
-                          child: const Center(
-                            child: Text('📝', style: TextStyle(fontSize: 32)),
+                          const SizedBox(width: EZSpacing.lg),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Additional Details',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineMedium,
+                                ),
+                                const SizedBox(height: EZSpacing.xs),
+                                Text(
+                                  'Provide purpose and items for your request',
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: EZSpacing.lg),
-                        Expanded(
+                        ],
+                      ),
+                    ),
+
+                    // Selected services summary
+                    if (formData.services.isNotEmpty) ...[
+                      Text(
+                        'Selected Services',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: EZSpacing.md),
+                      EZCard(
+                        padding: EdgeInsets.zero,
+                        child: Padding(
+                          padding: const EdgeInsets.all(EZSpacing.md),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Additional Details',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineMedium,
-                              ),
-                              const SizedBox(height: EZSpacing.xs),
-                              Text(
-                                'Provide purpose and items for your request',
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.6),
+                            children: formData.services.map((service) {
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: EZSpacing.xs,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      size: 16,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
                                     ),
-                              ),
-                            ],
+                                    const SizedBox(width: EZSpacing.xs),
+                                    Expanded(
+                                      child: Text(
+                                        service,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                      const SizedBox(height: EZSpacing.xxl),
+                    ],
 
-                  // Selected services summary
-                  if (formData.services.isNotEmpty) ...[
+                    // Purpose input
                     Text(
-                      'Selected Services',
+                      'Purpose',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: EZSpacing.md),
-                    EZCard(
-                      padding: EdgeInsets.zero,
-                      child: Padding(
-                        padding: const EdgeInsets.all(EZSpacing.md),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: formData.services.map((service) {
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: EZSpacing.xs,
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.check_circle,
-                                    size: 16,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
-                                  const SizedBox(width: EZSpacing.xs),
-                                  Expanded(
-                                    child: Text(
-                                      service,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
+                    EZInputField(
+                      child: TextField(
+                        controller: _purposeController,
+                        decoration: ThemeHelpers.textInputDecoration(
+                          hintText:
+                              'Describe the purpose for availing the service/s',
                         ),
+                        maxLines: 3,
+                        maxLength: 500,
+                        textInputAction: TextInputAction.done,
                       ),
                     ),
+
                     const SizedBox(height: EZSpacing.xxl),
-                  ],
 
-                  // Purpose input
-                  Text(
-                    'Purpose',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: EZSpacing.md),
-                  EZInputField(
-                    child: TextField(
-                      controller: _purposeController,
-                      decoration: ThemeHelpers.textInputDecoration(
-                        hintText:
-                            'Describe the purpose for availing the service/s',
+                    // Items / Quantities section
+                    Text(
+                      'Items / Quantities Needed',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: EZSpacing.sm),
+                    Text(
+                      'Optional — add items if applicable',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
                       ),
-                      maxLines: 3,
-                      maxLength: 500,
-                      textInputAction: TextInputAction.done,
                     ),
-                  ),
-
-                  const SizedBox(height: EZSpacing.xxl),
-
-                  // Items / Quantities section
-                  Text(
-                    'Items / Quantities Needed',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: EZSpacing.sm),
-                  Text(
-                    'Optional — add items if applicable',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                  const SizedBox(height: EZSpacing.md),
-                  _buildItemsSection(),
-
-                ],
+                    const SizedBox(height: EZSpacing.md),
+                    _buildItemsSection(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -331,9 +336,7 @@ class _DetailsInformationPageState
                       keyboardType: TextInputType.number,
                       textInputAction: TextInputAction.done,
                       maxLength: 3,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     ),
                   ),
                 ),

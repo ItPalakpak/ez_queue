@@ -68,190 +68,216 @@ class LandingPage extends ConsumerWidget {
           SafeArea(
             child: Column(
               children: [
-
                 // Main content
                 Expanded(
-                  child: Center(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      ref.invalidate(apiSettingsProvider);
+                      await Future.delayed(const Duration(milliseconds: 500));
+                    },
                     child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(EZSpacing.xl),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Logo
-                          Image.asset(
-                            logoPath,
-                            height:
-                                120, // Reduced from 200 for a more compact height
-                            width: 120,
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              // Fallback if image fails to load
-                              return Container(
-                                height: 120,
-                                width: 120,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(
-                                    EZSpacing.radiusMd,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.queue,
-                                  size: 60,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: EZSpacing.lg),
-
-                          // Subtitle
-                          Text(
-                            'Digital Queue Monitoring for Clients',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface
-                                      .withValues(alpha: 0.7),
-                                ),
-                          ),
-                          const SizedBox(height: EZSpacing.xl),
-
-                          // CHANGED: Render blocked state if system offline
-                          if (isSystemOffline) ...[
-                            Container(
-                              padding: const EdgeInsets.all(EZSpacing.lg),
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.errorContainer,
-                                borderRadius: BorderRadius.circular(
-                                  EZSpacing.md,
-                                ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.block,
-                                    size: 48,
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                                  const SizedBox(height: EZSpacing.md),
-                                  Text(
-                                    systemStatus == 'maintenance'
-                                        ? 'System Maintenance'
-                                        : 'System Closed',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.error,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                  const SizedBox(height: EZSpacing.sm),
-                                  Text(
-                                    systemMessage,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onErrorContainer,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            // Logo
+                            Image.asset(
+                              logoPath,
+                              height:
+                                  120, // Reduced from 200 for a more compact height
+                              width: 120,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                // Fallback if image fails to load
+                                return Container(
+                                  height: 120,
+                                  width: 120,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(
+                                      EZSpacing.radiusMd,
                                     ),
                                   ),
-                                  if (systemTimestamp != null) ...[
+                                  child: Icon(
+                                    Icons.queue,
+                                    size: 60,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: EZSpacing.lg),
+
+                            // Subtitle
+                            Text(
+                              'Digital Queue Monitoring for Clients',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.7),
+                                  ),
+                            ),
+                            const SizedBox(height: EZSpacing.xl),
+
+                            // CHANGED: Render blocked state if system offline
+                            if (isSystemOffline) ...[
+                              Container(
+                                padding: const EdgeInsets.all(EZSpacing.lg),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.errorContainer,
+                                  borderRadius: BorderRadius.circular(
+                                    EZSpacing.md,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.block,
+                                      size: 48,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.error,
+                                    ),
                                     const SizedBox(height: EZSpacing.md),
                                     Text(
-                                      'Expected Resume Time:\n$systemTimestamp',
+                                      systemStatus == 'maintenance'
+                                          ? 'System Maintenance'
+                                          : 'System Closed',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.error,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    const SizedBox(height: EZSpacing.sm),
+                                    Text(
+                                      systemMessage,
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: Theme.of(
                                           context,
                                         ).colorScheme.onErrorContainer,
-                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
+                                    if (systemTimestamp != null) ...[
+                                      const SizedBox(height: EZSpacing.md),
+                                      Text(
+                                        'Expected Resume Time:\n$systemTimestamp',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onErrorContainer,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ],
-                                ],
+                                ),
                               ),
-                            ),
-                          ] else ...[
-                            // Active system rendering
-                            if (remoteQueuingEnabled) ...[
+                            ] else ...[
+                              // Active system rendering
+                              if (remoteQueuingEnabled) ...[
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: EZButton(
+                                    onPressed: () {
+                                      context.push('/user-type-selection');
+                                    },
+                                    child: const Text('Get A Ticket'),
+                                  ),
+                                ),
+                                // CHANGED: show rate limit info so users know the queueing frequency limit
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: EZSpacing.xs,
+                                  ),
+                                  child: settingsAsync.maybeWhen(
+                                    data: (s) => Text(
+                                      'Limited to ${s.remoteRateLimitMax} ticket${s.remoteRateLimitMax == 1 ? '' : 's'} per ${s.remoteRateLimitDecayMinutes} min per device',
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withValues(alpha: 0.45),
+                                          ),
+                                    ),
+                                    orElse: () => const SizedBox.shrink(),
+                                  ),
+                                ),
+                                const SizedBox(height: EZSpacing.sm),
+                              ],
+
+                              // View Queue Button
                               SizedBox(
                                 width: double.infinity,
                                 child: EZButton(
+                                  isSecondary: true,
                                   onPressed: () {
-                                    context.push('/user-type-selection');
+                                    context.push('/department-queue');
                                   },
-                                  child: const Text('Get A Ticket'),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.visibility),
+                                      const SizedBox(width: EZSpacing.sm),
+                                      const Text('View Live Queue'),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              // CHANGED: show rate limit info so users know the queueing frequency limit
-                              Padding(
-                                padding: const EdgeInsets.only(top: EZSpacing.xs),
-                                child: settingsAsync.maybeWhen(
-                                  data: (s) => Text(
-                                    'Limited to ${s.remoteRateLimitMax} ticket${s.remoteRateLimitMax == 1 ? '' : 's'} per ${s.remoteRateLimitDecayMinutes} min per device',
-                                    textAlign: TextAlign.center,
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.45),
+                              const SizedBox(height: EZSpacing.xl),
+
+                              // Quick Track Options
+                              const Divider(),
+                              const SizedBox(height: EZSpacing.lg),
+                              Text(
+                                'Track an Existing Ticket',
+                                style: Theme.of(context).textTheme.titleSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.8),
                                     ),
-                                  ),
-                                  orElse: () => const SizedBox.shrink(),
-                                ),
+                              ),
+                              const SizedBox(height: EZSpacing.xs),
+                              Text(
+                                'Enter the tracking code from your ticket',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withValues(alpha: 0.5),
+                                    ),
                               ),
                               const SizedBox(height: EZSpacing.sm),
+                              _TrackTicketForm(),
                             ],
-
-                            // View Queue Button
-                            SizedBox(
-                              width: double.infinity,
-                              child: EZButton(
-                                isSecondary: true,
-                                onPressed: () {
-                                  context.push('/department-queue');
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(Icons.visibility),
-                                    const SizedBox(width: EZSpacing.sm),
-                                    const Text('View Live Queue'),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: EZSpacing.xl),
-
-                            // Quick Track Options
-                            const Divider(),
-                            const SizedBox(height: EZSpacing.lg),
-                            Text(
-                              'Track an Existing Ticket',
-                              style: Theme.of(context).textTheme.titleSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.8),
-                                  ),
-                            ),
-                            const SizedBox(height: EZSpacing.xs),
-                            Text(
-                              'Enter the tracking code from your ticket',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                              ),
-                            ),
-                            const SizedBox(height: EZSpacing.sm),
-                            _TrackTicketForm(),
                           ],
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -335,14 +361,21 @@ class _TrackTicketFormState extends State<_TrackTicketForm> {
                           }
                         }
                         // Fallback: if QR is just an 8-char token string
-                        if (trackingToken.isEmpty && RegExp(r'^[A-HJ-NP-Z2-9]{8}$').hasMatch(rawValue.toUpperCase())) {
+                        if (trackingToken.isEmpty &&
+                            RegExp(
+                              r'^[A-HJ-NP-Z2-9]{8}$',
+                            ).hasMatch(rawValue.toUpperCase())) {
                           trackingToken = rawValue.toUpperCase();
                         }
                         if (trackingToken.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('No tracking code found in QR code.'),
-                              backgroundColor: Theme.of(context).colorScheme.error,
+                              content: const Text(
+                                'No tracking code found in QR code.',
+                              ),
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.error,
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -388,7 +421,7 @@ class _TrackTicketFormState extends State<_TrackTicketForm> {
       // CHANGED: Look up by tracking_token and link device for push notifications
       String deviceToken = await DeviceTokenManager.getDeviceToken();
       String? fcmToken = await PushNotificationService.initializeAndGetToken();
-      
+
       if (fcmToken != null) {
         PushNotificationService.listenForTokenRefresh(deviceToken);
       }

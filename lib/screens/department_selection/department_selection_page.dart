@@ -66,149 +66,156 @@ class _DepartmentSelectionPageState
 
           // Main content
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Step header - icon and text in one row
-                  Container(
-                    margin: const EdgeInsets.only(bottom: EZSpacing.xl),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(apiDepartmentsProvider);
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Step header - icon and text in one row
+                    Container(
+                      margin: const EdgeInsets.only(bottom: EZSpacing.xl),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Text('🏢', style: TextStyle(fontSize: 32)),
+                            ),
                           ),
-                          child: const Center(
-                            child: Text('🏢', style: TextStyle(fontSize: 32)),
-                          ),
-                        ),
-                        const SizedBox(width: EZSpacing.lg),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Select Department',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineMedium,
-                              ),
-                              const SizedBox(height: EZSpacing.xs),
-                              Text(
-                                'Choose where you want to queue',
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.6),
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Department selection using card-style radio buttons
-                  Text(
-                    'Available Departments',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: EZSpacing.md),
-                  departmentsAsync.when(
-                    data: (departments) {
-                      if (departments.isEmpty) {
-                        return const Center(
-                          child: Text('No departments available'),
-                        );
-                      }
-                      return RadioGroup<ApiDepartment>(
-                        groupValue: _selectedDepartment,
-                        onChanged: (ApiDepartment? value) {
-                          if (value != null) {
-                            _selectDepartment(value);
-                          }
-                        },
-                        child: Column(
-                          children: departments.map((department) {
-                            final isDisabled = formData.disabledDepartments
-                                .contains(department.id);
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: EZSpacing.md,
-                              ),
-                              child: EZCard(
-                                padding: EdgeInsets.zero,
-                                child: RadioListTile<ApiDepartment>(
-                                  title: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          department.name,
-                                          style: TextStyle(
-                                            color: isDisabled
-                                                ? Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurface
-                                                      .withValues(alpha: 0.5)
-                                                : null,
-                                          ),
-                                        ),
-                                      ),
-                                      if (isDisabled)
-                                        Tooltip(
-                                          message:
-                                              'You already have an active queue in this department',
-                                          child: Icon(
-                                            Icons.block,
-                                            size: 16,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.error,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                  subtitle: department.description != null
-                                      ? Text(
-                                          department.description!,
-                                          style: TextStyle(
-                                            color: isDisabled
-                                                ? Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurface
-                                                      .withValues(alpha: 0.4)
-                                                : null,
-                                          ),
-                                        )
-                                      : null,
-                                  value: department,
-                                  enabled: !isDisabled,
-                                  controlAffinity:
-                                      ListTileControlAffinity.leading,
+                          const SizedBox(width: EZSpacing.lg),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Select Department',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineMedium,
                                 ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      );
-                    },
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, st) =>
-                        Center(child: Text('Failed to load departments: $e')),
-                  ),
-                ],
+                                const SizedBox(height: EZSpacing.xs),
+                                Text(
+                                  'Choose where you want to queue',
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Department selection using card-style radio buttons
+                    Text(
+                      'Available Departments',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: EZSpacing.md),
+                    departmentsAsync.when(
+                      data: (departments) {
+                        if (departments.isEmpty) {
+                          return const Center(
+                            child: Text('No departments available'),
+                          );
+                        }
+                        return RadioGroup<ApiDepartment>(
+                          groupValue: _selectedDepartment,
+                          onChanged: (ApiDepartment? value) {
+                            if (value != null) {
+                              _selectDepartment(value);
+                            }
+                          },
+                          child: Column(
+                            children: departments.map((department) {
+                              final isDisabled = formData.disabledDepartments
+                                  .contains(department.id);
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: EZSpacing.md,
+                                ),
+                                child: EZCard(
+                                  padding: EdgeInsets.zero,
+                                  child: RadioListTile<ApiDepartment>(
+                                    title: Row(
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            department.name,
+                                            style: TextStyle(
+                                              color: isDisabled
+                                                  ? Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withValues(alpha: 0.5)
+                                                  : null,
+                                            ),
+                                          ),
+                                        ),
+                                        if (isDisabled)
+                                          Tooltip(
+                                            message:
+                                                'You already have an active queue in this department',
+                                            child: Icon(
+                                              Icons.block,
+                                              size: 16,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.error,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                    subtitle: department.description != null
+                                        ? Text(
+                                            department.description!,
+                                            style: TextStyle(
+                                              color: isDisabled
+                                                  ? Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurface
+                                                        .withValues(alpha: 0.4)
+                                                  : null,
+                                            ),
+                                          )
+                                        : null,
+                                    value: department,
+                                    enabled: !isDisabled,
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        );
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, st) =>
+                          Center(child: Text('Failed to load departments: $e')),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

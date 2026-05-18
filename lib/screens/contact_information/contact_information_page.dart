@@ -202,195 +202,206 @@ class _ContactInformationPageState
         children: [
           const TopNavBar(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Step header - icon and text in one row
-                    Container(
-                      margin: const EdgeInsets.only(bottom: EZSpacing.xl),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primary.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Center(
-                              child: Text('📞', style: TextStyle(fontSize: 32)),
-                            ),
-                          ),
-                          const SizedBox(width: EZSpacing.lg),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Contact Information',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.headlineMedium,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Step header - icon and text in one row
+                      Container(
+                        margin: const EdgeInsets.only(bottom: EZSpacing.xl),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Center(
+                                child: Text(
+                                  '📞',
+                                  style: TextStyle(fontSize: 32),
                                 ),
-                                const SizedBox(height: EZSpacing.xs),
-                                Text(
-                                  'How can we reach you?',
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(alpha: 0.6),
-                                      ),
-                                ),
-                              ],
+                              ),
                             ),
+                            const SizedBox(width: EZSpacing.lg),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Contact Information',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.headlineMedium,
+                                  ),
+                                  const SizedBox(height: EZSpacing.xs),
+                                  Text(
+                                    'How can we reach you?',
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.6),
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Phone Number input (separate line)
+                      Text(
+                        'Phone Number',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: EZSpacing.sm),
+                      EZInputField(
+                        child: InternationalPhoneNumberInput(
+                          onInputChanged: (PhoneNumber number) {
+                            _phoneNumber = number;
+                          },
+                          selectorConfig: const SelectorConfig(
+                            selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
+                            showFlags: true,
+                            setSelectorButtonAsPrefixIcon: true,
+                            trailingSpace: false,
+                            leadingPadding: 16.0,
                           ),
-                        ],
-                      ),
-                    ),
-
-                    // Phone Number input (separate line)
-                    Text(
-                      'Phone Number',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: EZSpacing.sm),
-                    EZInputField(
-                      child: InternationalPhoneNumberInput(
-                        onInputChanged: (PhoneNumber number) {
-                          _phoneNumber = number;
-                        },
-                        selectorConfig: const SelectorConfig(
-                          selectorType: PhoneInputSelectorType.BOTTOM_SHEET,
-                          showFlags: true,
-                          setSelectorButtonAsPrefixIcon: true,
-                          trailingSpace: false,
-                          leadingPadding: 16.0,
+                          initialValue: _phoneNumber,
+                          textFieldController: _contactNumberController,
+                          inputDecoration: ThemeHelpers.textInputDecoration(
+                            hintText: 'Enter your phone number',
+                          ),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            signed: true,
+                            decimal: true,
+                          ),
+                          inputBorder: InputBorder.none,
+                          formatInput: true,
+                          autoValidateMode: AutovalidateMode.onUserInteraction,
                         ),
-                        initialValue: _phoneNumber,
-                        textFieldController: _contactNumberController,
-                        inputDecoration: ThemeHelpers.textInputDecoration(
-                          hintText: 'Enter your phone number',
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          signed: true,
-                          decimal: true,
-                        ),
-                        inputBorder: InputBorder.none,
-                        formatInput: true,
-                        autoValidateMode: AutovalidateMode.onUserInteraction,
                       ),
-                    ),
-                    const SizedBox(height: EZSpacing.sm),
-                    Text(
-                      'For SMS notifications regarding your position in the queue',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
-                    ),
-
-                    const SizedBox(height: EZSpacing.xl),
-
-                    // Email input (separate line)
-                    Text(
-                      'Email Address',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: EZSpacing.sm),
-                    EZFormTextField(
-                      controller: _emailController,
-                      hintText: 'Enter your email address',
-                      keyboardType: TextInputType.emailAddress,
-                      maxLength: 255,
-                      validator: (value) {
-                        if (value != null &&
-                            value.isNotEmpty &&
-                            !_isValidEmail(value.trim())) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                    ),
-                    const SizedBox(height: EZSpacing.sm),
-                    Text(
-                      'For email notifications regarding your position in the queue',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.6),
-                      ),
-                    ),
-
-                    const SizedBox(height: EZSpacing.xxl),
-
-                    // Queue Type / Priority selection (card style like React)
-                    if (enablePriorityQueue) ...[
+                      const SizedBox(height: EZSpacing.sm),
                       Text(
-                        '⭐ Queue Type',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        'For SMS notifications regarding your position in the queue',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
                       ),
-                      const SizedBox(height: EZSpacing.md),
-                      _buildPriorityCards(),
-                      const SizedBox(height: EZSpacing.xxl),
-                    ],
 
-                    // ID Number for priority verification
-                    if (_priorityWeight > 1) ...[
+                      const SizedBox(height: EZSpacing.xl),
+
+                      // Email input (separate line)
                       Text(
-                        'ID Number (Optional)',
+                        'Email Address',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: EZSpacing.sm),
                       EZFormTextField(
-                        controller: _idNumberController,
-                        hintText: 'For priority verification purposes',
-                        maxLength: 50,
+                        controller: _emailController,
+                        hintText: 'Enter your email address',
+                        keyboardType: TextInputType.emailAddress,
+                        maxLength: 255,
+                        validator: (value) {
+                          if (value != null &&
+                              value.isNotEmpty &&
+                              !_isValidEmail(value.trim())) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                       ),
-                      const SizedBox(height: EZSpacing.xxl),
-                    ],
+                      const SizedBox(height: EZSpacing.sm),
+                      Text(
+                        'For email notifications regarding your position in the queue',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
 
-                    // Navigation buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: EZButton(
-                            isSecondary: true,
-                            onPressed: _isChecking ? null : () => context.pop(),
-                            child: const Text('Back'),
-                          ),
+                      const SizedBox(height: EZSpacing.xxl),
+
+                      // Queue Type / Priority selection (card style like React)
+                      if (enablePriorityQueue) ...[
+                        Text(
+                          '⭐ Queue Type',
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        const SizedBox(width: EZSpacing.md),
-                        Expanded(
-                          flex: 2,
-                          child: EZButton(
-                            onPressed: _isChecking ? null : _handleContinue,
-                            child: _isChecking
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Text('Continue'),
-                          ),
-                        ),
+                        const SizedBox(height: EZSpacing.md),
+                        _buildPriorityCards(),
+                        const SizedBox(height: EZSpacing.xxl),
                       ],
-                    ),
-                  ],
+
+                      // ID Number for priority verification
+                      if (_priorityWeight > 1) ...[
+                        Text(
+                          'ID Number (Optional)',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: EZSpacing.sm),
+                        EZFormTextField(
+                          controller: _idNumberController,
+                          hintText: 'For priority verification purposes',
+                          maxLength: 50,
+                        ),
+                        const SizedBox(height: EZSpacing.xxl),
+                      ],
+
+                      // Navigation buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: EZButton(
+                              isSecondary: true,
+                              onPressed: _isChecking
+                                  ? null
+                                  : () => context.pop(),
+                              child: const Text('Back'),
+                            ),
+                          ),
+                          const SizedBox(width: EZSpacing.md),
+                          Expanded(
+                            flex: 2,
+                            child: EZButton(
+                              onPressed: _isChecking ? null : _handleContinue,
+                              child: _isChecking
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text('Continue'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

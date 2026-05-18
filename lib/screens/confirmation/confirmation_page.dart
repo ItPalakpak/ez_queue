@@ -40,166 +40,207 @@ class ConfirmationPage extends ConsumerWidget {
 
           // Main content
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Step header - icon and text in one row
-                  Container(
-                    margin: const EdgeInsets.only(bottom: EZSpacing.xl),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Text('👁️', style: TextStyle(fontSize: 32)),
-                          ),
-                        ),
-                        const SizedBox(width: EZSpacing.lg),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Review Your Details',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineMedium,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Step header - icon and text in one row
+                    Container(
+                      margin: const EdgeInsets.only(bottom: EZSpacing.xl),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Text(
+                                '👁️',
+                                style: TextStyle(fontSize: 32),
                               ),
-                              const SizedBox(height: EZSpacing.xs),
-                              Text(
-                                'Verify your information before generating ticket',
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.6),
-                                    ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: EZSpacing.lg),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Review Your Details',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineMedium,
+                                ),
+                                const SizedBox(height: EZSpacing.xs),
+                                Text(
+                                  'Verify your information before generating ticket',
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // Department & Services section
-                  _buildInfoSection(
-                    context,
-                    _buildDepartmentSectionTitle(formData.services.length),
-                    [
-                      'Department: ${formData.department ?? 'Not selected'}',
-                      '${_buildServiceLabel(formData.services.length)}: ${formData.services.isEmpty ? 'None' : formData.services.join(', ')}',
-                    ],
-                    '/service-selection',
-                  ),
-
-                  if (formData.selections.isNotEmpty) ...[
-                    const SizedBox(height: EZSpacing.lg),
+                    // Department & Services section
                     _buildInfoSection(
                       context,
-                      'Credentials Request Details',
+                      _buildDepartmentSectionTitle(formData.services.length),
                       [
-                        'Requestor: ${formData.extraDetails['is_authorized_person'] == true ? 'Authorized Person' : 'Owner'}',
-                        if (formData.extraDetails['is_authorized_person'] == true)
-                          'Requirements: ${[
-                            if (formData.extraDetails['has_authorization_letter'] == true) 'Auth Letter',
-                            if (formData.extraDetails['has_owner_id_photocopy'] == true) 'Owner ID',
-                            if (formData.extraDetails['has_authorized_person_id'] == true) 'Proxy ID',
-                          ].join(', ')}',
-                        if (formData.extraDetails['date_of_graduation'] != null && formData.extraDetails['date_of_graduation'].toString().isNotEmpty)
-                          'Graduated: ${formData.extraDetails['date_of_graduation']}'
-                        else
-                          'Last Attended: ${formData.extraDetails['last_semester_attended'] ?? '-'} / ${formData.extraDetails['last_sy_attended'] ?? '-'}',
-                        'Cleared: ${formData.extraDetails['is_cleared'] == true ? 'Yes' : 'No'}',
-                        if (formData.extraDetails['purposes_display'] != null && (formData.extraDetails['purposes_display'] as List).isNotEmpty)
-                          'Purposes: ${(formData.extraDetails['purposes_display'] as List).join(', ')}'
-                        else if (formData.extraDetails['purposes'] != null && (formData.extraDetails['purposes'] as List).isNotEmpty)
-                          'Purposes: ${(formData.extraDetails['purposes'] as List).join(', ')}',
-                        'Documents Selected:',
-                        ...formData.selections.map((sel) {
-                          final docName = sel['document_name'] ?? 'Unknown Document';
-                          final subText = sel['subselection_name'] != null ? ' - ${sel['subselection_name']}' : '';
-                          final periodParts = [];
-                          if (sel['semester'] != null) periodParts.add(sel['semester']);
-                          if (sel['academic_year_name'] != null) periodParts.add(sel['academic_year_name']);
-                          final periodText = periodParts.isNotEmpty ? ' (${periodParts.join(' / ')})' : '';
-                          return '  • $docName$subText$periodText';
-                        }),
+                        'Department: ${formData.department ?? 'Not selected'}',
+                        '${_buildServiceLabel(formData.services.length)}: ${formData.services.isEmpty ? 'None' : formData.services.join(', ')}',
                       ],
-                      '/service-selection', // Route back to service selection to edit documents
+                      '/service-selection',
                     ),
-                  ] else ...[
+
+                    if (formData.selections.isNotEmpty) ...[
+                      const SizedBox(height: EZSpacing.lg),
+                      _buildInfoSection(
+                        context,
+                        'Credentials Request Details',
+                        [
+                          'Requestor: ${formData.extraDetails['is_authorized_person'] == true ? 'Authorized Person' : 'Owner'}',
+                          if (formData.extraDetails['is_authorized_person'] ==
+                              true)
+                            'Requirements: ${[if (formData.extraDetails['has_authorization_letter'] == true) 'Auth Letter', if (formData.extraDetails['has_owner_id_photocopy'] == true) 'Owner ID', if (formData.extraDetails['has_authorized_person_id'] == true) 'Proxy ID'].join(', ')}',
+                          if (formData.extraDetails['date_of_graduation'] !=
+                                  null &&
+                              formData.extraDetails['date_of_graduation']
+                                  .toString()
+                                  .isNotEmpty)
+                            'Graduated: ${formData.extraDetails['date_of_graduation']}'
+                          else
+                            'Last Attended: ${formData.extraDetails['last_semester_attended'] ?? '-'} / ${formData.extraDetails['last_sy_attended'] ?? '-'}',
+                          'Cleared: ${formData.extraDetails['is_cleared'] == true ? 'Yes' : 'No'}',
+                          if (formData.extraDetails['purposes_display'] !=
+                                  null &&
+                              (formData.extraDetails['purposes_display']
+                                      as List)
+                                  .isNotEmpty)
+                            'Purposes: ${(formData.extraDetails['purposes_display'] as List).join(', ')}'
+                          else if (formData.extraDetails['purposes'] != null &&
+                              (formData.extraDetails['purposes'] as List)
+                                  .isNotEmpty)
+                            'Purposes: ${(formData.extraDetails['purposes'] as List).join(', ')}',
+                          'Documents Selected:',
+                          ...formData.selections.map((sel) {
+                            final docName =
+                                sel['document_name'] ?? 'Unknown Document';
+                            final subText = sel['subselection_name'] != null
+                                ? ' - ${sel['subselection_name']}'
+                                : '';
+                            final periodParts = [];
+                            // FIX: wrap bare if statements in curly braces
+                            if (sel['semester'] != null) {
+                              periodParts.add(sel['semester']);
+                            }
+                            if (sel['academic_year_name'] != null) {
+                              periodParts.add(sel['academic_year_name']);
+                            }
+                            final periodText = periodParts.isNotEmpty
+                                ? ' (${periodParts.join(' / ')})'
+                                : '';
+                            return '  • $docName$subText$periodText';
+                          }),
+                        ],
+                        '/service-selection',
+                      ),
+                    ] else ...[
+                      const SizedBox(height: EZSpacing.lg),
+
+                      // Additional Details section
+                      _buildInfoSection(context, 'Additional Details', [
+                        if (formData.purpose != null)
+                          'Purpose: ${formData.purpose}'
+                        else
+                          'Purpose: Not specified',
+                        if (formData.items.isNotEmpty)
+                          'Items: ${formData.items.map((item) => '${item.name} x${item.quantity}').join(', ')}'
+                        else
+                          'Items: None',
+                      ], '/details-information'),
+                    ],
+
                     const SizedBox(height: EZSpacing.lg),
 
-                    // Additional Details section
-                    _buildInfoSection(context, 'Additional Details', [
-                      if (formData.purpose != null)
-                        'Purpose: ${formData.purpose}'
-                      else
-                        'Purpose: Not specified',
-                      if (formData.items.isNotEmpty)
-                        'Items: ${formData.items.map((item) => '${item.name} x${item.quantity}').join(', ')}'
-                      else
-                        'Items: None',
-                    ], '/details-information'),
-                  ],
+                    // User Information (Identity)
+                    _buildInfoSection(context, 'Identity Information', [
+                      'User Type: ${formData.userType ?? 'Not selected'}',
+                      'Full Name: ${formData.fullName ?? 'Not provided'}',
+                      if (formData.courseProgram != null)
+                        'Course/Program: ${formData.courseProgram}',
+                      if (formData.yearLevel != null)
+                        'Year Level: ${formData.yearLevel}',
+                      if (formData.standing != null)
+                        'Standing: ${formData.standing}',
+                      if (formData.idNumber != null)
+                        'ID Number: ${formData.idNumber}',
+                    ], '/identity-information'),
 
-                  const SizedBox(height: EZSpacing.lg),
-
-                  // User Information (Identity)
-                  _buildInfoSection(context, 'Identity Information', [
-                    'User Type: ${formData.userType ?? 'Not selected'}',
-                    'Full Name: ${formData.fullName ?? 'Not provided'}',
-                    if (formData.courseProgram != null)
-                      'Course/Program: ${formData.courseProgram}',
-                    if (formData.yearLevel != null)
-                      'Year Level: ${formData.yearLevel}',
-                    if (formData.standing != null)
-                      'Standing: ${formData.standing}',
-                    if (formData.idNumber != null)
-                      'ID Number: ${formData.idNumber}',
-                  ], '/identity-information'),
-
-                  const SizedBox(height: EZSpacing.lg),
-
-                  // Contact Information
-                  _buildInfoSection(context, 'Contact Information', [
-                    'Email: ${formData.email ?? 'Not provided'}',
-                    'Contact Number: ${formData.contactNumber ?? 'Not provided'}',
-                    if (formData.priorityWeight > 1) 'Priority: Priority Queue',
-                    if (formData.priorityWeight > 1 && formData.priorityIdNumber != null)
-                      'Priority ID: ${formData.priorityIdNumber}',
-                  ], '/contact-information'),
-
-                  if (formData.customFields.isNotEmpty && formData.customFields.values.any((fields) => fields.isNotEmpty)) ...[
                     const SizedBox(height: EZSpacing.lg),
-                    _buildInfoSection(
-                      context,
-                      'Additional Requirements',
-                      formData.customFields.entries.expand((entry) {
-                        return entry.value.entries
-                            .where((field) => field.value != null && field.value.toString().isNotEmpty)
-                            .map((field) {
-                          final key = field.key.split('_').map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '').join(' ');
-                          return '$key: ${field.value}';
-                        });
-                      }).toList(),
-                      '/dynamic-fields',
-                    ),
-                  ],
 
-                ],
+                    // Contact Information
+                    _buildInfoSection(context, 'Contact Information', [
+                      'Email: ${formData.email ?? 'Not provided'}',
+                      'Contact Number: ${formData.contactNumber ?? 'Not provided'}',
+                      if (formData.priorityWeight > 1)
+                        'Priority: Priority Queue',
+                      if (formData.priorityWeight > 1 &&
+                          formData.priorityIdNumber != null)
+                        'Priority ID: ${formData.priorityIdNumber}',
+                    ], '/contact-information'),
+
+                    if (formData.customFields.isNotEmpty &&
+                        formData.customFields.values.any(
+                          (fields) => fields.isNotEmpty,
+                        )) ...[
+                      const SizedBox(height: EZSpacing.lg),
+                      _buildInfoSection(
+                        context,
+                        'Additional Requirements',
+                        formData.customFields.entries.expand((entry) {
+                          return entry.value.entries
+                              .where(
+                                (field) =>
+                                    field.value != null &&
+                                    field.value.toString().isNotEmpty,
+                              )
+                              .map((field) {
+                                final key = field.key
+                                    .split('_')
+                                    .map(
+                                      (w) => w.isNotEmpty
+                                          ? '${w[0].toUpperCase()}${w.substring(1)}'
+                                          : '',
+                                    )
+                                    .join(' ');
+                                return '$key: ${field.value}';
+                              });
+                        }).toList(),
+                        '/dynamic-fields',
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -335,7 +376,9 @@ class ConfirmationPage extends ConsumerWidget {
           if (formData.selections.isNotEmpty) 'selections': formData.selections,
           if (formData.customFields.containsKey(serviceId))
             'custom_fields': formData.customFields[serviceId],
-          if (formData.extraDetails.isNotEmpty || formData.yearLevel != null || formData.standing != null)
+          if (formData.extraDetails.isNotEmpty ||
+              formData.yearLevel != null ||
+              formData.standing != null)
             'extra_details': {
               ...formData.extraDetails,
               if (formData.yearLevel != null) 'year_level': formData.yearLevel,
@@ -363,7 +406,6 @@ class ConfirmationPage extends ConsumerWidget {
       // Hide loading overlay
       if (context.mounted) {
         Navigator.of(context).pop();
-        // CHANGED: Show only user-friendly error message without technical details
         final errorMessage = e.toString().replaceAll('Exception: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

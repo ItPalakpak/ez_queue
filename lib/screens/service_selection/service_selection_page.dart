@@ -80,97 +80,111 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
 
           // Main content
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Step header - icon and text in one row
-                  Container(
-                    margin: const EdgeInsets.only(bottom: EZSpacing.xl),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(
+                  apiServicesProvider((
+                    departmentId: departmentId,
+                    courseId: courseId,
+                  )),
+                );
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Step header - icon and text in one row
+                    Container(
+                      margin: const EdgeInsets.only(bottom: EZSpacing.xl),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Text('📋', style: TextStyle(fontSize: 32)),
+                            ),
                           ),
-                          child: const Center(
-                            child: Text('📋', style: TextStyle(fontSize: 32)),
-                          ),
-                        ),
-                        const SizedBox(width: EZSpacing.lg),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Select Services',
-                                style: Theme.of(
-                                  context,
-                                ).textTheme.headlineMedium,
-                              ),
-                              if (department != null) ...[
-                                const SizedBox(height: EZSpacing.xs),
+                          const SizedBox(width: EZSpacing.lg),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 Text(
-                                  'Department: $department',
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(alpha: 0.6),
-                                      ),
+                                  'Select Services',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineMedium,
                                 ),
+                                if (department != null) ...[
+                                  const SizedBox(height: EZSpacing.xs),
+                                  Text(
+                                    'Department: $department',
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.6),
+                                        ),
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Service selection
-                  Text(
-                    'Select the Service you want to avail',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  if (allowMultiple)
-                    Padding(
-                      padding: const EdgeInsets.only(top: EZSpacing.xs),
-                      child: Text(
-                        '(You may select multiple services)',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
+                        ],
                       ),
                     ),
-                  const SizedBox(height: EZSpacing.md),
-                  servicesAsync.when(
-                    data: (response) =>
-                        _buildServiceSelector(response.services, allowMultiple),
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, st) => Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
+
+                    // Service selection
+                    Text(
+                      'Select the Service you want to avail',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    if (allowMultiple)
+                      Padding(
+                        padding: const EdgeInsets.only(top: EZSpacing.xs),
                         child: Text(
-                          'Failed to load services:\n$e',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
+                          '(You may select multiple services)',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                        ),
+                      ),
+                    const SizedBox(height: EZSpacing.md),
+                    servicesAsync.when(
+                      data: (response) => _buildServiceSelector(
+                        response.services,
+                        allowMultiple,
+                      ),
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, st) => Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Text(
+                            'Failed to load services:\n$e',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -266,9 +280,7 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
                       formatDuration(service.estimatedMinutes, compact: true),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
-                    leading: Radio<int>(
-                      value: service.id,
-                    ),
+                    leading: Radio<int>(value: service.id),
                     onTap: () {
                       setState(() {
                         _selectedServiceIds.clear();
@@ -302,7 +314,7 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
         child: content,
       );
     }
-    
+
     return content;
   }
 
@@ -328,22 +340,25 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
     final selectedServices = availableServices
         .where((s) => selectedIds.contains(s.id))
         .toList();
-    
+
     final hasDocuments = selectedServices.any((s) => s.documents.isNotEmpty);
     final hasFields = selectedServices.any((s) => s.fields.isNotEmpty);
 
     final currentServiceIds = ref.read(queueFormProvider).serviceIds;
-    final isDifferentService = currentServiceIds.length != selectedIds.length || 
+    final isDifferentService =
+        currentServiceIds.length != selectedIds.length ||
         !currentServiceIds.every((id) => selectedIds.contains(id));
 
     // Save service selection to state
     ref
         .read(queueFormProvider.notifier)
         .updateServiceInfo(serviceIds: selectedIds, services: selectedNames);
-        
+
     // Clear old document selections if the service changed, to avoid stale data
     if (isDifferentService) {
-      ref.read(queueFormProvider.notifier).updateDocumentSelections(selections: [], extraDetails: {});
+      ref
+          .read(queueFormProvider.notifier)
+          .updateDocumentSelections(selections: [], extraDetails: {});
     }
 
     if (hasDocuments) {
@@ -351,7 +366,8 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => DocumentSelectionPage(services: selectedServices),
+          builder: (context) =>
+              DocumentSelectionPage(services: selectedServices),
         ),
       );
     } else if (hasFields) {

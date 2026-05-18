@@ -57,18 +57,28 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
 
           // Main content
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Center(
-                child: RepaintBoundary(
-                  key: _ticketKey,
-                  child: Column(
-                    children: tickets
-                        .map((t) => Padding(
-                              padding: const EdgeInsets.only(bottom: EZSpacing.lg),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Center(
+                  child: RepaintBoundary(
+                    key: _ticketKey,
+                    child: Column(
+                      children: tickets
+                          .map(
+                            (t) => Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: EZSpacing.lg,
+                              ),
                               child: _buildTicketCard(context, t, isDark),
-                            ))
-                        .toList(),
+                            ),
+                          )
+                          .toList(),
+                    ),
                   ),
                 ),
               ),
@@ -131,17 +141,23 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
     final List<String> qrDataArr = [];
     qrDataArr.add('Ticket: ${ticket.ticketNumber}');
     qrDataArr.add('Name: ${ticket.studentName}');
-    
+
     final String userTypeLower = ticket.userType.toLowerCase();
     final String? ticketIdNumber = ticket.studentId ?? ticket.employeeId;
-    
-    if (userTypeLower == 'student' && ticket.studentId != null && ticket.studentId!.isNotEmpty) {
+
+    if (userTypeLower == 'student' &&
+        ticket.studentId != null &&
+        ticket.studentId!.isNotEmpty) {
       qrDataArr.add('Student ID: ${ticket.studentId}');
     }
-    if (userTypeLower == 'alumni' && ticket.studentId != null && ticket.studentId!.isNotEmpty) {
+    if (userTypeLower == 'alumni' &&
+        ticket.studentId != null &&
+        ticket.studentId!.isNotEmpty) {
       qrDataArr.add('Alumni ID: ${ticket.studentId}');
     }
-    if (userTypeLower == 'faculty' && ticket.employeeId != null && ticket.employeeId!.isNotEmpty) {
+    if (userTypeLower == 'faculty' &&
+        ticket.employeeId != null &&
+        ticket.employeeId!.isNotEmpty) {
       qrDataArr.add('Staff/Faculty ID: ${ticket.employeeId}');
     }
     if (ticket.phone != null && ticket.phone!.isNotEmpty) {
@@ -231,14 +247,17 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
             const SizedBox(height: EZSpacing.md),
 
             // Tracking Token
-            if (ticket.trackingToken != null && ticket.trackingToken!.isNotEmpty)
+            if (ticket.trackingToken != null &&
+                ticket.trackingToken!.isNotEmpty)
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: EZSpacing.lg,
                   vertical: EZSpacing.sm,
                 ),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(EZSpacing.radiusMd),
                 ),
                 child: Column(
@@ -248,7 +267,9 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1.2,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                     ),
                     const SizedBox(height: EZSpacing.xs),
@@ -257,7 +278,9 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         letterSpacing: 3.0,
-                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -276,11 +299,7 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
             // Ticket Details
             _buildDetailRow(context, 'Department:', ticket.departmentName),
             const SizedBox(height: EZSpacing.sm),
-            _buildDetailRow(
-              context,
-              'Service Availed:',
-              ticket.serviceName,
-            ),
+            _buildDetailRow(context, 'Service Availed:', ticket.serviceName),
             if (ticket.purpose != null) ...[
               const SizedBox(height: EZSpacing.sm),
               _buildDetailRow(context, 'Purpose:', ticket.purpose!),
@@ -289,11 +308,7 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
             _buildDetailRow(context, 'User Type:', ticket.userType),
             if (ticket.course != null) ...[
               const SizedBox(height: EZSpacing.sm),
-              _buildDetailRow(
-                context,
-                'Course/Program:',
-                ticket.course!,
-              ),
+              _buildDetailRow(context, 'Course/Program:', ticket.course!),
             ],
             if (ticketIdNumber != null) ...[
               const SizedBox(height: EZSpacing.sm),

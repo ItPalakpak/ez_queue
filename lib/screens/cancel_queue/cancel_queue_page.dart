@@ -69,141 +69,149 @@ class _CancelQueuePageState extends ConsumerState<CancelQueuePage> {
 
           // Main content
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Page title
-                    Text(
-                      'Cancel Queue',
-                      style: Theme.of(context).textTheme.headlineMedium,
-                    ),
-                    const SizedBox(height: EZSpacing.xl),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Page title
+                      Text(
+                        'Cancel Queue',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      const SizedBox(height: EZSpacing.xl),
 
-                    // Warning message
-                    EZCard(
-                      padding: EdgeInsets.zero,
-                      child: Container(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.error.withValues(alpha: 0.1),
-                        child: Padding(
-                          padding: const EdgeInsets.all(EZSpacing.lg),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.warning,
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                              const SizedBox(width: EZSpacing.md),
-                              Expanded(
-                                child: Text(
-                                  'Are you sure you want to cancel your queue?',
-                                  style: Theme.of(context).textTheme.bodyLarge,
+                      // Warning message
+                      EZCard(
+                        padding: EdgeInsets.zero,
+                        child: Container(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.error.withValues(alpha: 0.1),
+                          child: Padding(
+                            padding: const EdgeInsets.all(EZSpacing.lg),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.warning,
+                                  color: Theme.of(context).colorScheme.error,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: EZSpacing.md),
+                                Expanded(
+                                  child: Text(
+                                    'Are you sure you want to cancel your queue?',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
-                    if (tickets.isNotEmpty) ...[
-                      const SizedBox(height: EZSpacing.lg),
-                      // Ticket information
-                      EZCard(
-                        padding: EdgeInsets.zero,
-                        child: Padding(
-                          padding: const EdgeInsets.all(EZSpacing.lg),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Ticket Information',
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: EZSpacing.md),
-                              ...tickets.map(
-                                (ticket) => Column(
-                                  children: [
-                                    Text(
-                                      'Ticket Number: ${ticket.ticketNumber}',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge,
-                                    ),
-                                    Text(
-                                      'Department: ${ticket.departmentName}',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge,
-                                    ),
-                                    Text(
-                                      'Service: ${ticket.serviceName}',
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodyLarge,
-                                    ),
-                                    if (tickets.length > 1 &&
-                                        tickets.last != ticket)
-                                      const Divider(height: EZSpacing.lg),
-                                  ],
+                      if (tickets.isNotEmpty) ...[
+                        const SizedBox(height: EZSpacing.lg),
+                        // Ticket information
+                        EZCard(
+                          padding: EdgeInsets.zero,
+                          child: Padding(
+                            padding: const EdgeInsets.all(EZSpacing.lg),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Ticket Information',
+                                  style: Theme.of(context).textTheme.titleLarge,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: EZSpacing.md),
+                                ...tickets.map(
+                                  (ticket) => Column(
+                                    children: [
+                                      Text(
+                                        'Ticket Number: ${ticket.ticketNumber}',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge,
+                                      ),
+                                      Text(
+                                        'Department: ${ticket.departmentName}',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge,
+                                      ),
+                                      Text(
+                                        'Service: ${ticket.serviceName}',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodyLarge,
+                                      ),
+                                      if (tickets.length > 1 &&
+                                          tickets.last != ticket)
+                                        const Divider(height: EZSpacing.lg),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                        ),
+                      ],
+
+                      const SizedBox(height: EZSpacing.xl),
+
+                      // Reason input
+                      Text(
+                        'Reason for Cancellation',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: EZSpacing.md),
+                      EZFormTextField(
+                        controller: _reasonController,
+                        hintText: 'Please provide a reason for cancelling',
+                        maxLines: 5,
+                        maxLength: 500,
+                        textInputAction: TextInputAction.done,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please provide a reason for cancellation';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: EZSpacing.xxl),
+
+                      // Confirm cancellation button
+                      SizedBox(
+                        width: double.infinity,
+                        child: EZButton(
+                          onPressed: () => _handleCancelQueue(context, ref),
+                          child: Text('Confirm Cancellation'),
+                        ),
+                      ),
+
+                      const SizedBox(height: EZSpacing.md),
+
+                      // Back button
+                      SizedBox(
+                        width: double.infinity,
+                        child: EZButton(
+                          isSecondary: true,
+                          onPressed: () => context.pop(),
+                          child: Text('Go Back'),
                         ),
                       ),
                     ],
-
-                    const SizedBox(height: EZSpacing.xl),
-
-                    // Reason input
-                    Text(
-                      'Reason for Cancellation',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: EZSpacing.md),
-                    EZFormTextField(
-                      controller: _reasonController,
-                      hintText: 'Please provide a reason for cancelling',
-                      maxLines: 5,
-                      maxLength: 500,
-                      textInputAction: TextInputAction.done,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please provide a reason for cancellation';
-                        }
-                        return null;
-                      },
-                    ),
-
-                    const SizedBox(height: EZSpacing.xxl),
-
-                    // Confirm cancellation button
-                    SizedBox(
-                      width: double.infinity,
-                      child: EZButton(
-                        onPressed: () => _handleCancelQueue(context, ref),
-                        child: Text('Confirm Cancellation'),
-                      ),
-                    ),
-
-                    const SizedBox(height: EZSpacing.md),
-
-                    // Back button
-                    SizedBox(
-                      width: double.infinity,
-                      child: EZButton(
-                        isSecondary: true,
-                        onPressed: () => context.pop(),
-                        child: Text('Go Back'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),

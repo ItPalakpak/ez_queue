@@ -14,7 +14,8 @@ import 'package:go_router/go_router.dart';
 class DynamicFieldsPage extends ConsumerStatefulWidget {
   final List<ApiQueueService> services;
 
-  const DynamicFieldsPage({Key? key, required this.services}) : super(key: key);
+  // FIX 1: use super.key instead of Key? key
+  const DynamicFieldsPage({super.key, required this.services});
 
   @override
   ConsumerState<DynamicFieldsPage> createState() => _DynamicFieldsPageState();
@@ -25,7 +26,7 @@ class _DynamicFieldsPageState extends ConsumerState<DynamicFieldsPage> {
   List<ApiAcademicYear> _academics = [];
   List<ApiSubject> _subjects = [];
   final Map<int, Map<String, dynamic>> _formData = {};
-  
+
   // Controllers
   final Map<String, TextEditingController> _controllers = {};
 
@@ -33,18 +34,22 @@ class _DynamicFieldsPageState extends ConsumerState<DynamicFieldsPage> {
   void initState() {
     super.initState();
     _loadOptions();
-    
+
     final existingData = ref.read(queueFormProvider).customFields;
     if (existingData.isNotEmpty) {
-      existingData.forEach((serviceId, fields) {
-        _formData[serviceId] = Map.from(fields);
-      });
+      // FIX 2: use for loop instead of forEach with function literal
+      for (final entry in existingData.entries) {
+        _formData[entry.key] = Map.from(entry.value);
+      }
     }
   }
 
   @override
   void dispose() {
-    _controllers.values.forEach((c) => c.dispose());
+    // FIX 2: use for loop instead of forEach with function literal
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -109,15 +114,14 @@ class _DynamicFieldsPageState extends ConsumerState<DynamicFieldsPage> {
 
     ref.read(queueFormProvider.notifier).updateCustomFields(_formData);
 
-    final hasDocs = widget.services.any((s) => s.documents.isNotEmpty);
-    if (hasDocs) {
-      context.push('/confirmation');
-    } else {
-      context.push('/details-information');
-    }
+    context.push('/confirmation');
   }
 
-  TextEditingController _getController(int serviceId, String fieldName, String initialValue) {
+  TextEditingController _getController(
+    int serviceId,
+    String fieldName,
+    String initialValue,
+  ) {
     final key = '${serviceId}_$fieldName';
     if (!_controllers.containsKey(key)) {
       _controllers[key] = TextEditingController(text: initialValue);
@@ -125,187 +129,279 @@ class _DynamicFieldsPageState extends ConsumerState<DynamicFieldsPage> {
     return _controllers[key]!;
   }
 
+  // FIX 3: renamed from _isWithinGracePeriod (no leading underscore for local functions)
+  bool isWithinGracePeriod(String? endDateStr, String? gpStr) {
+    // FIX 4: wrap single-statement ifs in braces
+    if (gpStr == null || gpStr.isEmpty) {
+      return true;
+    }
+    if (endDateStr == null || endDateStr.isEmpty) {
+      return true;
+    }
+
+    final end = DateTime.tryParse(endDateStr);
+    if (end == null) {
+      return true;
+    }
+
+    final now = DateTime.now();
+    int years = 0;
+    int months = 0;
+
+    final yMatch = RegExp(r'(\d+)\s*y', caseSensitive: false).firstMatch(gpStr);
+    final mMatch = RegExp(r'(\d+)\s*m', caseSensitive: false).firstMatch(gpStr);
+
+    if (yMatch != null) {
+      years = int.tryParse(yMatch.group(1) ?? '0') ?? 0;
+    }
+    if (mMatch != null) {
+      months = int.tryParse(mMatch.group(1) ?? '0') ?? 0;
+    }
+
+    final cutoff = DateTime(
+      now.year - years,
+      now.month - months,
+      now.day,
+    );
+    return end.isAfter(cutoff) || end.isAtSameMomentAs(cutoff);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final servicesWithFields = widget.services.where((s) => s.fields.isNotEmpty).toList();
+    final servicesWithFields = widget.services
+        .where((s) => s.fields.isNotEmpty)
+        .toList();
 
     return Scaffold(
       body: Column(
         children: [
           const TopNavBar(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.only(bottom: EZSpacing.xl),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await _loadOptions();
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(bottom: EZSpacing.xl),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .primary
+                                  .withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Text('📝', style: TextStyle(fontSize: 32)),
+                            ),
                           ),
-                          child: const Center(
-                            child: Text('📝', style: TextStyle(fontSize: 32)),
+                          const SizedBox(width: EZSpacing.lg),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Additional Information',
+                                  style: Theme.of(context).textTheme.headlineMedium,
+                                ),
+                                const SizedBox(height: EZSpacing.xs),
+                                Text(
+                                  'Please provide required details for your service.',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyLarge
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.6),
+                                      ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: EZSpacing.lg),
-                        Expanded(
+                        ],
+                      ),
+                    ),
+
+                    // FIX 5: removed unnecessary .toList() in spread
+                    ...servicesWithFields.map((service) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: EZSpacing.lg),
+                        child: EZCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'Additional Information',
-                                style: Theme.of(context).textTheme.headlineMedium,
-                              ),
-                              const SizedBox(height: EZSpacing.xs),
-                              Text(
-                                'Please provide required details for your service.',
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                              if (servicesWithFields.length > 1)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: EZSpacing.md,
+                                  ),
+                                  child: Text(
+                                    service.name,
+                                    style: Theme.of(context).textTheme.titleLarge,
+                                  ),
                                 ),
-                              ),
+
+                              // FIX 5: removed unnecessary .toList() in spread
+                              ...service.fields.map((field) {
+                                final value =
+                                    _formData[service.id]?[field.fieldName]
+                                        ?.toString() ??
+                                    '';
+
+                                Widget inputWidget;
+
+                                if (field.fieldType == 'select' ||
+                                    field.fieldType == 'radio') {
+                                  inputWidget = DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    decoration: ThemeHelpers.textInputDecoration(
+                                      labelText: field.fieldLabel,
+                                    ),
+                                    initialValue: value.isEmpty ? null : value,
+                                    items: field.options.map((opt) {
+                                      return DropdownMenuItem(
+                                        value: opt,
+                                        child: Text(
+                                          opt,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) => _handleFieldChange(
+                                      service.id,
+                                      field.fieldName,
+                                      val,
+                                    ),
+                                  );
+                                } else if (field.fieldType == 'academic_year') {
+                                  final gracePeriodStr =
+                                      field.validation['lapse_grace_period']?.toString();
+
+                                  // FIX 3: use renamed top-level-style method
+                                  final filteredAcademics = _academics
+                                      .where(
+                                        (acad) => isWithinGracePeriod(
+                                          acad.endDate,
+                                          gracePeriodStr,
+                                        ),
+                                      )
+                                      .toList();
+
+                                  inputWidget = DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    decoration: ThemeHelpers.textInputDecoration(
+                                      labelText: field.fieldLabel,
+                                    ),
+                                    initialValue: value.isEmpty ? null : value,
+                                    items: filteredAcademics.map((ay) {
+                                      final termYear = '${ay.semester} - ${ay.name}';
+                                      return DropdownMenuItem(
+                                        value: termYear,
+                                        child: Text(
+                                          termYear,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) => _handleFieldChange(
+                                      service.id,
+                                      field.fieldName,
+                                      val,
+                                    ),
+                                  );
+                                } else if (field.fieldType == 'subject') {
+                                  final userCourseId =
+                                      ref.read(queueFormProvider).courseId;
+                                  final filteredSubjects = _subjects
+                                      .where(
+                                        (s) =>
+                                            s.courseId == null ||
+                                            s.courseId == userCourseId,
+                                      )
+                                      .toList();
+
+                                  inputWidget = DropdownButtonFormField<String>(
+                                    isExpanded: true,
+                                    decoration: ThemeHelpers.textInputDecoration(
+                                      labelText: field.fieldLabel,
+                                    ),
+                                    initialValue: value.isEmpty ? null : value,
+                                    items: filteredSubjects.map((subj) {
+                                      return DropdownMenuItem(
+                                        value: subj.code,
+                                        child: Text(
+                                          '${subj.code} - ${subj.name}',
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      );
+                                    }).toList(),
+                                    onChanged: (val) => _handleFieldChange(
+                                      service.id,
+                                      field.fieldName,
+                                      val,
+                                    ),
+                                  );
+                                } else {
+                                  TextInputType kbdType = TextInputType.text;
+                                  if (field.fieldType == 'number') {
+                                    kbdType = TextInputType.number;
+                                  }
+                                  if (field.fieldType == 'email') {
+                                    kbdType = TextInputType.emailAddress;
+                                  }
+
+                                  final controller = _getController(
+                                    service.id,
+                                    field.fieldName,
+                                    value,
+                                  );
+
+                                  inputWidget = TextField(
+                                    controller: controller,
+                                    keyboardType: kbdType,
+                                    decoration: ThemeHelpers.textInputDecoration(
+                                      labelText: field.fieldLabel,
+                                    ),
+                                    onChanged: (val) => _handleFieldChange(
+                                      service.id,
+                                      field.fieldName,
+                                      val,
+                                    ),
+                                  );
+                                }
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: EZSpacing.md,
+                                  ),
+                                  child: EZInputField(child: inputWidget),
+                                );
+                              }),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-
-                  ...servicesWithFields.map((service) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: EZSpacing.lg),
-                      child: EZCard(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (servicesWithFields.length > 1)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: EZSpacing.md),
-                                child: Text(
-                                  service.name,
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                ),
-                              ),
-                            
-                            ...service.fields.map((field) {
-                              final value = _formData[service.id]?[field.fieldName]?.toString() ?? '';
-                              
-                              Widget inputWidget;
-
-                              if (field.fieldType == 'select' || field.fieldType == 'radio') {
-                                inputWidget = DropdownButtonFormField<String>(
-                                  decoration: ThemeHelpers.textInputDecoration(
-                                    labelText: field.fieldLabel,
-                                  ),
-                                  value: value.isEmpty ? null : value,
-                                  items: field.options.map((opt) {
-                                    return DropdownMenuItem(
-                                      value: opt,
-                                      child: Text(opt),
-                                    );
-                                  }).toList(),
-                                  onChanged: (val) => _handleFieldChange(service.id, field.fieldName, val),
-                                );
-                              } else if (field.fieldType == 'academic_year') {
-                                final gracePeriodStr = field.validation['lapse_grace_period']?.toString();
-                                
-                                bool _isWithinGracePeriod(String? endDateStr, String? gpStr) {
-                                  if (gpStr == null || gpStr.isEmpty) return true;
-                                  if (endDateStr == null || endDateStr.isEmpty) return true;
-                                  
-                                  final end = DateTime.tryParse(endDateStr);
-                                  if (end == null) return true;
-                                  
-                                  final now = DateTime.now();
-                                  int years = 0;
-                                  int months = 0;
-                                  
-                                  final yMatch = RegExp(r'(\d+)\s*y', caseSensitive: false).firstMatch(gpStr);
-                                  final mMatch = RegExp(r'(\d+)\s*m', caseSensitive: false).firstMatch(gpStr);
-                                  
-                                  if (yMatch != null) years = int.tryParse(yMatch.group(1) ?? '0') ?? 0;
-                                  if (mMatch != null) months = int.tryParse(mMatch.group(1) ?? '0') ?? 0;
-                                  
-                                  final cutoff = DateTime(now.year - years, now.month - months, now.day);
-                                  return end.isAfter(cutoff) || end.isAtSameMomentAs(cutoff);
-                                }
-                                
-                                final filteredAcademics = _academics.where((acad) => _isWithinGracePeriod(acad.endDate, gracePeriodStr)).toList();
-
-                                inputWidget = DropdownButtonFormField<String>(
-                                  decoration: ThemeHelpers.textInputDecoration(
-                                    labelText: field.fieldLabel,
-                                  ),
-                                  value: value.isEmpty ? null : value,
-                                  items: filteredAcademics.map((ay) {
-                                    final termYear = '${ay.semester} - ${ay.name}';
-                                    return DropdownMenuItem(
-                                      value: termYear,
-                                      child: Text(termYear),
-                                    );
-                                  }).toList(),
-                                  onChanged: (val) => _handleFieldChange(service.id, field.fieldName, val),
-                                );
-                              } else if (field.fieldType == 'subject') {
-                                final userCourseId = ref.read(queueFormProvider).courseId;
-                                final filteredSubjects = _subjects.where((s) => s.courseId == null || s.courseId == userCourseId).toList();
-                                
-                                inputWidget = DropdownButtonFormField<String>(
-                                  decoration: ThemeHelpers.textInputDecoration(
-                                    labelText: field.fieldLabel,
-                                  ),
-                                  value: value.isEmpty ? null : value,
-                                  items: filteredSubjects.map((subj) {
-                                    return DropdownMenuItem(
-                                      value: subj.code,
-                                      child: Text('${subj.code} - ${subj.name}'),
-                                    );
-                                  }).toList(),
-                                  onChanged: (val) => _handleFieldChange(service.id, field.fieldName, val),
-                                );
-                              } else {
-                                TextInputType kbdType = TextInputType.text;
-                                if (field.fieldType == 'number') kbdType = TextInputType.number;
-                                if (field.fieldType == 'email') kbdType = TextInputType.emailAddress;
-                                
-                                final controller = _getController(service.id, field.fieldName, value);
-                                
-                                inputWidget = TextField(
-                                  controller: controller,
-                                  keyboardType: kbdType,
-                                  decoration: ThemeHelpers.textInputDecoration(
-                                    labelText: field.fieldLabel,
-                                  ),
-                                  onChanged: (val) => _handleFieldChange(service.id, field.fieldName, val),
-                                );
-                              }
-
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: EZSpacing.md),
-                                child: EZInputField(
-                                  child: inputWidget,
-                                ),
-                              );
-                            }).toList(),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ],
+                      );
+                    }),
+                  ],
+                ),
               ),
             ),
           ),

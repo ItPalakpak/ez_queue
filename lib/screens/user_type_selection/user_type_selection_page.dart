@@ -32,8 +32,7 @@ class _UserType {
   });
 }
 
-class _UserTypeSelectionPageState
-    extends ConsumerState<UserTypeSelectionPage> {
+class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
   /// Available user types matching React kiosk.
   static const List<_UserType> _userTypes = [
     _UserType(
@@ -72,52 +71,60 @@ class _UserTypeSelectionPageState
         children: [
           const TopNavBar(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(EZSpacing.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Step header - matches React kiosk style
-                  Container(
-                    margin: const EdgeInsets.only(bottom: EZSpacing.xl),
-                    child: Column(
-                      children: [
-                        // Icon
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: colorScheme.primary.withValues(alpha: 0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              '🏷️',
-                              style: TextStyle(fontSize: 32),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(EZSpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Step header - matches React kiosk style
+                    Container(
+                      margin: const EdgeInsets.only(bottom: EZSpacing.xl),
+                      child: Column(
+                        children: [
+                          // Icon
+                          Container(
+                            width: 64,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: colorScheme.primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                '🏷️',
+                                style: TextStyle(fontSize: 32),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: EZSpacing.lg),
-                        // Title
-                        Text(
-                          'Who are you?',
-                          style: theme.textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: EZSpacing.sm),
-                        // Subtitle
-                        Text(
-                          'Select your user type to continue',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          const SizedBox(height: EZSpacing.lg),
+                          // Title
+                          Text(
+                            'Who are you?',
+                            style: theme.textTheme.headlineMedium,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: EZSpacing.sm),
+                          // Subtitle
+                          Text(
+                            'Select your user type to continue',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  // User type cards grid
-                  _buildUserTypeGrid(context),
-                ],
+                    // User type cards grid
+                    _buildUserTypeGrid(context),
+                  ],
+                ),
               ),
             ),
           ),
