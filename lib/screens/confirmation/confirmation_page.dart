@@ -373,6 +373,7 @@ class ConfirmationPage extends ConsumerWidget {
             'priority_id_number': formData.priorityIdNumber,
           'device_token': deviceToken,
           'fcm_token': fcmToken,
+          if (formData.nameBreakdown != null) 'name_breakdown': formData.nameBreakdown,
           if (formData.selections.isNotEmpty) 'selections': formData.selections,
           if (formData.customFields.containsKey(serviceId))
             'custom_fields': formData.customFields[serviceId],

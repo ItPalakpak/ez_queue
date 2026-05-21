@@ -4,6 +4,8 @@ import 'package:ez_queue/widgets/app_logo.dart';
 import 'package:ez_queue/services/api_service.dart';
 import 'package:ez_queue/services/device_token_manager.dart';
 import 'package:go_router/go_router.dart';
+import 'package:ez_queue/widgets/ez_dialog.dart';
+import 'package:ez_queue/widgets/ez_button.dart';
 
 /// Reusable top navigation bar widget used across all pages.
 ///
@@ -114,7 +116,7 @@ class _ActiveTicketsButtonState extends State<_ActiveTicketsButton> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
+        return EZDialog(
           title: Row(
             children: [
               Icon(Icons.receipt_long, color: Theme.of(context).colorScheme.primary),
@@ -177,7 +179,8 @@ class _ActiveTicketsButtonState extends State<_ActiveTicketsButton> {
             ),
           ),
           actions: [
-            TextButton(
+            EZButton(
+              isSecondary: true,
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Close'),
             ),
@@ -211,7 +214,7 @@ class _WarningButton extends StatelessWidget {
       onPressed: () {
         showDialog(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (context) => EZDialog(
             title: Row(
               children: [
                 Icon(
@@ -222,13 +225,21 @@ class _WarningButton extends StatelessWidget {
                 const Text('Important Reminders'),
               ],
             ),
-            content: const Text(
-              '• You cannot create another queue in a department where you have an active queue\n\n'
-              '• Always maintain an internet connection\n\n'
-              '• Wait for notifications via email and this app for queue status updates',
+            content: RichText(
+              text: TextSpan(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
+                children: const [
+                  TextSpan(text: '• You cannot create another queue in a department where you have an active queue\n\n'),
+                  TextSpan(text: '• Always maintain an internet connection\n\n'),
+                  TextSpan(text: '• Wait for notifications via email and this app for queue status updates\n\n'),
+                  TextSpan(text: '• Inputs marked with a red asterisk ('),
+                  TextSpan(text: '*', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                  TextSpan(text: ') are required inputs'),
+                ],
+              ),
             ),
             actions: [
-              TextButton(
+              EZButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('Got it'),
               ),

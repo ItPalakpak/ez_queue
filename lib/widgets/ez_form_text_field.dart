@@ -28,6 +28,7 @@ class EZFormTextField extends StatefulWidget {
   final void Function(String)? onChanged;
   final void Function(String)? onFieldSubmitted;
   final FocusNode? focusNode;
+  final bool isRequired;
 
   const EZFormTextField({
     super.key,
@@ -48,6 +49,7 @@ class EZFormTextField extends StatefulWidget {
     this.onChanged,
     this.onFieldSubmitted,
     this.focusNode,
+    this.isRequired = false,
   });
 
   @override
@@ -98,6 +100,7 @@ class _EZFormTextFieldState extends State<EZFormTextField> {
       children: [
         EZInputField(
           borderColor: _errorText != null ? errorColor : null,
+          isRequired: widget.isRequired,
           child: TextFormField(
             controller: widget.controller,
             focusNode: widget.focusNode,

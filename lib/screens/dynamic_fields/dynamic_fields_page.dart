@@ -392,7 +392,10 @@ class _DynamicFieldsPageState extends ConsumerState<DynamicFieldsPage> {
                                   padding: const EdgeInsets.only(
                                     bottom: EZSpacing.md,
                                   ),
-                                  child: EZInputField(child: inputWidget),
+                                  child: EZInputField(
+                                    isRequired: field.isRequired,
+                                    child: inputWidget,
+                                  ),
                                 );
                               }),
                             ],

@@ -12,6 +12,7 @@ import 'package:ez_queue/widgets/ez_button.dart';
 import 'package:ez_queue/widgets/ez_input_field.dart';
 import 'package:ez_queue/widgets/ez_form_text_field.dart';
 import 'package:ez_queue/utils/theme_helpers.dart';
+import 'package:ez_queue/widgets/ez_dialog.dart';
 import 'package:ez_queue/providers/api_providers.dart';
 import 'package:ez_queue/models/api_models.dart';
 
@@ -28,7 +29,10 @@ class IdentityInformationPage extends ConsumerStatefulWidget {
 
 class _IdentityInformationPageState
     extends ConsumerState<IdentityInformationPage> {
-  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _middleNameController = TextEditingController();
+  final TextEditingController _suffixController = TextEditingController();
   final TextEditingController _idNumberController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
@@ -44,7 +48,10 @@ class _IdentityInformationPageState
 
   @override
   void dispose() {
-    _fullNameController.dispose();
+    _lastNameController.dispose();
+    _firstNameController.dispose();
+    _middleNameController.dispose();
+    _suffixController.dispose();
     _idNumberController.dispose();
     super.dispose();
   }
@@ -124,10 +131,39 @@ class _IdentityInformationPageState
     final formData = ref.read(queueFormProvider);
     final userType = formData.userType;
 
-    // Parse Name — CHANGED: truncate and strip HTML tags for security
-    if (data['Name'] != null && data['Name']!.isNotEmpty) {
+    // Parse explicitly structured Name Parts if available
+    if (data['Last Name'] != null) {
+      setState(() => _lastNameController.text = _sanitize(data['Last Name']!, 100));
+      hasValidData = true;
+    }
+    if (data['First Name'] != null) {
+      setState(() => _firstNameController.text = _sanitize(data['First Name']!, 100));
+      hasValidData = true;
+    }
+    if (data['Middle Name'] != null) {
+      setState(() => _middleNameController.text = _sanitize(data['Middle Name']!, 100));
+      hasValidData = true;
+    }
+    if (data['Suffix'] != null) {
+      setState(() => _suffixController.text = _sanitize(data['Suffix']!, 50));
+      hasValidData = true;
+    }
+
+    // Fallback logic for old QR codes
+    if (data['Name'] != null && data['Name']!.isNotEmpty && data['Last Name'] == null && data['First Name'] == null) {
+      final sanitizedName = _sanitize(data['Name']!, 255);
+      final parts = sanitizedName.split(',');
       setState(() {
-        _fullNameController.text = _sanitize(data['Name']!, 255);
+        if (parts.length > 1) {
+          _lastNameController.text = parts[0].trim();
+          final remaining = parts[1].trim().split(' ');
+          _firstNameController.text = remaining.isNotEmpty ? remaining[0] : '';
+          if (remaining.length > 1) {
+            _middleNameController.text = remaining.sublist(1).join(' ');
+          }
+        } else {
+          _firstNameController.text = sanitizedName.trim();
+        }
       });
       hasValidData = true;
     }
@@ -236,54 +272,37 @@ class _IdentityInformationPageState
   void _showQRScanner(List<ApiCourse> courses) {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 400,
-          height: 500,
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(EZSpacing.md),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Scan QR Code',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-              // Scanner
-              Expanded(
-                child: MobileScanner(
-                  onDetect: (capture) {
-                    final barcodes = capture.barcodes;
-                    for (final barcode in barcodes) {
-                      if (barcode.rawValue != null) {
-                        Navigator.of(context).pop();
-                        _parseQRData(barcode.rawValue!, courses);
-                        return;
-                      }
+      builder: (context) => EZDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Scan QR Code'),
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close),
+            ),
+          ],
+        ),
+        content: Column(
+          children: [
+            SizedBox(
+              height: 300,
+              child: MobileScanner(
+                onDetect: (capture) {
+                  final barcodes = capture.barcodes;
+                  for (final barcode in barcodes) {
+                    if (barcode.rawValue != null) {
+                      Navigator.of(context).pop();
+                      _parseQRData(barcode.rawValue!, courses);
+                      return;
                     }
-                  },
-                ),
+                  }
+                },
               ),
-              // Instructions
-              Padding(
-                padding: const EdgeInsets.all(EZSpacing.md),
-                child: Text(
-                  'Point camera at a student/faculty ID QR code',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: EZSpacing.md),
+            const Text('Point camera at a student/faculty ID QR code'),
+          ],
         ),
       ),
     );
@@ -300,10 +319,20 @@ class _IdentityInformationPageState
       );
     }
 
-    if (formData.fullName != null && _fullNameController.text.isEmpty) {
+    if (formData.nameBreakdown != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _fullNameController.text = formData.fullName!;
+          if (_lastNameController.text.isEmpty) _lastNameController.text = formData.nameBreakdown!['last_name'] ?? '';
+          if (_firstNameController.text.isEmpty) _firstNameController.text = formData.nameBreakdown!['first_name'] ?? '';
+          if (_middleNameController.text.isEmpty) _middleNameController.text = formData.nameBreakdown!['middle_name'] ?? '';
+          if (_suffixController.text.isEmpty) _suffixController.text = formData.nameBreakdown!['suffix'] ?? '';
+        }
+      });
+    } else if (formData.fullName != null && _firstNameController.text.isEmpty && _lastNameController.text.isEmpty) {
+      // Legacy fallback
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+           _firstNameController.text = formData.fullName!;
         }
       });
     }
@@ -456,6 +485,7 @@ class _IdentityInformationPageState
                             ),
                             const SizedBox(height: EZSpacing.md),
                             EZFormTextField(
+                              isRequired: true,
                               controller: _idNumberController,
                               hintText: _idNumberHintText(userType),
                               keyboardType: TextInputType.text,
@@ -476,23 +506,70 @@ class _IdentityInformationPageState
                             const SizedBox(height: EZSpacing.xxl),
                           ],
 
-                          // Full name input
+                          // Name inputs
                           Text(
-                            'Full Name *',
+                            'Last Name *',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
-                          const SizedBox(height: EZSpacing.md),
+                          const SizedBox(height: EZSpacing.sm),
                           EZFormTextField(
-                            controller: _fullNameController,
-                            hintText: 'Enter your full name',
+                            isRequired: true,
+                            controller: _lastNameController,
+                            hintText: 'Enter your last name',
                             textInputAction: TextInputAction.next,
-                            maxLength: 255,
+                            maxLength: 100,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Please enter your full name';
+                                return 'Please enter your last name';
                               }
                               return null;
                             },
+                          ),
+                          const SizedBox(height: EZSpacing.lg),
+
+                          Text(
+                            'First Name *',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: EZSpacing.sm),
+                          EZFormTextField(
+                            isRequired: true,
+                            controller: _firstNameController,
+                            hintText: 'Enter your first name',
+                            textInputAction: TextInputAction.next,
+                            maxLength: 100,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Please enter your first name';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: EZSpacing.lg),
+
+                          Text(
+                            'Middle Name',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: EZSpacing.sm),
+                          EZFormTextField(
+                            controller: _middleNameController,
+                            hintText: 'Enter your middle name',
+                            textInputAction: TextInputAction.next,
+                            maxLength: 100,
+                          ),
+                          const SizedBox(height: EZSpacing.lg),
+
+                          Text(
+                            'Suffix',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: EZSpacing.sm),
+                          EZFormTextField(
+                            controller: _suffixController,
+                            hintText: 'e.g., Jr., III',
+                            textInputAction: TextInputAction.next,
+                            maxLength: 50,
                           ),
                           const SizedBox(height: EZSpacing.xxl),
 
@@ -533,6 +610,7 @@ class _IdentityInformationPageState
                                   });
                                 }
                                 return EZInputField(
+                                  isRequired: !_isCourseOptional(userType),
                                   child: DropdownButtonFormField<int>(
                                     initialValue: effectiveCourseId,
                                     decoration:
@@ -821,10 +899,25 @@ class _IdentityInformationPageState
         return;
       }
 
+      final lastName = _lastNameController.text.trim();
+      final firstName = _firstNameController.text.trim();
+      final middleName = _middleNameController.text.trim();
+      final suffix = _suffixController.text.trim();
+
+      String generatedFullName = '$lastName, $firstName';
+      if (middleName.isNotEmpty) generatedFullName += ' $middleName';
+      if (suffix.isNotEmpty) generatedFullName += ' $suffix';
+
       ref
           .read(queueFormProvider.notifier)
           .updateIdentityInfo(
-            fullName: _fullNameController.text.trim(),
+            fullName: generatedFullName,
+            nameBreakdown: {
+              'last_name': lastName,
+              'first_name': firstName,
+              if (middleName.isNotEmpty) 'middle_name': middleName,
+              if (suffix.isNotEmpty) 'suffix': suffix,
+            },
             idNumber: _idNumberController.text.trim().isEmpty
                 ? null
                 : _idNumberController.text.trim(),

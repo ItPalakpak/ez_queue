@@ -9,6 +9,7 @@ import 'package:ez_queue/widgets/ez_button.dart';
 import 'package:ez_queue/widgets/ez_card.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ez_queue/widgets/ez_form_text_field.dart';
+import 'package:ez_queue/widgets/ez_dialog.dart';
 
 /// Cancel queue page where users can provide a reason for cancellation.
 class CancelQueuePage extends ConsumerStatefulWidget {
@@ -230,18 +231,19 @@ class _CancelQueuePageState extends ConsumerState<CancelQueuePage> {
       // Show confirmation dialog
       showDialog(
         context: context,
-        builder: (dialogContext) => AlertDialog(
+        builder: (dialogContext) => EZDialog(
           title: const Text('Confirm Cancellation'),
           content: Text(
             'Are you sure you want to cancel ${tickets.length == 1 ? "this ticket" : "all ${tickets.length} tickets"}? This action cannot be undone.\n\n'
             'Reason: $reason',
           ),
           actions: [
-            TextButton(
+            EZButton(
+              isSecondary: true,
               onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('No'),
             ),
-            TextButton(
+            EZButton(
               onPressed: () async {
                 // CHANGED: actual API call to cancel each ticket with reason
                 final apiService = ApiService();

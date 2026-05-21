@@ -14,6 +14,7 @@ import 'package:ez_queue/services/api_service.dart';
 import 'package:ez_queue/services/device_token_manager.dart';
 import 'package:ez_queue/services/push_notification_service.dart';
 import 'package:ez_queue/utils/theme_helpers.dart';
+import 'package:ez_queue/widgets/ez_dialog.dart';
 
 /// Landing page with EZQueue force that adapts to theme mode.
 class LandingPage extends ConsumerWidget {
@@ -315,97 +316,80 @@ class _TrackTicketFormState extends State<_TrackTicketForm> {
   void _showQRScanner() {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        child: SizedBox(
-          width: 400,
-          height: 500,
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(EZSpacing.md),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Scan Ticket QR Code',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-              ),
-              // Scanner
-              Expanded(
-                child: MobileScanner(
-                  onDetect: (capture) {
-                    final barcodes = capture.barcodes;
-                    for (final barcode in barcodes) {
-                      if (barcode.rawValue != null) {
-                        Navigator.of(context).pop();
-                        String rawValue = barcode.rawValue!.trim();
-                        // CHANGED: Parse tracking token from QR data
-                        String trackingToken = '';
-                        // Look for 'Tracking: XXXXXXXX' line in multi-line QR data
-                        for (final line in rawValue.split('\n')) {
-                          final trimmed = line.trim();
-                          if (trimmed.toUpperCase().startsWith('TRACKING:')) {
-                            trackingToken = trimmed
-                                .substring('TRACKING:'.length)
-                                .trim()
-                                .toUpperCase();
-                            break;
-                          }
+      builder: (context) => EZDialog(
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Scan Ticket QR Code'),
+            IconButton(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close),
+            ),
+          ],
+        ),
+        content: Column(
+          children: [
+            SizedBox(
+              height: 300,
+              child: MobileScanner(
+                onDetect: (capture) {
+                  final barcodes = capture.barcodes;
+                  for (final barcode in barcodes) {
+                    if (barcode.rawValue != null) {
+                      Navigator.of(context).pop();
+                      String rawValue = barcode.rawValue!.trim();
+                      // CHANGED: Parse tracking token from QR data
+                      String trackingToken = '';
+                      // Look for 'Tracking: XXXXXXXX' line in multi-line QR data
+                      for (final line in rawValue.split('\n')) {
+                        final trimmed = line.trim();
+                        if (trimmed.toUpperCase().startsWith('TRACKING:')) {
+                          trackingToken = trimmed
+                              .substring('TRACKING:'.length)
+                              .trim()
+                              .toUpperCase();
+                          break;
                         }
-                        // Fallback: if QR is just an 8-char token string
-                        if (trackingToken.isEmpty &&
-                            RegExp(
-                              r'^[A-HJ-NP-Z2-9]{8}$',
-                            ).hasMatch(rawValue.toUpperCase())) {
-                          trackingToken = rawValue.toUpperCase();
-                        }
-                        if (trackingToken.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                'No tracking code found in QR code.',
-                              ),
-                              backgroundColor: Theme.of(
-                                context,
-                              ).colorScheme.error,
-                              behavior: SnackBarBehavior.floating,
+                      }
+                      // Fallback: if QR is just an 8-char token string
+                      if (trackingToken.isEmpty &&
+                          RegExp(
+                            r'^[A-HJ-NP-Z2-9]{8}$',
+                          ).hasMatch(rawValue.toUpperCase())) {
+                        trackingToken = rawValue.toUpperCase();
+                      }
+                      if (trackingToken.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text(
+                              'No tracking code found in QR code.',
                             ),
-                          );
-                          return;
-                        }
-                        setState(() {
-                          _controller.text = trackingToken;
-                        });
-                        // Auto-trigger track after short delay
-                        Future.delayed(const Duration(milliseconds: 300), () {
-                          if (mounted && _controller.text.isNotEmpty) {
-                            _handleTrack();
-                          }
-                        });
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.error,
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
                         return;
                       }
+                      setState(() {
+                        _controller.text = trackingToken;
+                      });
+                      // Auto-trigger track after short delay
+                      Future.delayed(const Duration(milliseconds: 300), () {
+                        if (mounted && _controller.text.isNotEmpty) {
+                          _handleTrack();
+                        }
+                      });
+                      return;
                     }
-                  },
-                ),
+                  }
+                },
               ),
-              // Instructions
-              Padding(
-                padding: const EdgeInsets.all(EZSpacing.md),
-                child: Text(
-                  'Point camera at a ticket QR code',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: EZSpacing.md),
+            const Text('Point camera at a ticket QR code'),
+          ],
         ),
       ),
     );

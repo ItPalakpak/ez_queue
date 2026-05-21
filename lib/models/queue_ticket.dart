@@ -20,6 +20,7 @@ class QueueTicket {
   final String status;
   final DateTime createdAt;
   final String? trackingToken;
+  final Map<String, String>? nameBreakdown;
 
   const QueueTicket({
     required this.id,
@@ -42,9 +43,17 @@ class QueueTicket {
     required this.status,
     required this.createdAt,
     this.trackingToken,
+    this.nameBreakdown,
   });
 
   factory QueueTicket.fromJson(Map<String, dynamic> json) {
+    Map<String, String>? parsedNameBreakdown;
+    if (json['name_breakdown'] != null) {
+      try {
+        parsedNameBreakdown = Map<String, String>.from(json['name_breakdown'] as Map);
+      } catch (_) {}
+    }
+
     return QueueTicket(
       id: json['id'],
       ticketNumber: json['ticket_number'],
@@ -66,6 +75,7 @@ class QueueTicket {
       status: json['status'] ?? 'waiting',
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']).toLocal() : DateTime.now(),
       trackingToken: json['tracking_token'],
+      nameBreakdown: parsedNameBreakdown,
     );
   }
 }

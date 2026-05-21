@@ -253,10 +253,11 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
                     subtitle: service.description != null
                         ? Text(service.description!)
                         : null,
-                    secondary: Text(
-                      formatDuration(service.estimatedMinutes, compact: true),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    // CHANGED: hide estimated time for now
+                    // secondary: Text(
+                    //   formatDuration(service.estimatedMinutes, compact: true),
+                    //   style: Theme.of(context).textTheme.bodySmall,
+                    // ),
                     value: isSelected,
                     onChanged: (bool? value) {
                       setState(() {
@@ -276,10 +277,11 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
                     subtitle: service.description != null
                         ? Text(service.description!)
                         : null,
-                    trailing: Text(
-                      formatDuration(service.estimatedMinutes, compact: true),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                    // CHANGED: hide estimated time for now
+                    // trailing: Text(
+                    //   formatDuration(service.estimatedMinutes, compact: true),
+                    //   style: Theme.of(context).textTheme.bodySmall,
+                    // ),
                     leading: Radio<int>(value: service.id),
                     onTap: () {
                       setState(() {

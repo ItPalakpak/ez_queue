@@ -7,6 +7,7 @@ import 'package:ez_queue/utils/api_config.dart';
 import 'package:ez_queue/services/api_service.dart';
 import 'package:ez_queue/theme/spacing.dart';
 import 'package:ez_queue/widgets/ez_button.dart';
+import 'package:ez_queue/widgets/ez_dialog.dart';
 
 class GlobalQueueAlertManager {
   static final GlobalQueueAlertManager _instance = GlobalQueueAlertManager._internal();
@@ -115,7 +116,7 @@ class GlobalQueueAlertManager {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => EZDialog(
         title: const Text('It\'s almost your turn!'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -130,7 +131,8 @@ class GlobalQueueAlertManager {
           ],
         ),
         actions: [
-          TextButton(
+          EZButton(
+            isSecondary: true,
             onPressed: () {
               if (_deviceToken != null) {
                 ApiService.confirmOnWay(

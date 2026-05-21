@@ -10,6 +10,7 @@ import 'package:ez_queue/widgets/top_nav_bar.dart';
 import 'package:ez_queue/widgets/ez_button.dart';
 import 'package:ez_queue/widgets/ez_card.dart';
 import 'package:ez_queue/widgets/ez_input_field.dart';
+import 'package:ez_queue/widgets/ez_dialog.dart';
 import 'package:ez_queue/widgets/ez_form_text_field.dart';
 import 'package:ez_queue/utils/theme_helpers.dart';
 import 'package:ez_queue/services/api_service.dart';
@@ -44,32 +45,31 @@ class _ContactInformationPageState
     if (fullNumber.isEmpty || _contactNumberController.text.isNotEmpty) return;
 
     try {
-      final parsed = await PhoneNumber.getRegionInfoFromPhoneNumber(fullNumber);
-      final dialCode = parsed.dialCode ?? ''; // e.g. "+63"
-      final isoCode = parsed.isoCode ?? 'PH'; // e.g. "PH"
-
-      // Strip exactly the dial code from the full number
-      String localNumber = fullNumber.replaceAll(RegExp(r'\s'), '');
-      // Remove leading + from both for reliable prefix matching
-      final dialDigits = dialCode.replaceAll('+', '');
-      localNumber = localNumber.replaceFirst(RegExp(r'^\+'), '');
-      if (dialDigits.isNotEmpty && localNumber.startsWith(dialDigits)) {
-        localNumber = localNumber.substring(dialDigits.length);
+      // Ensure the number has a proper country code prefix for parsing
+      String numberToParse = fullNumber.replaceAll(RegExp(r'\s'), '');
+      if (numberToParse.startsWith('0') && numberToParse.length == 11) {
+        numberToParse = '+63${numberToParse.substring(1)}';
+      } else if (numberToParse.startsWith('63') && numberToParse.length == 12) {
+        numberToParse = '+$numberToParse';
+      } else if (!numberToParse.startsWith('+') && numberToParse.length == 10) {
+        numberToParse = '+63$numberToParse';
       }
+
+      final parsed = await PhoneNumber.getRegionInfoFromPhoneNumber(numberToParse);
 
       if (mounted) {
         setState(() {
-          _phoneNumber = PhoneNumber(isoCode: isoCode, dialCode: dialCode);
-          _contactNumberController.text = _formatLocalNumber(localNumber);
+          _phoneNumber = parsed;
+          // We don't set _contactNumberController.text here.
+          // By updating the Key of InternationalPhoneNumberInput, it will rebuild
+          // and initialize the controller text correctly from the new initialValue.
         });
       }
     } catch (_) {
-      // Fallback: strip leading + and digits manually
+      // Fallback
       if (mounted) {
-        final cleaned = fullNumber.replaceAll(RegExp(r'\s'), '');
-        final local = cleaned.replaceFirst(RegExp(r'^\+\d{1,3}'), '');
         setState(() {
-          _contactNumberController.text = _formatLocalNumber(local);
+          _contactNumberController.text = fullNumber;
         });
       }
     }
@@ -273,6 +273,7 @@ class _ContactInformationPageState
                       const SizedBox(height: EZSpacing.sm),
                       EZInputField(
                         child: InternationalPhoneNumberInput(
+                          key: ValueKey(_phoneNumber.hashCode),
                           onInputChanged: (PhoneNumber number) {
                             _phoneNumber = number;
                           },
@@ -516,7 +517,7 @@ class _ContactInformationPageState
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
+      builder: (context) => EZDialog(
         title: const Row(
           children: [
             Text('⚠️ ', style: TextStyle(fontSize: 20)),

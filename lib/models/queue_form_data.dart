@@ -23,6 +23,7 @@ class QueueFormData {
   final String? pwdSpecification;
   final String? priorityIdNumber;
   final String? fullName;
+  final Map<String, String>? nameBreakdown;
   final String? email;
   final String? yearLevel;
   final String? standing;
@@ -48,6 +49,7 @@ class QueueFormData {
     this.pwdSpecification,
     this.priorityIdNumber,
     this.fullName,
+    this.nameBreakdown,
     this.email,
     this.yearLevel,
     this.standing,
@@ -75,6 +77,7 @@ class QueueFormData {
     String? pwdSpecification,
     String? priorityIdNumber,
     String? fullName,
+    Map<String, String>? nameBreakdown,
     String? email,
     String? yearLevel,
     String? standing,
@@ -100,6 +103,7 @@ class QueueFormData {
       pwdSpecification: pwdSpecification ?? this.pwdSpecification,
       priorityIdNumber: priorityIdNumber ?? this.priorityIdNumber,
       fullName: fullName ?? this.fullName,
+      nameBreakdown: nameBreakdown ?? this.nameBreakdown,
       email: email ?? this.email,
       yearLevel: yearLevel ?? this.yearLevel,
       standing: standing ?? this.standing,

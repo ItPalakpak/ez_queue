@@ -140,7 +140,19 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
     // Construct QR data to match React kiosk format
     final List<String> qrDataArr = [];
     qrDataArr.add('Ticket: ${ticket.ticketNumber}');
-    qrDataArr.add('Name: ${ticket.studentName}');
+
+    if (ticket.nameBreakdown != null && ticket.nameBreakdown!['last_name'] != null) {
+      qrDataArr.add('Last Name: ${ticket.nameBreakdown!['last_name']}');
+      qrDataArr.add('First Name: ${ticket.nameBreakdown!['first_name']}');
+      if (ticket.nameBreakdown!['middle_name'] != null) {
+        qrDataArr.add('Middle Name: ${ticket.nameBreakdown!['middle_name']}');
+      }
+      if (ticket.nameBreakdown!['suffix'] != null) {
+        qrDataArr.add('Suffix: ${ticket.nameBreakdown!['suffix']}');
+      }
+    } else {
+      qrDataArr.add('Name: ${ticket.studentName}');
+    }
 
     final String userTypeLower = ticket.userType.toLowerCase();
     final String? ticketIdNumber = ticket.studentId ?? ticket.employeeId;

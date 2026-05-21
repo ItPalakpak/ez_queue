@@ -50,6 +50,7 @@ class QueueFormNotifier extends StateNotifier<QueueFormData> {
   /// Update identity information.
   void updateIdentityInfo({
     required String fullName,
+    Map<String, String>? nameBreakdown,
     String? idNumber,
     int? courseId,
     String? courseProgram,
@@ -58,6 +59,7 @@ class QueueFormNotifier extends StateNotifier<QueueFormData> {
   }) {
     state = state.copyWith(
       fullName: fullName,
+      nameBreakdown: nameBreakdown,
       idNumber: idNumber,
       courseId: courseId,
       courseProgram: courseProgram,
