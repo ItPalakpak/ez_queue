@@ -300,7 +300,7 @@ class _ContactInformationPageState
                       ),
                       const SizedBox(height: EZSpacing.sm),
                       Text(
-                        'For SMS notifications regarding your position in the queue',
+                        'For further follow-ups regarding a pending transaction or queue updates.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(
                             context,

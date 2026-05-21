@@ -138,6 +138,9 @@ class _DepartmentSelectionPageState
                             child: Text('No departments available'),
                           );
                         }
+                        // CHANGED: Sort departments alphabetically by name
+                        final sortedDepartments = List<ApiDepartment>.from(departments)
+                          ..sort((a, b) => a.name.compareTo(b.name));
                         return RadioGroup<ApiDepartment>(
                           groupValue: _selectedDepartment,
                           onChanged: (ApiDepartment? value) {
@@ -146,7 +149,7 @@ class _DepartmentSelectionPageState
                             }
                           },
                           child: Column(
-                            children: departments.map((department) {
+                            children: sortedDepartments.map((department) {
                               final isDisabled = formData.disabledDepartments
                                   .contains(department.id);
                               return Padding(

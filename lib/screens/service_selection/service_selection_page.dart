@@ -240,8 +240,12 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
       );
     }
 
+    // CHANGED: Sort services alphabetically by name
+    final sortedServices = List<ApiQueueService>.from(availableServices)
+      ..sort((a, b) => a.name.compareTo(b.name));
+
     Widget content = Column(
-      children: availableServices.map((service) {
+      children: sortedServices.map((service) {
         final isSelected = _selectedServiceIds.contains(service.id);
         return Padding(
           padding: const EdgeInsets.only(bottom: EZSpacing.md),
