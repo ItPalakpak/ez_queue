@@ -21,6 +21,7 @@ class QueueTicket {
   final DateTime createdAt;
   final String? trackingToken;
   final Map<String, String>? nameBreakdown;
+  final List<dynamic>? selections;
 
   const QueueTicket({
     required this.id,
@@ -44,6 +45,7 @@ class QueueTicket {
     required this.createdAt,
     this.trackingToken,
     this.nameBreakdown,
+    this.selections,
   });
 
   factory QueueTicket.fromJson(Map<String, dynamic> json) {
@@ -76,6 +78,7 @@ class QueueTicket {
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']).toLocal() : DateTime.now(),
       trackingToken: json['tracking_token'],
       nameBreakdown: parsedNameBreakdown,
+      selections: json['selections'],
     );
   }
 }

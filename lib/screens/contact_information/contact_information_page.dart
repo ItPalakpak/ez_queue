@@ -638,6 +638,7 @@ class _ContactInformationPageState
 
       final payload = {
         'student_name': formData.fullName,
+        'name_breakdown': formData.nameBreakdown,
         'student_id': formData.idNumber,
         'employee_id': formData.idNumber,
         'phone':

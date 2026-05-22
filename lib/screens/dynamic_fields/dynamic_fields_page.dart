@@ -194,7 +194,8 @@ class _DynamicFieldsPageState extends ConsumerState<DynamicFieldsPage> {
                   children: [
                     Container(
                       margin: const EdgeInsets.only(bottom: EZSpacing.xl),
-                      child: Row(
+                      width: double.infinity,
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Container(
@@ -211,30 +212,67 @@ class _DynamicFieldsPageState extends ConsumerState<DynamicFieldsPage> {
                               child: Text('📝', style: TextStyle(fontSize: 32)),
                             ),
                           ),
-                          const SizedBox(width: EZSpacing.lg),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Additional Information',
-                                  style: Theme.of(context).textTheme.headlineMedium,
-                                ),
-                                const SizedBox(height: EZSpacing.xs),
-                                Text(
-                                  'Please provide required details for your service.',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge
-                                      ?.copyWith(
+                          const SizedBox(height: EZSpacing.md),
+                          if (servicesWithFields.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: EZSpacing.md),
+                              child: Wrap(
+                                spacing: EZSpacing.xs,
+                                runSpacing: EZSpacing.xs,
+                                alignment: WrapAlignment.center,
+                                children: servicesWithFields.map((service) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: EZSpacing.md,
+                                      vertical: EZSpacing.xs,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
                                         color: Theme.of(context)
                                             .colorScheme
-                                            .onSurface
-                                            .withValues(alpha: 0.6),
+                                            .primary
+                                            .withValues(alpha: 0.15),
                                       ),
-                                ),
-                              ],
+                                    ),
+                                    child: Text(
+                                      service.name.toUpperCase(),
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineMedium
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                             ),
+                          Text(
+                            'Additional Information',
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          const SizedBox(height: EZSpacing.xs),
+                          Text(
+                            'Please provide required details for your service.',
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyLarge
+                                ?.copyWith(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withValues(alpha: 0.6),
+                                ),
                           ),
                         ],
                       ),

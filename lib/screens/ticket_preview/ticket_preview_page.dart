@@ -338,6 +338,74 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
               const SizedBox(height: EZSpacing.sm),
               _buildDetailRow(context, 'Priority Queue:', 'Yes'),
             ],
+            if (ticket.selections != null && ticket.selections!.isNotEmpty) ...[
+              const SizedBox(height: EZSpacing.md),
+              Divider(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+              ),
+              const SizedBox(height: EZSpacing.sm),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'SELECTED DOCUMENTS',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: EZSpacing.sm),
+              ...ticket.selections!.map<Widget>((selItem) {
+                final sel = selItem is Map ? selItem : const {};
+                final docName = sel['document_name'] ?? '';
+                final subText = sel['subselection_name'] != null ? ' - ${sel['subselection_name']}' : '';
+                final periods = <String>[];
+                if (sel['semester'] != null && sel['semester'].toString().isNotEmpty) {
+                  periods.add(sel['semester'].toString());
+                }
+                if (sel['academic_year_name'] != null && sel['academic_year_name'].toString().isNotEmpty) {
+                  periods.add(sel['academic_year_name'].toString());
+                }
+                final periodText = periods.isNotEmpty ? ' (${periods.join(' / ')})' : '';
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: EZSpacing.xs),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '• ',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            children: [
+                              TextSpan(
+                                text: docName,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              TextSpan(text: subText),
+                              TextSpan(
+                                text: periodText,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ],
             const SizedBox(height: EZSpacing.xl),
 
             // Divider

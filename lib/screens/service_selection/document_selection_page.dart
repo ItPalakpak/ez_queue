@@ -152,7 +152,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   }
 
   final bool _allowMultipleSubselections =
-      false; // Toggle this to enable multiple subselections per document
+      true; // Toggle this to enable multiple subselections per document
 
   void _handleSubselectionToggle(
     int docId,
@@ -662,49 +662,54 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                   if (isSelected && doc.subselections.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8, left: 16),
-                      child: RadioGroup<int>(
-                        groupValue: docSelections.isNotEmpty
-                            ? docSelections.first['document_subselection_id']
-                            : null,
-                        onChanged: (val) {
-                          if (val != null) {
-                            final selectedSub = doc.subselections.firstWhere(
-                              (s) => s.id == val,
-                            );
-                            _handlePreviousSubselectionToggle(
-                              doc.id,
-                              val,
-                              selectedSub.name,
-                              true,
-                            );
-                          }
-                        },
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: doc.subselections.map((sub) {
-                            final subSelectionIndex = docSelections.indexWhere(
-                              (s) => s['document_subselection_id'] == sub.id,
-                            );
-                            final isSubSelected = subSelectionIndex != -1;
-                            return _allowMultipleSubselections
-                                ? CheckboxListTile(
-                                    title: Text(sub.name),
-                                    value: isSubSelected,
-                                    onChanged: (val) =>
-                                        _handlePreviousSubselectionToggle(
-                                          doc.id,
-                                          sub.id,
-                                          sub.name,
-                                          val ?? false,
-                                        ),
-                                  )
-                                : RadioListTile<int>(
+                      child: _allowMultipleSubselections
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: doc.subselections.map((sub) {
+                                final subSelectionIndex = docSelections.indexWhere(
+                                  (s) => s['document_subselection_id'] == sub.id,
+                                );
+                                final isSubSelected = subSelectionIndex != -1;
+                                return CheckboxListTile(
+                                  title: Text(sub.name),
+                                  value: isSubSelected,
+                                  onChanged: (val) =>
+                                      _handlePreviousSubselectionToggle(
+                                        doc.id,
+                                        sub.id,
+                                        sub.name,
+                                        val ?? false,
+                                      ),
+                                );
+                              }).toList(),
+                            )
+                          : RadioGroup<int>(
+                              groupValue: docSelections.isNotEmpty
+                                  ? docSelections.first['document_subselection_id']
+                                  : null,
+                              onChanged: (val) {
+                                if (val != null) {
+                                  final selectedSub = doc.subselections.firstWhere(
+                                    (s) => s.id == val,
+                                  );
+                                  _handlePreviousSubselectionToggle(
+                                    doc.id,
+                                    val,
+                                    selectedSub.name,
+                                    true,
+                                  );
+                                }
+                              },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: doc.subselections.map((sub) {
+                                  return RadioListTile<int>(
                                     title: Text(sub.name),
                                     value: sub.id,
                                   );
-                          }).toList(),
-                        ),
-                      ),
+                                }).toList(),
+                              ),
+                            ),
                     ),
                 ],
               );
@@ -777,123 +782,204 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                 if (isSelected && doc.subselections.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: RadioGroup<int>(
-                      groupValue: docSelections.isNotEmpty
-                          ? docSelections.first['document_subselection_id']
-                          : null,
-                      onChanged: (val) {
-                        if (val != null) {
-                          final selectedSub = doc.subselections.firstWhere(
-                            (s) => s.id == val,
-                          );
-                          _handleSubselectionToggle(
-                            doc.id,
-                            val,
-                            selectedSub.name,
-                            selectedSub.requiresAcademicPeriod,
-                            true,
-                          );
-                        }
-                      },
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: doc.subselections.map((sub) {
-                          final subSelectionIndex = docSelections.indexWhere(
-                            (s) => s['document_subselection_id'] == sub.id,
-                          );
-                          final isSubSelected = subSelectionIndex != -1;
-                          final subSelection = isSubSelected
-                              ? docSelections[subSelectionIndex]
-                              : null;
-                          return Column(
+                    child: _allowMultipleSubselections
+                        ? Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _allowMultipleSubselections
-                                  ? CheckboxListTile(
-                                      title: Text(sub.name),
-                                      value: isSubSelected,
-                                      onChanged: (val) =>
-                                          _handleSubselectionToggle(
-                                            doc.id,
-                                            sub.id,
-                                            sub.name,
-                                            sub.requiresAcademicPeriod,
-                                            val ?? false,
+                            children: doc.subselections.map((sub) {
+                              final subSelectionIndex = docSelections.indexWhere(
+                                (s) => s['document_subselection_id'] == sub.id,
+                              );
+                              final isSubSelected = subSelectionIndex != -1;
+                              final subSelection = isSubSelected
+                                  ? docSelections[subSelectionIndex]
+                                  : null;
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CheckboxListTile(
+                                    title: Text(sub.name),
+                                    value: isSubSelected,
+                                    onChanged: (val) =>
+                                        _handleSubselectionToggle(
+                                          doc.id,
+                                          sub.id,
+                                          sub.name,
+                                          sub.requiresAcademicPeriod,
+                                          val ?? false,
+                                        ),
+                                  ),
+                                  if (isSubSelected && sub.requiresAcademicPeriod)
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 32),
+                                      child: Column(
+                                        children: [
+                                          // ignore: deprecated_member_use
+                                          EZInputField(
+                                            child: DropdownButtonFormField<int>(
+                                              decoration:
+                                                  ThemeHelpers.textInputDecoration(
+                                                    labelText: 'Academic Year',
+                                                  ),
+                                              initialValue:
+                                                  subSelection!['academic_year_id'],
+                                              items: _academics.map((ay) {
+                                                return DropdownMenuItem(
+                                                  value: ay.id,
+                                                  child: Text(ay.name),
+                                                );
+                                              }).toList(),
+                                              onChanged: (val) =>
+                                                  _handlePeriodChange(
+                                                    doc.id,
+                                                    sub.id,
+                                                    'academic_year_id',
+                                                    val,
+                                                  ),
+                                            ),
                                           ),
-                                    )
-                                  : RadioListTile<int>(
+                                          const SizedBox(height: 16),
+                                          EZInputField(
+                                            child: DropdownButtonFormField<String>(
+                                              decoration:
+                                                  ThemeHelpers.textInputDecoration(
+                                                    labelText: 'Semester',
+                                                  ),
+                                              initialValue:
+                                                  subSelection['semester'],
+                                              items: const [
+                                                DropdownMenuItem(
+                                                  value: '1st Semester',
+                                                  child: Text('1st Semester'),
+                                                ),
+                                                DropdownMenuItem(
+                                                  value: '2nd Semester',
+                                                  child: Text('2nd Semester'),
+                                                ),
+                                                DropdownMenuItem(
+                                                  value: 'Summer',
+                                                  child: Text('Summer'),
+                                                ),
+                                              ],
+                                              onChanged: (val) =>
+                                                  _handlePeriodChange(
+                                                    doc.id,
+                                                    sub.id,
+                                                    'semester',
+                                                    val,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
+                              );
+                            }).toList(),
+                          )
+                        : RadioGroup<int>(
+                            groupValue: docSelections.isNotEmpty
+                                ? docSelections.first['document_subselection_id']
+                                : null,
+                            onChanged: (val) {
+                              if (val != null) {
+                                final selectedSub = doc.subselections.firstWhere(
+                                  (s) => s.id == val,
+                                );
+                                _handleSubselectionToggle(
+                                  doc.id,
+                                  val,
+                                  selectedSub.name,
+                                  selectedSub.requiresAcademicPeriod,
+                                  true,
+                                );
+                              }
+                            },
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: doc.subselections.map((sub) {
+                                final subSelectionIndex = docSelections.indexWhere(
+                                  (s) => s['document_subselection_id'] == sub.id,
+                                );
+                                final isSubSelected = subSelectionIndex != -1;
+                                final subSelection = isSubSelected
+                                    ? docSelections[subSelectionIndex]
+                                    : null;
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    RadioListTile<int>(
                                       title: Text(sub.name),
                                       value: sub.id,
                                     ),
-                              if (isSubSelected && sub.requiresAcademicPeriod)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 32),
-                                  child: Column(
-                                    children: [
-                                      // ignore: deprecated_member_use
-                                      EZInputField(
-                                        child: DropdownButtonFormField<int>(
-                                          decoration:
-                                              ThemeHelpers.textInputDecoration(
-                                                labelText: 'Academic Year',
+                                    if (isSubSelected && sub.requiresAcademicPeriod)
+                                      Padding(
+                                        padding: const EdgeInsets.only(left: 32),
+                                        child: Column(
+                                          children: [
+                                            // ignore: deprecated_member_use
+                                            EZInputField(
+                                              child: DropdownButtonFormField<int>(
+                                                decoration:
+                                                    ThemeHelpers.textInputDecoration(
+                                                      labelText: 'Academic Year',
+                                                    ),
+                                                initialValue:
+                                                    subSelection!['academic_year_id'],
+                                                items: _academics.map((ay) {
+                                                  return DropdownMenuItem(
+                                                    value: ay.id,
+                                                    child: Text(ay.name),
+                                                  );
+                                                }).toList(),
+                                                onChanged: (val) =>
+                                                    _handlePeriodChange(
+                                                      doc.id,
+                                                      sub.id,
+                                                      'academic_year_id',
+                                                      val,
+                                                    ),
                                               ),
-                                          initialValue:
-                                              subSelection!['academic_year_id'],
-                                          items: _academics.map((ay) {
-                                            return DropdownMenuItem(
-                                              value: ay.id,
-                                              child: Text(ay.name),
-                                            );
-                                          }).toList(),
-                                          onChanged: (val) =>
-                                              _handlePeriodChange(
-                                                doc.id,
-                                                sub.id,
-                                                'academic_year_id',
-                                                val,
-                                              ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      EZInputField(
-                                        child: DropdownButtonFormField<String>(
-                                          decoration:
-                                              ThemeHelpers.textInputDecoration(
-                                                labelText: 'Semester',
-                                              ),
-                                          initialValue:
-                                              subSelection['semester'],
-                                          items: const [
-                                            DropdownMenuItem(
-                                              value: '1st Semester',
-                                              child: Text('1st Semester'),
                                             ),
-                                            DropdownMenuItem(
-                                              value: '2nd Semester',
-                                              child: Text('2nd Semester'),
-                                            ),
-                                            DropdownMenuItem(
-                                              value: 'Summer',
-                                              child: Text('Summer'),
+                                            const SizedBox(height: 16),
+                                            EZInputField(
+                                              child: DropdownButtonFormField<String>(
+                                                decoration:
+                                                    ThemeHelpers.textInputDecoration(
+                                                      labelText: 'Semester',
+                                                    ),
+                                                initialValue:
+                                                    subSelection['semester'],
+                                                items: const [
+                                                  DropdownMenuItem(
+                                                    value: '1st Semester',
+                                                    child: Text('1st Semester'),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: '2nd Semester',
+                                                    child: Text('2nd Semester'),
+                                                  ),
+                                                  DropdownMenuItem(
+                                                    value: 'Summer',
+                                                    child: Text('Summer'),
+                                                  ),
+                                                ],
+                                                onChanged: (val) =>
+                                                    _handlePeriodChange(
+                                                      doc.id,
+                                                      sub.id,
+                                                      'semester',
+                                                      val,
+                                                    ),
+                                              ),
                                             ),
                                           ],
-                                          onChanged: (val) =>
-                                              _handlePeriodChange(
-                                                doc.id,
-                                                sub.id,
-                                                'semester',
-                                                val,
-                                              ),
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          );
-                        }).toList(),
-                      ),
-                    ),
+                                  ],
+                                );
+                              }).toList(),
+                            ),
+                          ),
                   ),
                 const Divider(),
               ],
