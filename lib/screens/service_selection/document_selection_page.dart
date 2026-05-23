@@ -114,6 +114,12 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   void _handleExtraChange(String key, dynamic value) {
     setState(() {
       _extraDetails[key] = value;
+      if (key == 'date_of_graduation' && value != null && value.toString().isNotEmpty) {
+        _extraDetails['last_semester_attended'] = null;
+        _extraDetails['last_sy_attended'] = null;
+      } else if ((key == 'last_semester_attended' || key == 'last_sy_attended') && value != null && value.toString().isNotEmpty) {
+        _extraDetails['date_of_graduation'] = null;
+      }
     });
   }
 
@@ -547,6 +553,14 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   }
 
   Widget _buildPart1Section(List<ApiServiceDocument> uniqueDocs) {
+    final showGraduation = (_extraDetails['last_semester_attended'] == null ||
+            _extraDetails['last_semester_attended'].toString().isEmpty) &&
+        (_extraDetails['last_sy_attended'] == null ||
+            _extraDetails['last_sy_attended'].toString().isEmpty);
+
+    final showSemesterAndSy = _extraDetails['date_of_graduation'] == null ||
+        _extraDetails['date_of_graduation'].toString().isEmpty;
+
     return EZCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,62 +570,102 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
-          EZInputField(
-            child: TextField(
-              readOnly: true,
-              onTap: () => _selectDate(context, 'date_of_graduation'),
-              decoration: ThemeHelpers.textInputDecoration(
-                labelText: 'If a graduate, Date of Graduation',
-              ).copyWith(suffixIcon: const Icon(Icons.calendar_today)),
-              controller: TextEditingController(
-                text: _extraDetails['date_of_graduation']?.toString() ?? '',
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text('If not, state the Last Semester & SY of Attendance:'),
-          const SizedBox(height: 8),
-          EZInputField(
-            child: DropdownButtonFormField<String>(
-              decoration: ThemeHelpers.textInputDecoration(
-                labelText: 'Semester',
-              ),
-              initialValue:
-                  _extraDetails['last_semester_attended']?.toString().isEmpty ??
-                      true
-                  ? null
-                  : _extraDetails['last_semester_attended'],
-              items: const [
-                DropdownMenuItem(
-                  value: '1st Semester',
-                  child: Text('1st Semester'),
+          if (showGraduation) ...[
+            EZInputField(
+              child: TextField(
+                readOnly: true,
+                onTap: () => _selectDate(context, 'date_of_graduation'),
+                decoration: ThemeHelpers.textInputDecoration(
+                  labelText: 'If a graduate, Date of Graduation',
+                ).copyWith(
+                  suffixIcon: _extraDetails['date_of_graduation'] != null &&
+                          _extraDetails['date_of_graduation']
+                              .toString()
+                              .isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () =>
+                              _handleExtraChange('date_of_graduation', null),
+                        )
+                      : const Icon(Icons.calendar_today),
                 ),
-                DropdownMenuItem(
-                  value: '2nd Semester',
-                  child: Text('2nd Semester'),
+                controller: TextEditingController(
+                  text: _extraDetails['date_of_graduation']?.toString() ?? '',
                 ),
-                DropdownMenuItem(value: 'Summer', child: Text('Summer')),
-              ],
-              onChanged: (val) =>
-                  _handleExtraChange('last_semester_attended', val),
-            ),
-          ),
-          const SizedBox(height: 16),
-          EZInputField(
-            child: DropdownButtonFormField<String>(
-              decoration: ThemeHelpers.textInputDecoration(
-                labelText: 'School Year',
               ),
-              initialValue:
-                  _extraDetails['last_sy_attended']?.toString().isEmpty ?? true
-                  ? null
-                  : _extraDetails['last_sy_attended'],
-              items: _academics.map((ay) {
-                return DropdownMenuItem(value: ay.name, child: Text(ay.name));
-              }).toList(),
-              onChanged: (val) => _handleExtraChange('last_sy_attended', val),
             ),
-          ),
+            const SizedBox(height: 16),
+          ],
+          if (showSemesterAndSy) ...[
+            const Text('If not, state the Last Semester & SY of Attendance:'),
+            const SizedBox(height: 8),
+            EZInputField(
+              child: DropdownButtonFormField<String>(
+                decoration: ThemeHelpers.textInputDecoration(
+                  labelText: 'Semester',
+                ),
+                value:
+                    _extraDetails['last_semester_attended']?.toString().isEmpty ??
+                        true
+                    ? null
+                    : _extraDetails['last_semester_attended'],
+                items: const [
+                  DropdownMenuItem(
+                    value: '1st Semester',
+                    child: Text('1st Semester'),
+                  ),
+                  DropdownMenuItem(
+                    value: '2nd Semester',
+                    child: Text('2nd Semester'),
+                  ),
+                  DropdownMenuItem(value: 'Summer', child: Text('Summer')),
+                ],
+                onChanged: (val) =>
+                    _handleExtraChange('last_semester_attended', val),
+              ),
+            ),
+            const SizedBox(height: 16),
+            EZInputField(
+              child: DropdownButtonFormField<String>(
+                decoration: ThemeHelpers.textInputDecoration(
+                  labelText: 'School Year/Academic Year',
+                ),
+                value:
+                    _extraDetails['last_sy_attended']?.toString().isEmpty ?? true
+                    ? null
+                    : _extraDetails['last_sy_attended'],
+                items: _academics.map((ay) {
+                  return DropdownMenuItem(value: ay.name, child: Text(ay.name));
+                }).toList(),
+                onChanged: (val) => _handleExtraChange('last_sy_attended', val),
+              ),
+            ),
+            const SizedBox(height: 16),
+            if ((_extraDetails['last_semester_attended'] != null &&
+                    _extraDetails['last_semester_attended']
+                        .toString()
+                        .isNotEmpty) ||
+                (_extraDetails['last_sy_attended'] != null &&
+                    _extraDetails['last_sy_attended']
+                        .toString()
+                        .isNotEmpty)) ...[
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: () {
+                    _handleExtraChange('last_semester_attended', null);
+                    _handleExtraChange('last_sy_attended', null);
+                  },
+                  icon: const Icon(Icons.clear, size: 16),
+                  label: const Text('Clear Semester & SY'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ],
           const SizedBox(height: 16),
           const Text('Already requested credential/s before?'),
           RadioGroup<bool>(
