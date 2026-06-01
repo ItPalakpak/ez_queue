@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:ez_queue/utils/api_config.dart';
+import 'package:ez_queue/services/global_queue_alert_manager.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -23,6 +24,19 @@ class PushNotificationService {
         // 2. Fetch the FCM token to give to Laravel
         String? token = await _firebaseMessaging.getToken();
         debugPrint("FCM Token Generated: \$token");
+
+        // 3. Listen for foreground messages to show the Confirm on Way dialog
+        FirebaseMessaging.onMessage.listen(_handleIncomingMessage);
+
+        // 4. Listen for background notification taps
+        FirebaseMessaging.onMessageOpenedApp.listen(_handleIncomingMessage);
+
+        // 5. Handle cold-start launches from a notification tap
+        RemoteMessage? initialMessage = await _firebaseMessaging.getInitialMessage();
+        if (initialMessage != null) {
+          _handleIncomingMessage(initialMessage);
+        }
+
         return token;
       } else {
         debugPrint("User declined or has not accepted push notifications.");
@@ -31,6 +45,19 @@ class PushNotificationService {
       debugPrint("Error generating FCM token: \$e");
     }
     return null;
+  }
+
+  static void _handleIncomingMessage(RemoteMessage message) {
+    final data = message.data;
+    if (data['type'] == 'advance_alert') {
+      final ticketId = int.tryParse(data['ticket_id'] ?? '');
+      final ticketNumber = data['ticket_number'] as String?;
+      final clientName = data['client_name'] as String?;
+
+      if (ticketId != null) {
+        GlobalQueueAlertManager().handleAdvanceAlert(ticketId, ticketNumber, clientName);
+      }
+    }
   }
 
   static void listenForTokenRefresh(String deviceToken) {

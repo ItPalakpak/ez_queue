@@ -5,6 +5,13 @@ class ApiDepartment {
   final String? description;
   final bool allowMultipleServices;
   final String status;
+  final String? queueCutoffTime;
+  final int dailyTicketLimit;
+  final int dailyTicketsUsed;
+  final int maxConcurrentQueue;
+  final int currentWaiting;
+  final bool isQueueOpen;
+  final String? queueClosedReason;
 
   ApiDepartment({
     required this.id,
@@ -13,6 +20,13 @@ class ApiDepartment {
     this.description,
     this.allowMultipleServices = false,
     this.status = 'active',
+    this.queueCutoffTime,
+    this.dailyTicketLimit = 0,
+    this.dailyTicketsUsed = 0,
+    this.maxConcurrentQueue = 50,
+    this.currentWaiting = 0,
+    this.isQueueOpen = true,
+    this.queueClosedReason,
   });
 
   factory ApiDepartment.fromJson(Map<String, dynamic> json) {
@@ -28,6 +42,25 @@ class ApiDepartment {
           json['allow_multiple_services'] == 1 ||
           json['allow_multiple_services'] == '1',
       status: json['status']?.toString() ?? 'active',
+      queueCutoffTime: json['queue_cutoff_time']?.toString(),
+      dailyTicketLimit: json['daily_ticket_limit'] is int
+          ? json['daily_ticket_limit']
+          : int.tryParse(json['daily_ticket_limit']?.toString() ?? '0') ?? 0,
+      dailyTicketsUsed: json['daily_tickets_used'] is int
+          ? json['daily_tickets_used']
+          : int.tryParse(json['daily_tickets_used']?.toString() ?? '0') ?? 0,
+      maxConcurrentQueue: json['max_concurrent_queue'] is int
+          ? json['max_concurrent_queue']
+          : int.tryParse(json['max_concurrent_queue']?.toString() ?? '50') ?? 50,
+      currentWaiting: json['current_waiting'] is int
+          ? json['current_waiting']
+          : int.tryParse(json['current_waiting']?.toString() ?? '0') ?? 0,
+      isQueueOpen:
+          json['is_queue_open'] == null ? true :
+          json['is_queue_open'] == true ||
+          json['is_queue_open'] == 1 ||
+          json['is_queue_open'] == '1',
+      queueClosedReason: json['queue_closed_reason']?.toString(),
     );
   }
 }

@@ -604,7 +604,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                 decoration: ThemeHelpers.textInputDecoration(
                   labelText: 'Semester',
                 ),
-                value:
+                initialValue:
                     _extraDetails['last_semester_attended']?.toString().isEmpty ??
                         true
                     ? null
@@ -630,7 +630,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                 decoration: ThemeHelpers.textInputDecoration(
                   labelText: 'School Year/Academic Year',
                 ),
-                value:
+                initialValue:
                     _extraDetails['last_sy_attended']?.toString().isEmpty ?? true
                     ? null
                     : _extraDetails['last_sy_attended'],

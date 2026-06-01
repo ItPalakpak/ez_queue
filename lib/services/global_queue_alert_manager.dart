@@ -107,6 +107,13 @@ class GlobalQueueAlertManager {
     });
   }
 
+  /// Public entry point for external callers (e.g. FCM listeners) to trigger
+  /// the advance alert dialog. Delegates to the private [_showAlertModal].
+  void handleAdvanceAlert(int ticketId, String? ticketNumber, String? clientName) {
+    if (_alertShown) return;
+    _showAlertModal(ticketId, ticketNumber, clientName);
+  }
+
   void _showAlertModal(int realTicketId, String? ticketNumber, String? clientName) {
     final context = navigatorKey?.currentContext;
     if (context == null) return;

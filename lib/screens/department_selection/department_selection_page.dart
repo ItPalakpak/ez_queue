@@ -165,7 +165,7 @@ class _DepartmentSelectionPageState
                                           child: Text(
                                             department.name,
                                             style: TextStyle(
-                                              color: isDisabled
+                                              color: isDisabled || !department.isQueueOpen
                                                   ? Theme.of(context)
                                                         .colorScheme
                                                         .onSurface
@@ -186,23 +186,56 @@ class _DepartmentSelectionPageState
                                               ).colorScheme.error,
                                             ),
                                           ),
+                                        if (!isDisabled && !department.isQueueOpen)
+                                          Icon(
+                                            Icons.lock_outline,
+                                            size: 16,
+                                            color: Theme.of(context).colorScheme.error,
+                                          ),
                                       ],
                                     ),
-                                    subtitle: department.description != null
-                                        ? Text(
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        if (department.description != null)
+                                          Text(
                                             department.description!,
                                             style: TextStyle(
-                                              color: isDisabled
+                                              color: isDisabled || !department.isQueueOpen
                                                   ? Theme.of(context)
                                                         .colorScheme
                                                         .onSurface
                                                         .withValues(alpha: 0.4)
                                                   : null,
                                             ),
+                                          ),
+                                        const SizedBox(height: 4),
+                                        if (!department.isQueueOpen)
+                                          Text(
+                                            department.queueClosedReason ?? 'Queue is currently closed',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Theme.of(context).colorScheme.error,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           )
-                                        : null,
+                                        else
+                                          Text(
+                                            '${department.currentWaiting > 0 ? '${department.currentWaiting} in queue' : 'No queue'}'
+                                            '${department.dailyTicketLimit > 0 ? ' · ${department.dailyTicketsUsed}/${department.dailyTicketLimit} tickets today' : ''}'
+                                            '${department.queueCutoffTime != null ? ' · Closes at ${department.queueCutoffTime!.substring(0, 5)}' : ''}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withValues(alpha: 0.5),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                     value: department,
-                                    enabled: !isDisabled,
+                                    enabled: !isDisabled && department.isQueueOpen,
                                     controlAffinity:
                                         ListTileControlAffinity.leading,
                                   ),
