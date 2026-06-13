@@ -75,15 +75,6 @@ class _ContactInformationPageState
     }
   }
 
-  // CHANGED: Format local digits as "000 000 0000" for display in the controller.
-  // e.g. "9888777654" → "988 877 7654"
-  String _formatLocalNumber(String digits) {
-    final d = digits.replaceAll(RegExp(r'[^0-9]'), '');
-    if (d.length <= 3) return d;
-    if (d.length <= 6) return '${d.substring(0, 3)} ${d.substring(3)}';
-    return '${d.substring(0, 3)} ${d.substring(3, 6)} ${d.substring(6)}';
-  }
-
   // Priority selection
   int _priorityWeight = 1;
   bool _isPWD = false;

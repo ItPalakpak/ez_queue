@@ -9,7 +9,6 @@ import 'package:ez_queue/screens/service_selection/document_selection_page.dart'
 import 'package:ez_queue/providers/api_providers.dart';
 import 'package:ez_queue/models/api_models.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ez_queue/utils/format_utils.dart';
 
 /// Service selection page.
 /// Allows users to select services for their queue request.

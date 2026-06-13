@@ -17,8 +17,7 @@ import 'package:go_router/go_router.dart';
 class DocumentSelectionPage extends ConsumerStatefulWidget {
   final List<ApiQueueService> services;
 
-  const DocumentSelectionPage({Key? key, required this.services})
-    : super(key: key);
+  const DocumentSelectionPage({super.key, required this.services});
 
   @override
   ConsumerState<DocumentSelectionPage> createState() =>
@@ -46,7 +45,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
 
   List<Map<String, dynamic>> _selections = [];
   List<Map<String, dynamic>> _previousSelections = [];
-  List<dynamic> _selectedPurposes = [];
+  final List<dynamic> _selectedPurposes = [];
   bool _isOthersChecked = false;
   String _customPurpose = '';
 
@@ -316,8 +315,9 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   void _handlePurposeToggle(dynamic purposeValue, bool selected) {
     setState(() {
       if (selected) {
-        if (!_selectedPurposes.contains(purposeValue))
+        if (!_selectedPurposes.contains(purposeValue)) {
           _selectedPurposes.add(purposeValue);
+        }
       } else {
         _selectedPurposes.remove(purposeValue);
       }
@@ -767,7 +767,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                     ),
                 ],
               );
-            }).toList(),
+            }),
             const SizedBox(height: 8),
             EZInputField(
               child: TextField(
