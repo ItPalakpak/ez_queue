@@ -33,8 +33,11 @@ class GlobalQueueAlertManager {
 
     try {
       _channel?.sink.close();
+      final host = ApiConfig.reverbHost;
+      final isSecure = ApiConfig.baseUrl.startsWith('https') || host.contains('trycloudflare.com') || host.contains(':443');
+      final scheme = isSecure ? 'wss' : 'ws';
       _channel = WebSocketChannel.connect(
-        Uri.parse('ws://${ApiConfig.reverbHost}/app/${ApiConfig.reverbKey}?protocol=7&client=ezqueue-mobile&version=1.0.0'),
+        Uri.parse('$scheme://$host/app/${ApiConfig.reverbKey}?protocol=7&client=ezqueue-mobile&version=1.0.0'),
       );
 
       await _channel!.ready;

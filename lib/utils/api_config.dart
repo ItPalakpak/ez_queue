@@ -112,7 +112,7 @@ class ApiConfig {
     if (envUrl != null && envUrl.isNotEmpty) return envUrl;
 
     if (kIsWeb) return 'http://127.0.0.1:8000/api/v1';
-    if (Platform.isAndroid) return 'http://193.169.19.162:8000/api/v1';
+    if (Platform.isAndroid) return 'http://10.0.2.2:8000/api/v1';
     return 'http://127.0.0.1:8000/api/v1'; // Windows, iOS simulator
   }
 
@@ -132,7 +132,7 @@ class ApiConfig {
     if (envHost != null && envHost.isNotEmpty) return envHost;
 
     if (kIsWeb) return '127.0.0.1:8085';
-    if (Platform.isAndroid) return '192.168.18.161:8085';
+    if (Platform.isAndroid) return '10.0.2.2:8085';
     return '127.0.0.1:8085';
   }
 

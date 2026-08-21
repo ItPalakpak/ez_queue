@@ -22,6 +22,8 @@ class EZInputField extends StatelessWidget {
     final theme = Theme.of(context);
     final ext = theme.extension<EZThemeExtension>();
     final shadowColor = ext?.shadowColor ?? theme.colorScheme.onSurface;
+    final shadowOffset = ext?.shadowOffset ?? const Offset(3, 3);
+    final hasShadow = shadowOffset != Offset.zero;
 
     final container = Container(
       clipBehavior: Clip.hardEdge,
@@ -29,14 +31,16 @@ class EZInputField extends StatelessWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: borderColor ?? shadowColor, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor,
-            offset: const Offset(3, 3),
-            blurRadius: 0,
-            spreadRadius: 0,
-          ),
-        ],
+        boxShadow: hasShadow
+            ? [
+                BoxShadow(
+                  color: shadowColor,
+                  offset: shadowOffset,
+                  blurRadius: 0,
+                  spreadRadius: 0,
+                ),
+              ]
+            : null,
       ),
       child: child,
     );

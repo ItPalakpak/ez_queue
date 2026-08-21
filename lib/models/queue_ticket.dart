@@ -2,7 +2,7 @@
 class QueueTicket {
   final int id;
   final String ticketNumber;
-  final String studentName;
+  final String clientName;
   final String userType;
   final String? studentId;
   final String? employeeId;
@@ -26,7 +26,7 @@ class QueueTicket {
   const QueueTicket({
     required this.id,
     required this.ticketNumber,
-    required this.studentName,
+    required this.clientName,
     required this.userType,
     this.studentId,
     this.employeeId,
@@ -59,7 +59,7 @@ class QueueTicket {
     return QueueTicket(
       id: json['id'],
       ticketNumber: json['ticket_number'],
-      studentName: json['student_name'] ?? 'Unknown',
+      clientName: json['client_name'] ?? 'Unknown',
       userType: json['user_type'] ?? 'student',
       studentId: json['student_id'],
       employeeId: json['employee_id'],

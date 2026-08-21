@@ -151,7 +151,7 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
         qrDataArr.add('Suffix: ${ticket.nameBreakdown!['suffix']}');
       }
     } else {
-      qrDataArr.add('Name: ${ticket.studentName}');
+      qrDataArr.add('Name: ${ticket.clientName}');
     }
 
     final String userTypeLower = ticket.userType.toLowerCase();
@@ -327,7 +327,7 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
               _buildDetailRow(context, 'ID Number:', ticketIdNumber),
             ],
             const SizedBox(height: EZSpacing.sm),
-            _buildDetailRow(context, 'Full Name:', ticket.studentName),
+            _buildDetailRow(context, 'Full Name:', ticket.clientName),
             const SizedBox(height: EZSpacing.sm),
             _buildDetailRow(context, 'Email:', ticket.email ?? ''),
             if (ticket.phone != null) ...[

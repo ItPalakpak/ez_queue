@@ -10,6 +10,8 @@ enum AppThemeVariant {
   corporate,
   playful,
   trailblazer,
+  monochrome,
+  ci4Default,
 }
 
 /// Theme mode enum for light/dark mode.
@@ -27,6 +29,7 @@ class ThemeColors {
   final Color surface;
   final Color onBackground;
   final Color shadowColor;
+  final Offset shadowOffset;
 
   const ThemeColors({
     required this.background,
@@ -35,22 +38,30 @@ class ThemeColors {
     required this.surface,
     required this.onBackground,
     required this.shadowColor,
+    this.shadowOffset = const Offset(3, 3),
   });
 }
 
 class EZThemeExtension extends ThemeExtension<EZThemeExtension> {
   final Color shadowColor;
+  final Offset shadowOffset;
   final Color? secondaryButtonText;
 
   const EZThemeExtension({
     required this.shadowColor,
+    this.shadowOffset = const Offset(3, 3),
     this.secondaryButtonText,
   });
 
   @override
-  ThemeExtension<EZThemeExtension> copyWith({Color? shadowColor, Color? secondaryButtonText}) {
+  ThemeExtension<EZThemeExtension> copyWith({
+    Color? shadowColor,
+    Offset? shadowOffset,
+    Color? secondaryButtonText,
+  }) {
     return EZThemeExtension(
       shadowColor: shadowColor ?? this.shadowColor,
+      shadowOffset: shadowOffset ?? this.shadowOffset,
       secondaryButtonText: secondaryButtonText ?? this.secondaryButtonText,
     );
   }
@@ -62,6 +73,7 @@ class EZThemeExtension extends ThemeExtension<EZThemeExtension> {
     }
     return EZThemeExtension(
       shadowColor: Color.lerp(shadowColor, other.shadowColor, t) ?? shadowColor,
+      shadowOffset: Offset.lerp(shadowOffset, other.shadowOffset, t) ?? shadowOffset,
       secondaryButtonText: Color.lerp(secondaryButtonText, other.secondaryButtonText, t),
     );
   }
@@ -79,6 +91,7 @@ class AppTheme {
           surface: EZColors.pureBoldSurfaceLight,
           onBackground: EZColors.pureBoldOnBackgroundLight,
           shadowColor: EZColors.pureBoldShadowLight,
+          shadowOffset: Offset(3, 3),
         ),
       AppThemeVariant.techy => const ThemeColors(
           background: EZColors.techyBackground,
@@ -87,6 +100,7 @@ class AppTheme {
           surface: EZColors.techySurface,
           onBackground: Colors.white,
           shadowColor: EZColors.techyShadowLight,
+          shadowOffset: Offset(3, 3),
         ),
       AppThemeVariant.friendly => const ThemeColors(
           background: EZColors.friendlyBackground,
@@ -95,6 +109,7 @@ class AppTheme {
           surface: EZColors.friendlySurface,
           onBackground: EZColors.pureBoldPrimaryLight,
           shadowColor: EZColors.friendlyShadowLight,
+          shadowOffset: Offset(3, 3),
         ),
       AppThemeVariant.corporate => const ThemeColors(
           background: EZColors.corporateBackground,
@@ -103,6 +118,7 @@ class AppTheme {
           surface: EZColors.corporateSurface,
           onBackground: EZColors.corporatePrimary,
           shadowColor: EZColors.corporateShadowLight,
+          shadowOffset: Offset(3, 3),
         ),
       AppThemeVariant.playful => const ThemeColors(
           background: EZColors.playfulBackground,
@@ -111,6 +127,7 @@ class AppTheme {
           surface: EZColors.playfulSurface,
           onBackground: Colors.white,
           shadowColor: EZColors.playfulShadowLight,
+          shadowOffset: Offset(3, 3),
         ),
       AppThemeVariant.trailblazer => const ThemeColors(
           background: EZColors.trailblazerBackground,
@@ -119,6 +136,25 @@ class AppTheme {
           surface: EZColors.trailblazerSurface,
           onBackground: Colors.white,
           shadowColor: EZColors.trailblazerShadowLight,
+          shadowOffset: Offset(3, 3),
+        ),
+      AppThemeVariant.monochrome => const ThemeColors(
+          background: EZColors.monochromeBackgroundLight,
+          primary: EZColors.monochromePrimaryLight,
+          accent: EZColors.monochromeAccentLight,
+          surface: EZColors.monochromeSurfaceLight,
+          onBackground: EZColors.monochromeOnBackgroundLight,
+          shadowColor: EZColors.monochromeShadowLight,
+          shadowOffset: Offset(3, 3),
+        ),
+      AppThemeVariant.ci4Default => const ThemeColors(
+          background: EZColors.ci4DefaultBackgroundLight,
+          primary: EZColors.ci4DefaultPrimaryLight,
+          accent: EZColors.ci4DefaultAccentLight,
+          surface: EZColors.ci4DefaultSurfaceLight,
+          onBackground: EZColors.ci4DefaultOnBackgroundLight,
+          shadowColor: EZColors.ci4DefaultShadowLight,
+          shadowOffset: Offset.zero, // Zero offset shadow for CI4
         ),
     };
   }
@@ -133,6 +169,7 @@ class AppTheme {
           surface: EZColors.pureBoldSurfaceDark,
           onBackground: EZColors.pureBoldOnBackgroundDark,
           shadowColor: EZColors.pureBoldShadowDark,
+          shadowOffset: Offset(3, 3),
         ),
       AppThemeVariant.techy => const ThemeColors(
           background: EZColors.techyBackground,
@@ -141,6 +178,7 @@ class AppTheme {
           surface: EZColors.techySurface,
           onBackground: Colors.white,
           shadowColor: EZColors.techyShadowDark,
+          shadowOffset: Offset(3, 3),
         ),
       AppThemeVariant.friendly => const ThemeColors(
           background: EZColors.friendlyBackground,
@@ -149,6 +187,7 @@ class AppTheme {
           surface: EZColors.friendlySurface,
           onBackground: EZColors.pureBoldPrimaryLight,
           shadowColor: EZColors.friendlyShadowDark,
+          shadowOffset: Offset(3, 3),
         ),
       AppThemeVariant.corporate => const ThemeColors(
           background: EZColors.corporateBackground,
@@ -157,6 +196,7 @@ class AppTheme {
           surface: EZColors.corporateSurface,
           onBackground: EZColors.corporatePrimary,
           shadowColor: EZColors.corporateShadowDark,
+          shadowOffset: Offset(3, 3),
         ),
       AppThemeVariant.playful => const ThemeColors(
           background: EZColors.playfulBackground,
@@ -165,6 +205,7 @@ class AppTheme {
           surface: EZColors.playfulSurface,
           onBackground: Colors.white,
           shadowColor: EZColors.playfulShadowDark,
+          shadowOffset: Offset(3, 3),
         ),
       AppThemeVariant.trailblazer => const ThemeColors(
           background: EZColors.trailblazerBackground,
@@ -173,6 +214,25 @@ class AppTheme {
           surface: EZColors.trailblazerSurface,
           onBackground: Colors.white,
           shadowColor: EZColors.trailblazerShadowDark,
+          shadowOffset: Offset(3, 3),
+        ),
+      AppThemeVariant.monochrome => const ThemeColors(
+          background: EZColors.monochromeBackgroundDark,
+          primary: EZColors.monochromePrimaryDark,
+          accent: EZColors.monochromeAccentDark,
+          surface: EZColors.monochromeSurfaceDark,
+          onBackground: EZColors.monochromeOnBackgroundDark,
+          shadowColor: EZColors.monochromeShadowDark,
+          shadowOffset: Offset(3, 3),
+        ),
+      AppThemeVariant.ci4Default => const ThemeColors(
+          background: EZColors.ci4DefaultBackgroundDark,
+          primary: EZColors.ci4DefaultPrimaryDark,
+          accent: EZColors.ci4DefaultAccentDark,
+          surface: EZColors.ci4DefaultSurfaceDark,
+          onBackground: EZColors.ci4DefaultOnBackgroundDark,
+          shadowColor: EZColors.ci4DefaultShadowDark,
+          shadowOffset: Offset.zero, // Zero offset shadow for CI4
         ),
     };
   }
@@ -180,6 +240,7 @@ class AppTheme {
   /// Build light theme for a given variant.
   static ThemeData light(AppThemeVariant variant) {
     final colors = _lightColors(variant);
+    final isMonochromeLike = variant == AppThemeVariant.monochrome || variant == AppThemeVariant.ci4Default;
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.light(
@@ -188,8 +249,8 @@ class AppTheme {
         surface: colors.surface,
         onSurface: colors.onBackground,
       ).copyWith(
-        onPrimary: variant == AppThemeVariant.trailblazer ? Colors.white : null,
-        onSecondary: variant == AppThemeVariant.trailblazer ? Colors.white : null,
+        onPrimary: variant == AppThemeVariant.trailblazer || isMonochromeLike ? Colors.white : null,
+        onSecondary: variant == AppThemeVariant.trailblazer || isMonochromeLike ? Colors.white : null,
       ),
       textTheme: EZTypography.textTheme,
       scaffoldBackgroundColor: colors.background,
@@ -201,6 +262,7 @@ class AppTheme {
       extensions: [
         EZThemeExtension(
           shadowColor: colors.shadowColor,
+          shadowOffset: colors.shadowOffset,
           secondaryButtonText: variant == AppThemeVariant.trailblazer ? Colors.white : null,
         ),
       ],
@@ -210,6 +272,7 @@ class AppTheme {
   /// Build dark theme for a given variant.
   static ThemeData dark(AppThemeVariant variant) {
     final colors = _darkColors(variant);
+    final isMonochromeLike = variant == AppThemeVariant.monochrome || variant == AppThemeVariant.ci4Default;
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -219,8 +282,8 @@ class AppTheme {
         surface: colors.surface,
         onSurface: colors.onBackground,
       ).copyWith(
-        onPrimary: variant == AppThemeVariant.trailblazer ? Colors.white : null,
-        onSecondary: variant == AppThemeVariant.trailblazer ? Colors.white : null,
+        onPrimary: variant == AppThemeVariant.trailblazer ? Colors.white : (isMonochromeLike ? const Color(0xFF111827) : null),
+        onSecondary: variant == AppThemeVariant.trailblazer ? Colors.white : (isMonochromeLike ? const Color(0xFF111827) : null),
       ),
       textTheme: EZTypography.textTheme,
       scaffoldBackgroundColor: colors.background,
@@ -232,6 +295,7 @@ class AppTheme {
       extensions: [
         EZThemeExtension(
           shadowColor: colors.shadowColor,
+          shadowOffset: colors.shadowOffset,
           secondaryButtonText: variant == AppThemeVariant.trailblazer ? Colors.white : null,
         ),
       ],

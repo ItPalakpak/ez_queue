@@ -26,7 +26,9 @@ class AppLogo extends ConsumerWidget {
   ) {
     switch (variant) {
       case AppThemeVariant.pureBold:
-        // Pure & Bold uses brightness-based logo
+      case AppThemeVariant.monochrome:
+      case AppThemeVariant.ci4Default:
+        // Pure & Bold, Monochrome, and CI4 use brightness-based logo
         return brightness == Brightness.dark
             ? 'assets/photos/logo_for_dark_mode_no_bg.png'
             : 'assets/photos/logo_for_light_mode_no_bg.png';

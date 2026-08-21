@@ -156,7 +156,6 @@ class _EZQueueAppState extends ConsumerState<EZQueueApp> {
     return MaterialApp.router(
       title: 'EZQueue',
       theme: theme,
-      darkTheme: theme,
       themeMode: themeMode,
       routerConfig: _router,
       debugShowCheckedModeBanner: false,

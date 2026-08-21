@@ -16,6 +16,8 @@ class EZCard extends StatelessWidget {
     final theme = Theme.of(context);
     final ext = theme.extension<EZThemeExtension>();
     final shadowColor = ext?.shadowColor ?? theme.colorScheme.onSurface;
+    final shadowOffset = ext?.shadowOffset ?? const Offset(3, 3);
+    final hasShadow = shadowOffset != Offset.zero;
 
     return Container(
       padding: padding,
@@ -23,14 +25,16 @@ class EZCard extends StatelessWidget {
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: shadowColor, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor,
-            offset: const Offset(3, 3),
-            blurRadius: 0,
-            spreadRadius: 0,
-          ),
-        ],
+        boxShadow: hasShadow
+            ? [
+                BoxShadow(
+                  color: shadowColor,
+                  offset: shadowOffset,
+                  blurRadius: 0,
+                  spreadRadius: 0,
+                ),
+              ]
+            : null,
       ),
       child: child,
     );

@@ -113,6 +113,8 @@ final appThemeProvider = Provider<ThemeData>((ref) {
       useDark = false;
       break;
     case AppThemeVariant.pureBold:
+    case AppThemeVariant.monochrome:
+    case AppThemeVariant.ci4Default:
       useDark = switch (mode) {
         ThemeMode.light => false,
         ThemeMode.dark => true,
@@ -139,6 +141,8 @@ final brightnessProvider = Provider<Brightness>((ref) {
     case AppThemeVariant.corporate:
       return Brightness.light;
     case AppThemeVariant.pureBold:
+    case AppThemeVariant.monochrome:
+    case AppThemeVariant.ci4Default:
       return switch (mode) {
         ThemeMode.light => Brightness.light,
         ThemeMode.dark => Brightness.dark,

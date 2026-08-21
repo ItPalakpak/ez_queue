@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class ApiDepartment {
   final int id;
   final String name;
@@ -267,6 +269,7 @@ class ApiSettings {
   final int remoteRateLimitMax;
   final int remoteRateLimitDecayMinutes;
   final Map<String, dynamic>? academicSettings;
+  final dynamic clientIdFormats;
 
   ApiSettings({
     this.enablePriority = true,
@@ -278,6 +281,7 @@ class ApiSettings {
     this.remoteRateLimitMax = 5,
     this.remoteRateLimitDecayMinutes = 10,
     this.academicSettings,
+    this.clientIdFormats,
   });
 
   factory ApiSettings.fromJson(Map<String, dynamic> json) {
@@ -300,7 +304,39 @@ class ApiSettings {
       remoteRateLimitDecayMinutes:
           int.tryParse(json['remote_rate_limit_decay_minutes']?.toString() ?? '') ?? 10,
       academicSettings: json['academic_settings'] as Map<String, dynamic>?,
+      clientIdFormats: json['client_id_formats'],
     );
+  }
+
+  List<String> getFormatsForRole(String? userType) {
+    final defaults = {
+      'Student': ['XX-XXXXX', '20XX-XXXXX'],
+      'Alumni': ['XX-XXXXX', '20XX-XXXXX'],
+      'Faculty/Staff': ['EMP-XXXXX'],
+    };
+
+    Map<String, dynamic>? formatsMap;
+    if (clientIdFormats is Map<String, dynamic>) {
+      formatsMap = clientIdFormats as Map<String, dynamic>;
+    } else if (clientIdFormats is String) {
+      try {
+        formatsMap = jsonDecode(clientIdFormats as String) as Map<String, dynamic>?;
+      } catch (_) {}
+    }
+
+    final backendKey = switch (userType) {
+      'Student' => 'student',
+      'Alumni' => 'alumni',
+      'Faculty/Staff' => 'faculty',
+      _ => 'student',
+    };
+
+    if (formatsMap != null && formatsMap[backendKey] is List) {
+      final list = (formatsMap[backendKey] as List).map((e) => e.toString()).toList();
+      if (list.isNotEmpty) return list;
+    }
+
+    return defaults[userType] ?? ['XX-XXXXX', '20XX-XXXXX'];
   }
 }
 
@@ -334,7 +370,7 @@ class ApiDisplayStation {
   final String stationName;
   final String? currentTicket;
   final String? serviceName;
-  final String? studentName;
+  final String? clientName;
   final String status;
   final List<int> waitingIds;
 
@@ -343,7 +379,7 @@ class ApiDisplayStation {
     required this.stationName,
     this.currentTicket,
     this.serviceName,
-    this.studentName,
+    this.clientName,
     required this.status,
     this.waitingIds = const [],
   });
@@ -356,7 +392,7 @@ class ApiDisplayStation {
       stationName: json['station_name']?.toString() ?? '',
       currentTicket: json['current_ticket']?.toString(),
       serviceName: json['service_name']?.toString(),
-      studentName: json['student_name']?.toString(),
+      clientName: json['client_name']?.toString(),
       status: json['status']?.toString() ?? 'available',
       waitingIds:
           (json['waiting_ids'] as List<dynamic>?)
@@ -371,7 +407,7 @@ class ApiDisplayTicket {
   final int id;
   final String ticketNumber;
   final String serviceName;
-  final String? studentName;
+  final String? clientName;
   final String? course;
   final bool isPriority;
   final String waitTime;
@@ -380,7 +416,7 @@ class ApiDisplayTicket {
     required this.id,
     required this.ticketNumber,
     required this.serviceName,
-    this.studentName,
+    this.clientName,
     this.course,
     required this.isPriority,
     required this.waitTime,
@@ -393,7 +429,7 @@ class ApiDisplayTicket {
           : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       ticketNumber: json['ticket_number']?.toString() ?? '',
       serviceName: json['service_name']?.toString() ?? '',
-      studentName: json['student_name']?.toString(),
+      clientName: json['client_name']?.toString(),
       course: json['course']?.toString(),
       isPriority:
           json['is_priority'] == true ||

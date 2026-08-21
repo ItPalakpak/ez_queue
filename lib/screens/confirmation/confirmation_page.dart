@@ -359,7 +359,7 @@ class ConfirmationPage extends ConsumerWidget {
         final payload = {
           'department_id': formData.departmentId,
           'service_id': serviceId,
-          'student_name': formData.fullName,
+          'client_name': formData.fullName,
           'user_type': mappedUserType,
           if (formData.idNumber != null) 'student_id': formData.idNumber,
           if (formData.idNumber != null) 'employee_id': formData.idNumber,

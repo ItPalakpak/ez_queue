@@ -93,7 +93,7 @@ class PDFGenerator {
                         _buildPdfDetailRow('ID Number:', ticket.studentId ?? ticket.employeeId ?? '', robotoRegular, robotoBold),
                       ],
                       pw.SizedBox(height: 5),
-                      _buildPdfDetailRow('Full Name:', ticket.studentName, robotoRegular, robotoBold),
+                      _buildPdfDetailRow('Full Name:', ticket.clientName, robotoRegular, robotoBold),
                       pw.SizedBox(height: 5),
                       _buildPdfDetailRow('Email:', ticket.email ?? '', robotoRegular, robotoBold),
                       if (ticket.phone != null) ...[

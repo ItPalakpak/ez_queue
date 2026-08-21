@@ -41,7 +41,9 @@ class ThemeCustomizerPage extends ConsumerWidget {
                           'Theme Customizer',
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
-                        if (currentVariant == AppThemeVariant.pureBold)
+                        if (currentVariant == AppThemeVariant.pureBold ||
+                            currentVariant == AppThemeVariant.monochrome ||
+                            currentVariant == AppThemeVariant.ci4Default)
                           _buildSmallThemeModeToggle(context, ref, currentMode),
                       ],
                     ),
@@ -73,7 +75,7 @@ class ThemeCustomizerPage extends ConsumerWidget {
     );
   }
 
-  /// Build compact 3-state theme mode toggle button (Light/System/Dark).
+  /// Build small theme mode toggle for the top right.
   Widget _buildSmallThemeModeToggle(
     BuildContext context,
     WidgetRef ref,
@@ -81,59 +83,65 @@ class ThemeCustomizerPage extends ConsumerWidget {
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(24),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(EZSpacing.radiusMd),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
+          width: 1,
+        ),
       ),
-      padding: const EdgeInsets.all(4),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildSmallSegment(
+          _buildSmallModeButton(
             context,
             ref,
             ThemeMode.light,
             Icons.light_mode,
             currentMode == ThemeMode.light,
           ),
-          _buildSmallSegment(
-            context,
-            ref,
-            ThemeMode.system,
-            Icons.brightness_auto,
-            currentMode == ThemeMode.system,
-          ),
-          _buildSmallSegment(
+          _buildSmallModeButton(
             context,
             ref,
             ThemeMode.dark,
             Icons.dark_mode,
             currentMode == ThemeMode.dark,
           ),
+          _buildSmallModeButton(
+            context,
+            ref,
+            ThemeMode.system,
+            Icons.settings_brightness,
+            currentMode == ThemeMode.system,
+          ),
         ],
       ),
     );
   }
 
-  /// Build individual compact toggle segment.
-  Widget _buildSmallSegment(
+  /// Build small mode button for the segmented control.
+  Widget _buildSmallModeButton(
     BuildContext context,
     WidgetRef ref,
     ThemeMode mode,
     IconData icon,
     bool isSelected,
   ) {
-    return GestureDetector(
+    return InkWell(
       onTap: () {
         ref.read(themeModeProvider.notifier).setThemeMode(mode);
       },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+      borderRadius: BorderRadius.circular(EZSpacing.radiusSm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: EZSpacing.sm,
+          vertical: EZSpacing.xs,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? Theme.of(context).colorScheme.primary
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(EZSpacing.radiusSm),
         ),
         child: Icon(
           icon,
@@ -159,6 +167,8 @@ class ThemeCustomizerPage extends ConsumerWidget {
       (AppThemeVariant.corporate, 'Corporate / Minimal', 'Clean, professional'),
       (AppThemeVariant.playful, 'Playful', 'Bold, energetic'),
       (AppThemeVariant.trailblazer, 'Trailblazer', 'Navy, gold, elegant'),
+      (AppThemeVariant.monochrome, 'Monochrome', 'Pure black and white, minimal'),
+      (AppThemeVariant.ci4Default, 'CI4 Default', 'Clean monochrome with zero offset shadows'),
     ];
 
     return Column(
@@ -196,7 +206,9 @@ class ThemeCustomizerPage extends ConsumerWidget {
   ) {
     switch (variant) {
       case AppThemeVariant.pureBold:
-        // Pure & Bold uses brightness-based logo
+      case AppThemeVariant.monochrome:
+      case AppThemeVariant.ci4Default:
+        // Pure & Bold, Monochrome, and CI4 use brightness-based logo
         return brightness == Brightness.dark
             ? 'assets/photos/logo_for_dark_mode_no_bg.png'
             : 'assets/photos/logo_for_light_mode_no_bg.png';

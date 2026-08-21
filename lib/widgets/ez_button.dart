@@ -24,6 +24,8 @@ class EZButton extends StatelessWidget {
     final theme = Theme.of(context);
     final ext = theme.extension<EZThemeExtension>();
     final shadowColor = ext?.shadowColor ?? theme.colorScheme.onSurface;
+    final shadowOffset = ext?.shadowOffset ?? const Offset(3, 3);
+    final hasShadow = shadowOffset != Offset.zero;
 
     Color bg = isDestructive ? theme.colorScheme.error : theme.colorScheme.secondary;
     Color fg = isDestructive ? theme.colorScheme.onError : theme.colorScheme.onSecondary;
@@ -42,14 +44,16 @@ class EZButton extends StatelessWidget {
         color: bg,
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: shadowColor, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: shadowColor,
-            offset: const Offset(3, 3),
-            blurRadius: 0,
-            spreadRadius: 0,
-          ),
-        ],
+        boxShadow: hasShadow
+            ? [
+                BoxShadow(
+                  color: shadowColor,
+                  offset: shadowOffset,
+                  blurRadius: 0,
+                  spreadRadius: 0,
+                ),
+              ]
+            : null,
       ),
       child: Material(
         color: Colors.transparent,

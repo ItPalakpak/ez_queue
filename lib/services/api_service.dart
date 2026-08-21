@@ -310,6 +310,28 @@ class ApiService {
       throw Exception('Network error: $e');
     }
   }
+  // CHANGED: added lookupClientProfile to query archived client details by ID number
+  Future<Map<String, dynamic>?> lookupClientProfile({
+    required String idNumber,
+    required String userType,
+  }) async {
+    try {
+      final uri = Uri.parse('${ApiConfig.baseUrl}/kiosk/lookup-client').replace(
+        queryParameters: {
+          'id_number': idNumber,
+          'user_type': userType,
+        },
+      );
+      final response = await _client.get(uri);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> body = json.decode(response.body);
+        return body['data'] != null ? Map<String, dynamic>.from(body['data']) : null;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 }
 
 // Global instance for providers

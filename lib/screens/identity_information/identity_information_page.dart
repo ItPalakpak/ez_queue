@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,6 +16,7 @@ import 'package:ez_queue/utils/theme_helpers.dart';
 import 'package:ez_queue/widgets/ez_dialog.dart';
 import 'package:ez_queue/providers/api_providers.dart';
 import 'package:ez_queue/models/api_models.dart';
+import 'package:ez_queue/services/api_service.dart';
 
 /// Identity information page.
 /// Step 2: Captures Full Name, ID Number (if applicable), and Course/Program.
@@ -40,6 +42,7 @@ class _IdentityInformationPageState
   String? _selectedCourseProgram;
   String? _selectedYearLevel;
   String? _selectedStanding;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -48,6 +51,7 @@ class _IdentityInformationPageState
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _lastNameController.dispose();
     _firstNameController.dispose();
     _middleNameController.dispose();
@@ -60,6 +64,31 @@ class _IdentityInformationPageState
   bool _requiresIdNumber(String? userType) {
     return userType != null &&
         ['Student', 'Faculty/Staff', 'Alumni'].contains(userType);
+  }
+
+  /// Validate ID value against configured role format patterns.
+  bool _validateIdFormat(String idVal, List<String> allowedFormats) {
+    if (idVal.isEmpty || allowedFormats.isEmpty) return true;
+    for (final fmt in allowedFormats) {
+      final cleanFmt = fmt.trim();
+      if (cleanFmt.isEmpty) continue;
+      RegExp regex;
+      if (cleanFmt.startsWith('/') || cleanFmt.startsWith('^')) {
+        final pattern = cleanFmt.startsWith('/')
+            ? cleanFmt.substring(1, cleanFmt.length - 1)
+            : cleanFmt;
+        regex = RegExp(pattern, caseSensitive: false);
+      } else {
+        final pattern = RegExp.escape(cleanFmt)
+            .replaceAll('X', r'\d')
+            .replaceAll('x', r'\d');
+        regex = RegExp('^$pattern\$', caseSensitive: false);
+      }
+      if (regex.hasMatch(idVal.trim())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /// Check if selected user type requires course/program.
@@ -101,6 +130,106 @@ class _IdentityInformationPageState
         'please choose the course that connects to your purpose for coming here in this institution',
       _ => null,
     };
+  }
+
+  String? _lastPopulatedId;
+
+  String _getBackendRole(String? userType) {
+    return switch (userType) {
+      'Student' => 'student',
+      'Alumni' => 'alumni',
+      'Faculty/Staff' => 'faculty',
+      'Visitor' => 'visitor',
+      _ => 'student',
+    };
+  }
+
+  Future<void> _autoPopulateFromArchive(String idVal, String userTypeBackend) async {
+    final cleanId = idVal.trim();
+    if (cleanId.isEmpty || _lastPopulatedId == cleanId) return;
+    try {
+      final profile = await apiService.lookupClientProfile(
+        idNumber: cleanId,
+        userType: userTypeBackend,
+      );
+      if (profile == null) return;
+
+      _lastPopulatedId = cleanId;
+
+      final nameBreakdown = profile['name_breakdown'] as Map<String, dynamic>?;
+      if (nameBreakdown != null) {
+        if (nameBreakdown['last_name'] != null && (nameBreakdown['last_name'] as String).isNotEmpty) {
+          _lastNameController.text = nameBreakdown['last_name'];
+        }
+        if (nameBreakdown['first_name'] != null && (nameBreakdown['first_name'] as String).isNotEmpty) {
+          _firstNameController.text = nameBreakdown['first_name'];
+        }
+        if (nameBreakdown['middle_name'] != null) {
+          _middleNameController.text = nameBreakdown['middle_name'];
+        }
+        if (nameBreakdown['suffix'] != null) {
+          _suffixController.text = nameBreakdown['suffix'];
+        }
+      } else if (profile['client_name'] != null) {
+        _firstNameController.text = profile['client_name'];
+      }
+
+      if (profile['course_id'] != null) {
+        setState(() {
+          _selectedCourseId = profile['course_id'] as int?;
+          if (profile['course'] != null) {
+            _selectedCourseProgram = profile['course'];
+          }
+        });
+      }
+
+      if (profile['year_level'] != null) {
+        setState(() {
+          _selectedYearLevel = profile['year_level'];
+        });
+      }
+
+      if (profile['standing'] != null) {
+        setState(() {
+          _selectedStanding = profile['standing'];
+        });
+      }
+
+      final contact = <String, String>{};
+      if (profile['phone'] != null && (profile['phone'] as String).isNotEmpty) {
+        contact['phone'] = profile['phone'];
+      }
+      if (profile['email'] != null && (profile['email'] as String).isNotEmpty) {
+        contact['email'] = profile['email'];
+      }
+
+      if (contact.isNotEmpty) {
+        _storeScannedContact(contact);
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Archive Data Found: Identity and contact details auto-populated'),
+            backgroundColor: Colors.blue,
+          ),
+        );
+      }
+    } catch (_) {
+      // Ignore lookup error
+    }
+  }
+
+  void _onIdNumberChanged(String val, List<String> allowedFormats, String userTypeBackend) {
+    _debounceTimer?.cancel();
+    if (val.trim().isEmpty) {
+      _lastPopulatedId = null;
+      return;
+    }
+    if (_lastPopulatedId == val.trim() || !_validateIdFormat(val, allowedFormats)) return;
+    _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
+      _autoPopulateFromArchive(val, userTypeBackend);
+    });
   }
 
   /// Strip HTML tags and truncate to a max length — CHANGED: security hardening for QR data.
@@ -242,6 +371,11 @@ class _IdentityInformationPageState
 
     if (contact.isNotEmpty) {
       _storeScannedContact(contact);
+    }
+
+    final scannedId = _idNumberController.text.trim();
+    if (scannedId.isNotEmpty) {
+      _autoPopulateFromArchive(scannedId, _getBackendRole(userType));
     }
 
     // Show result
@@ -491,19 +625,109 @@ class _IdentityInformationPageState
                               keyboardType: TextInputType.text,
                               textInputAction: TextInputAction.next,
                               maxLength: 50,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
                               inputFormatters: [
                                 FilteringTextInputFormatter.allow(
                                   RegExp(r'[a-zA-Z0-9\-]'),
                                 ),
                               ],
+                              onChanged: (val) {
+                                final settings = settingsAsync.asData?.value;
+                                final formats = settings?.getFormatsForRole(userType) ??
+                                    (userType == 'Faculty/Staff'
+                                        ? ['EMP-XXXXX']
+                                        : ['XX-XXXXX', '20XX-XXXXX']);
+                                _onIdNumberChanged(val, formats, _getBackendRole(userType));
+                              },
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Please enter your ${_idNumberLabel(userType).toLowerCase()}';
                                 }
+                                final settings = settingsAsync.asData?.value;
+                                final formats = settings?.getFormatsForRole(userType) ??
+                                    (userType == 'Faculty/Staff'
+                                        ? ['EMP-XXXXX']
+                                        : ['XX-XXXXX', '20XX-XXXXX']);
+                                if (!_validateIdFormat(value.trim(), formats)) {
+                                  return 'Invalid format. Expected: ${formats.join(' or ')}';
+                                }
                                 return null;
                               },
                             ),
-                            const SizedBox(height: EZSpacing.xxl),
+                            const SizedBox(height: EZSpacing.xs),
+                            Builder(
+                              builder: (context) {
+                                final settings = settingsAsync.asData?.value;
+                                final formats = settings?.getFormatsForRole(userType) ??
+                                    (userType == 'Faculty/Staff'
+                                        ? ['EMP-XXXXX']
+                                        : ['XX-XXXXX', '20XX-XXXXX']);
+                                if (formats.isEmpty) return const SizedBox.shrink();
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 2,
+                                    bottom: EZSpacing.md,
+                                  ),
+                                  child: Wrap(
+                                    crossAxisAlignment:
+                                        WrapCrossAlignment.center,
+                                    spacing: 6,
+                                    runSpacing: 4,
+                                    children: [
+                                      Text(
+                                        'Allowed Formats:',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withValues(alpha: 0.6),
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 12,
+                                            ),
+                                      ),
+                                      ...formats.map(
+                                        (fmt) => Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withValues(alpha: 0.15),
+                                            border: Border.all(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                                  .withValues(alpha: 0.3),
+                                            ),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            fmt,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .primary,
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: EZSpacing.lg),
                           ],
 
                           // Name inputs

@@ -59,6 +59,36 @@ class EZColors {
   static const Color trailblazerShadowDark = Color(0xFF000000); // Black shadow
   static const Color trailblazerShadowLight = Color(0xFF000000); 
 
+  // Monochrome Theme (Pure black & white, minimal)
+  static const Color monochromeBackgroundLight = Color(0xFFFFFFFF);
+  static const Color monochromePrimaryLight = Color(0xFF000000);
+  static const Color monochromeAccentLight = Color(0xFF000000);
+  static const Color monochromeSurfaceLight = Color(0xFFF5F5F5);
+  static const Color monochromeOnBackgroundLight = Color(0xFF000000);
+  static const Color monochromeShadowLight = Color(0xFF000000);
+
+  static const Color monochromeBackgroundDark = Color(0xFF000000);
+  static const Color monochromePrimaryDark = Color(0xFFFFFFFF);
+  static const Color monochromeAccentDark = Color(0xFFFFFFFF);
+  static const Color monochromeSurfaceDark = Color(0xFF1A1A1A);
+  static const Color monochromeOnBackgroundDark = Color(0xFFFFFFFF);
+  static const Color monochromeShadowDark = Color.fromRGBO(255, 255, 255, 0.70);
+
+  // CI4 Default Theme (QueueSys monochrome palette with solid borders & zero offset shadows)
+  static const Color ci4DefaultBackgroundLight = Color(0xFFFFFFFF);
+  static const Color ci4DefaultPrimaryLight = Color(0xFF111110);
+  static const Color ci4DefaultAccentLight = Color(0xFF111110);
+  static const Color ci4DefaultSurfaceLight = Color(0xFFF7F7F5);
+  static const Color ci4DefaultOnBackgroundLight = Color(0xFF111110);
+  static const Color ci4DefaultShadowLight = Color(0xFF111110);
+
+  static const Color ci4DefaultBackgroundDark = Color(0xFF111110);
+  static const Color ci4DefaultPrimaryDark = Color(0xFFFFFFFF);
+  static const Color ci4DefaultAccentDark = Color(0xFFFFFFFF);
+  static const Color ci4DefaultSurfaceDark = Color(0xFF1A1A19);
+  static const Color ci4DefaultOnBackgroundDark = Color(0xFFFFFFFF);
+  static const Color ci4DefaultShadowDark = Color(0xFF555550); 
+
   // Semantic / Status Colors (shared across all themes)
   static const Color success = Color(0xFF10B981);
   static const Color warning = Color(0xFFF59E0B);

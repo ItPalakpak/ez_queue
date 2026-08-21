@@ -628,7 +628,7 @@ class _ContactInformationPageState
       final formData = ref.read(queueFormProvider);
 
       final payload = {
-        'student_name': formData.fullName,
+        'client_name': formData.fullName,
         'name_breakdown': formData.nameBreakdown,
         'student_id': formData.idNumber,
         'employee_id': formData.idNumber,
