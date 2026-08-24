@@ -86,7 +86,11 @@ class PDFGenerator {
                       _buildPdfDetailRow('User Type:', ticket.userType, robotoRegular, robotoBold),
                       if (ticket.course != null) ...[
                         pw.SizedBox(height: 5),
-                        _buildPdfDetailRow('Course/Program:', ticket.course!, robotoRegular, robotoBold),
+                        _buildPdfDetailRow('Course/Program:', '${ticket.course!}${ticket.major != null && ticket.major!.isNotEmpty ? ' (${ticket.major})' : ''}', robotoRegular, robotoBold),
+                        if (ticket.major != null && ticket.major!.isNotEmpty) ...[
+                          pw.SizedBox(height: 5),
+                          _buildPdfDetailRow('Major / Specialization:', ticket.major!, robotoRegular, robotoBold),
+                        ],
                       ],
                       if (ticket.studentId != null || ticket.employeeId != null) ...[
                         pw.SizedBox(height: 5),

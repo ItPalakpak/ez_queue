@@ -159,7 +159,18 @@ class ConfirmationPage extends ConsumerWidget {
                             final periodText = periodParts.isNotEmpty
                                 ? ' (${periodParts.join(' / ')})'
                                 : '';
-                            return '  • $docName$subText$periodText';
+                            final selPurps = (sel['purposes'] as List<dynamic>? ?? [])
+                                .map((p) => p.toString())
+                                .where((p) => p.isNotEmpty)
+                                .toList();
+                            final customP = (sel['custom_purpose'] ?? '').toString().trim();
+                            if (customP.isNotEmpty && !selPurps.contains(customP)) {
+                              selPurps.add('Other: $customP');
+                            }
+                            final purpText = selPurps.isNotEmpty
+                                ? ' [Purpose: ${selPurps.join(', ')}]'
+                                : '';
+                            return '  • $docName$subText$periodText$purpText';
                           }),
                         ],
                         '/service-selection',
@@ -187,7 +198,9 @@ class ConfirmationPage extends ConsumerWidget {
                       'User Type: ${formData.userType ?? 'Not selected'}',
                       'Full Name: ${formData.fullName ?? 'Not provided'}',
                       if (formData.courseProgram != null)
-                        'Course/Program: ${formData.courseProgram}',
+                        'Course/Program: ${formData.courseProgram}${formData.major != null ? ' (${formData.major})' : ''}',
+                      if (formData.major != null)
+                        'Major: ${formData.major}',
                       if (formData.yearLevel != null)
                         'Year Level: ${formData.yearLevel}',
                       if (formData.standing != null)
@@ -366,6 +379,7 @@ class ConfirmationPage extends ConsumerWidget {
           if (formData.contactNumber != null) 'phone': formData.contactNumber,
           if (formData.email != null) 'email': formData.email,
           if (formData.courseId != null) 'course_id': formData.courseId,
+          if (formData.major != null) 'major': formData.major,
           if (formData.purpose != null) 'purpose': formData.purpose,
           'priority_weight': formData.priorityWeight,
           'is_priority': formData.priorityWeight > 1,

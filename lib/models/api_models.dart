@@ -352,12 +352,14 @@ class ApiCourse {
   final int id;
   final String courseCode;
   final String courseName;
+  final String? major;
   final String status;
 
   ApiCourse({
     required this.id,
     required this.courseCode,
     required this.courseName,
+    this.major,
     this.status = 'active',
   });
 
@@ -368,6 +370,7 @@ class ApiCourse {
           : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       courseCode: json['course_code']?.toString() ?? '',
       courseName: json['course_name']?.toString() ?? '',
+      major: json['major']?.toString(),
       status: json['status']?.toString() ?? 'active',
     );
   }

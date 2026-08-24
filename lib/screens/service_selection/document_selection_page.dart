@@ -45,9 +45,6 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
 
   List<Map<String, dynamic>> _selections = [];
   List<Map<String, dynamic>> _previousSelections = [];
-  final List<dynamic> _selectedPurposes = [];
-  bool _isOthersChecked = false;
-  String _customPurpose = '';
 
   // CHANGED: Mutually exclusive single-open accordion state
   String? _openSection = 'reminder';
@@ -72,20 +69,6 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     }
     if (formData.extraDetails.isNotEmpty) {
       _extraDetails = Map.from(formData.extraDetails);
-      if (_extraDetails['purposes'] != null) {
-        final List<dynamic> p = _extraDetails['purposes'];
-        for (var item in p) {
-          if (item is String || item is int) {
-            _selectedPurposes.add(item);
-          }
-        }
-      }
-      if (_extraDetails['custom_purpose'] != null) {
-        _customPurpose = _extraDetails['custom_purpose'];
-        if (_customPurpose.isNotEmpty) {
-          _isOthersChecked = true;
-        }
-      }
       if (_extraDetails['previous_selections'] != null) {
         final List<dynamic> ps = _extraDetails['previous_selections'];
         _previousSelections = List<Map<String, dynamic>>.from(
@@ -120,32 +103,31 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
           });
         }
       }
-    } catch (e) {
-      debugPrint('Failed to load academics: $e');
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+    } catch (_) {} finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  void _handleExtraChange(String key, dynamic value) {
+  void _handleExtraChange(String field, dynamic value) {
     setState(() {
-      _extraDetails[key] = value;
-      if (key == 'date_of_graduation' && value != null && value.toString().isNotEmpty) {
+      _extraDetails[field] = value;
+      if (field == 'date_of_graduation' && value != null && value.toString().isNotEmpty) {
         _extraDetails['last_semester_attended'] = null;
         _extraDetails['last_sy_attended'] = null;
-      } else if ((key == 'last_semester_attended' || key == 'last_sy_attended') && value != null && value.toString().isNotEmpty) {
+      } else if ((field == 'last_semester_attended' || field == 'last_sy_attended') &&
+          value != null &&
+          value.toString().isNotEmpty) {
         _extraDetails['date_of_graduation'] = null;
       }
     });
   }
 
   Future<void> _selectDate(BuildContext context, String key) async {
-    final DateTime initialDate = DateTime.now();
-    final DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
-      initialDate: initialDate,
+      initialDate: DateTime.now(),
       firstDate: DateTime(1900),
       lastDate: DateTime(2100),
     );
@@ -154,6 +136,51 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
           "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
       _handleExtraChange(key, formattedDate);
     }
+  }
+
+  // CHANGED: Specific purpose resolution per level (only show purposes explicitly configured on the document or subselection)
+  List<_PurposeOption> _resolvePurposesFor(ApiServiceDocument doc, [int? subId]) {
+    // 1. Subselection-level purposes
+    if (subId != null) {
+      final sub = doc.subselections.where((s) => s.id == subId).firstOrNull;
+      if (sub != null && sub.purposes.isNotEmpty) {
+        final list = <_PurposeOption>[];
+        for (var p in sub.purposes) {
+          final name = p is Map ? (p['name']?.toString() ?? '') : p.toString();
+          final isActive = p is Map ? (p['is_active'] != false) : true;
+          if (isActive && name.isNotEmpty) {
+            list.add(_PurposeOption(
+              id: p is Map && p['id'] != null ? p['id'] : name,
+              name: name,
+              level: 'subselection',
+              context: '${doc.name} - ${sub.name}',
+            ));
+          }
+        }
+        return list;
+      }
+      return [];
+    }
+
+    // 2. Document-level purposes
+    if (doc.purposes.isNotEmpty) {
+      final list = <_PurposeOption>[];
+      for (var p in doc.purposes) {
+        final name = p is Map ? (p['name']?.toString() ?? '') : p.toString();
+        final isActive = p is Map ? (p['is_active'] != false) : true;
+        if (isActive && name.isNotEmpty) {
+          list.add(_PurposeOption(
+            id: p is Map && p['id'] != null ? p['id'] : name,
+            name: name,
+            level: 'document',
+            context: doc.name,
+          ));
+        }
+      }
+      return list;
+    }
+
+    return [];
   }
 
   void _handleDocumentToggle(ApiServiceDocument doc) {
@@ -170,13 +197,14 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
           'academic_year_id': null,
           'academic_year_name': null,
           'semester': null,
+          'purposes': <dynamic>[],
+          'custom_purpose': '',
         });
       }
     });
   }
 
-  final bool _allowMultipleSubselections =
-      true; // Toggle this to enable multiple subselections per document
+  final bool _allowMultipleSubselections = true;
 
   void _handleSubselectionToggle(
     int docId,
@@ -208,6 +236,8 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
           'academic_year_id': null,
           'academic_year_name': null,
           'semester': null,
+          'purposes': <dynamic>[],
+          'custom_purpose': '',
         });
       } else {
         _selections.removeWhere(
@@ -230,8 +260,48 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
             'academic_year_id': null,
             'academic_year_name': null,
             'semester': null,
+            'purposes': <dynamic>[],
+            'custom_purpose': '',
           });
         }
+      }
+    });
+  }
+
+  void _handleDocPurposeToggle(int docId, int? subId, String purposeName, bool isChecked) {
+    setState(() {
+      final index = _selections.indexWhere(
+        (s) =>
+            s['service_document_id'] == docId &&
+            (subId != null
+                ? s['document_subselection_id'] == subId
+                : (s['document_subselection_id'] == null || subId == null)),
+      );
+      if (index != -1) {
+        final curPurposes = List<dynamic>.from(_selections[index]['purposes'] ?? []);
+        if (isChecked) {
+          if (!curPurposes.contains(purposeName)) {
+            curPurposes.add(purposeName);
+          }
+        } else {
+          curPurposes.remove(purposeName);
+        }
+        _selections[index]['purposes'] = curPurposes;
+      }
+    });
+  }
+
+  void _handleDocCustomPurposeChange(int docId, int? subId, String value) {
+    setState(() {
+      final index = _selections.indexWhere(
+        (s) =>
+            s['service_document_id'] == docId &&
+            (subId != null
+                ? s['document_subselection_id'] == subId
+                : (s['document_subselection_id'] == null || subId == null)),
+      );
+      if (index != -1) {
+        _selections[index]['custom_purpose'] = value;
       }
     });
   }
@@ -331,39 +401,40 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     });
   }
 
-  void _handlePurposeToggle(dynamic purposeValue, bool selected) {
-    setState(() {
-      if (selected) {
-        if (!_selectedPurposes.contains(purposeValue)) {
-          _selectedPurposes.add(purposeValue);
-        }
-      } else {
-        _selectedPurposes.remove(purposeValue);
-      }
-    });
-  }
-
-  void _handleCustomPurposeChange(String value) {
-    setState(() {
-      _customPurpose = value;
-    });
-  }
-
   void _proceed() {
-    // CHANGED: Support multi-level purposes (service, document, subselection)
-    final applicablePurposes = _getApplicablePurposes();
+    final allSelectedPurposes = <dynamic>[];
+    final allSelectedPurposesDisplay = <String>[];
+    final docPurposesMap = <String, List<String>>{};
 
-    final List<dynamic> finalPurposes = List.from(_selectedPurposes);
-    final List<String> finalPurposesDisplay = _selectedPurposes.map((p) {
-      final purposeObj = applicablePurposes.where((up) => up.id == p || up.name == p).firstOrNull;
-      if (purposeObj != null) return purposeObj.name;
-      return p.toString();
+    final updatedSelections = _selections.map((s) {
+      final copy = Map<String, dynamic>.from(s);
+      final itemPurps = List<dynamic>.from(copy['purposes'] ?? []);
+      final customPurp = (copy['custom_purpose'] ?? '').toString().trim();
+      if (customPurp.isNotEmpty && !itemPurps.contains(customPurp)) {
+        itemPurps.add(customPurp);
+      }
+      final docName = (copy['document_name'] ?? 'Document').toString();
+
+      if (itemPurps.isNotEmpty) {
+        if (!docPurposesMap.containsKey(docName)) {
+          docPurposesMap[docName] = [];
+        }
+        for (var p in itemPurps) {
+          final pStr = p.toString();
+          if (!docPurposesMap[docName]!.contains(pStr)) {
+            docPurposesMap[docName]!.add(pStr);
+          }
+          if (!allSelectedPurposes.contains(p)) {
+            allSelectedPurposes.add(p);
+          }
+          if (!allSelectedPurposesDisplay.contains(pStr)) {
+            allSelectedPurposesDisplay.add(pStr);
+          }
+        }
+      }
+      copy['purposes'] = itemPurps.map((e) => e.toString()).toList();
+      return copy;
     }).toList();
-
-    if (_customPurpose.trim().isNotEmpty && _isOthersChecked) {
-      finalPurposes.add(_customPurpose.trim());
-      finalPurposesDisplay.add(_customPurpose.trim());
-    }
 
     final prevDetailsStr = _previousSelections
         .map((s) {
@@ -383,18 +454,11 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
       updatedExtraDetails['date_of_graduation'] = null;
     }
 
-    updatedExtraDetails['purposes'] = finalPurposes;
-    updatedExtraDetails['purposes_display'] = finalPurposesDisplay;
-    updatedExtraDetails['custom_purpose'] = _customPurpose;
+    updatedExtraDetails['purposes'] = allSelectedPurposes;
+    updatedExtraDetails['purposes_display'] = allSelectedPurposesDisplay;
+    updatedExtraDetails['document_purposes'] = docPurposesMap;
     updatedExtraDetails['previous_request_details'] = prevDetailsStr;
     updatedExtraDetails['previous_selections'] = _previousSelections;
-
-    // Attach chosen purposes to each selection
-    final updatedSelections = _selections.map((s) {
-      final copy = Map<String, dynamic>.from(s);
-      copy['purposes'] = finalPurposesDisplay;
-      return copy;
-    }).toList();
 
     ref
         .read(queueFormProvider.notifier)
@@ -414,61 +478,6 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     }
   }
 
-  List<_PurposeOption> _getApplicablePurposes() {
-    final list = <_PurposeOption>[];
-    final seen = <String>{};
-
-    // 1. Purposes from selected subselections
-    for (var sel in _selections) {
-      final docId = sel['service_document_id'];
-      final subId = sel['document_subselection_id'];
-      if (docId != null && subId != null) {
-        final doc = widget.services.expand((s) => s.documents).where((d) => d.id == docId).firstOrNull;
-        if (doc != null) {
-          final sub = doc.subselections.where((s) => s.id == subId).firstOrNull;
-          if (sub != null) {
-            for (var p in sub.purposes) {
-              final name = p is Map ? (p['name']?.toString() ?? '') : p.toString();
-              final isActive = p is Map ? (p['is_active'] != false) : true;
-              if (isActive && name.isNotEmpty && !seen.contains(name.toLowerCase())) {
-                seen.add(name.toLowerCase());
-                list.add(_PurposeOption(id: p is Map && p['id'] != null ? p['id'] : name, name: name, level: 'subselection', context: '${doc.name} - ${sub.name}'));
-              }
-            }
-          }
-        }
-      }
-
-      // 2. Purposes from selected document
-      if (docId != null) {
-        final doc = widget.services.expand((s) => s.documents).where((d) => d.id == docId).firstOrNull;
-        if (doc != null) {
-          for (var p in doc.purposes) {
-            final name = p is Map ? (p['name']?.toString() ?? '') : p.toString();
-            final isActive = p is Map ? (p['is_active'] != false) : true;
-            if (isActive && name.isNotEmpty && !seen.contains(name.toLowerCase())) {
-              seen.add(name.toLowerCase());
-              list.add(_PurposeOption(id: p is Map && p['id'] != null ? p['id'] : name, name: name, level: 'document', context: doc.name));
-            }
-          }
-        }
-      }
-    }
-
-    // 3. Service-level purposes
-    for (var service in widget.services) {
-      for (var p in service.purposes) {
-        if (!p.isActive) continue;
-        if (!seen.contains(p.name.toLowerCase())) {
-          seen.add(p.name.toLowerCase());
-          list.add(_PurposeOption(id: p.id, name: p.name, level: 'service', context: service.name));
-        }
-      }
-    }
-
-    return list;
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -483,7 +492,6 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
       }
     }
     final uniqueDocs = uniqueDocsMap.values.toList();
-    final applicablePurposes = _getApplicablePurposes();
 
     return Scaffold(
       body: Column(
@@ -506,8 +514,6 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                     _buildPart1Section(uniqueDocs),
                     const SizedBox(height: EZSpacing.lg),
                     _buildPart2Section(uniqueDocs),
-                    const SizedBox(height: EZSpacing.lg),
-                    _buildPart3Section(applicablePurposes),
                   ],
                 ),
               ),
@@ -738,7 +744,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                 decoration: ThemeHelpers.textInputDecoration(
                   labelText: 'Semester',
                 ),
-                value: _extraDetails['last_semester_attended'],
+                initialValue: _extraDetails['last_semester_attended'],
                 items: const [
                   DropdownMenuItem(
                     value: '1st Semester',
@@ -760,7 +766,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                 decoration: ThemeHelpers.textInputDecoration(
                   labelText: 'School Year/Academic Year',
                 ),
-                value: _extraDetails['last_sy_attended'],
+                initialValue: _extraDetails['last_sy_attended'],
                 items: _academics.map((ay) {
                   return DropdownMenuItem(value: ay.name, child: Text(ay.name));
                 }).toList(),
@@ -933,6 +939,123 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     );
   }
 
+  // CHANGED: Document & Subselection contextual purposes widget (only shown when purposes are configured)
+  Widget _buildDocumentPurposesView({
+    required ApiServiceDocument doc,
+    int? subId,
+    String? subName,
+    required Map<String, dynamic>? selectionItem,
+  }) {
+    final purposes = _resolvePurposesFor(doc, subId);
+    if (purposes.isEmpty) return const SizedBox.shrink();
+
+    final curPurposes = List<dynamic>.from(selectionItem?['purposes'] ?? []);
+    final curCustom = (selectionItem?['custom_purpose'] ?? '').toString();
+    final isCustomChecked = curCustom.isNotEmpty;
+
+    final theme = Theme.of(context);
+    final title = subName != null ? 'Purpose(s) for $subName:' : 'Purpose(s) for ${doc.name}:';
+
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 32,
+        right: subName != null ? 0 : 16,
+        bottom: subName != null ? 8 : 16,
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(top: 8, bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant,
+            style: BorderStyle.solid,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurfaceVariant,
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...purposes.map((purpose) {
+              final isChecked = curPurposes.contains(purpose.name) || curPurposes.contains(purpose.id);
+              return CheckboxListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                title: Row(
+                  children: [
+                    Expanded(child: Text(purpose.name, style: const TextStyle(fontSize: 14))),
+                    if (purpose.level != 'service')
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          purpose.level == 'subselection' ? 'Sub-option' : 'Doc',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                value: isChecked,
+                onChanged: (val) => _handleDocPurposeToggle(doc.id, subId, purpose.name, val ?? false),
+                controlAffinity: ListTileControlAffinity.leading,
+              );
+            }),
+            CheckboxListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Others (Specify)', style: TextStyle(fontSize: 14)),
+              value: isCustomChecked,
+              onChanged: (val) {
+                _handleDocCustomPurposeChange(
+                  doc.id,
+                  subId,
+                  (val ?? false) ? (curCustom.isNotEmpty ? curCustom : ' ') : '',
+                );
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+            if (isCustomChecked)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: EZInputField(
+                  child: TextField(
+                    decoration: ThemeHelpers.textInputDecoration(
+                      labelText: 'Specify other purpose',
+                    ),
+                    controller: TextEditingController.fromValue(
+                      TextEditingValue(
+                        text: curCustom.trim(),
+                        selection: TextSelection.collapsed(
+                          offset: curCustom.trim().length,
+                        ),
+                      ),
+                    ),
+                    onChanged: (val) => _handleDocCustomPurposeChange(doc.id, subId, val),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPart2Section(List<ApiServiceDocument> uniqueDocs) {
     return _buildAccordionCard(
       title: 'Part 2: Check document/s you need',
@@ -946,6 +1069,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                 .where((s) => s['service_document_id'] == doc.id)
                 .toList();
             final isSelected = docSelections.isNotEmpty;
+            final hasSubselections = doc.subselections.isNotEmpty;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -958,9 +1082,11 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                   value: isSelected,
                   onChanged: (val) => _handleDocumentToggle(doc),
                 ),
-                if (isSelected && doc.subselections.isNotEmpty)
+
+                // Subselections
+                if (isSelected && hasSubselections)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: 16, left: 16),
                     child: _allowMultipleSubselections
                         ? Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -987,19 +1113,19 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                           val ?? false,
                                         ),
                                   ),
-                                  if (isSubSelected && sub.requiresAcademicPeriod)
+                                  if (isSubSelected &&
+                                      sub.requiresAcademicPeriod)
                                     Padding(
                                       padding: const EdgeInsets.only(left: 32),
                                       child: Column(
                                         children: [
-                                          // ignore: deprecated_member_use
                                           EZInputField(
                                             child: DropdownButtonFormField<int>(
                                               decoration:
                                                   ThemeHelpers.textInputDecoration(
                                                     labelText: 'Academic Year',
                                                   ),
-                                              value:
+                                              initialValue:
                                                   subSelection!['academic_year_id'],
                                               items: _academics.map((ay) {
                                                 return DropdownMenuItem(
@@ -1023,7 +1149,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                                   ThemeHelpers.textInputDecoration(
                                                     labelText: 'Semester',
                                                   ),
-                                              value:
+                                              initialValue:
                                                   subSelection['semester'],
                                               items: const [
                                                 DropdownMenuItem(
@@ -1050,6 +1176,15 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                           ),
                                         ],
                                       ),
+                                    ),
+
+                                  // Subselection-level Contextual Purposes (only shown if configured)
+                                  if (isSubSelected)
+                                    _buildDocumentPurposesView(
+                                      doc: doc,
+                                      subId: sub.id,
+                                      subName: sub.name,
+                                      selectionItem: subSelection,
                                     ),
                                 ],
                               );
@@ -1095,14 +1230,13 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                         padding: const EdgeInsets.only(left: 32),
                                         child: Column(
                                           children: [
-                                            // ignore: deprecated_member_use
                                             EZInputField(
                                               child: DropdownButtonFormField<int>(
                                                 decoration:
                                                     ThemeHelpers.textInputDecoration(
                                                       labelText: 'Academic Year',
                                                     ),
-                                                value:
+                                                initialValue:
                                                     subSelection!['academic_year_id'],
                                                 items: _academics.map((ay) {
                                                   return DropdownMenuItem(
@@ -1111,12 +1245,12 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                                   );
                                                 }).toList(),
                                                 onChanged: (val) =>
-                                                    _handlePeriodChange(
-                                                      doc.id,
-                                                      sub.id,
-                                                      'academic_year_id',
-                                                      val,
-                                                    ),
+                                                  _handlePeriodChange(
+                                                    doc.id,
+                                                    sub.id,
+                                                    'academic_year_id',
+                                                    val,
+                                                  ),
                                               ),
                                             ),
                                             const SizedBox(height: 16),
@@ -1126,7 +1260,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                                     ThemeHelpers.textInputDecoration(
                                                       labelText: 'Semester',
                                                     ),
-                                                value:
+                                                initialValue:
                                                     subSelection['semester'],
                                                 items: const [
                                                   DropdownMenuItem(
@@ -1154,92 +1288,36 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                           ],
                                         ),
                                       ),
+                                    if (isSubSelected)
+                                      _buildDocumentPurposesView(
+                                        doc: doc,
+                                        subId: sub.id,
+                                        subName: sub.name,
+                                        selectionItem: subSelection,
+                                      ),
                                   ],
                                 );
                               }).toList(),
                             ),
                           ),
                   ),
+
+                // Document-level Contextual Purposes (only shown if configured and document has no subselections)
+                if (isSelected && !hasSubselections)
+                  _buildDocumentPurposesView(
+                    doc: doc,
+                    subId: null,
+                    subName: null,
+                    selectionItem: docSelections.firstWhere(
+                      (s) => s['document_subselection_id'] == null,
+                      orElse: () => docSelections.first,
+                    ),
+                  ),
+
                 const Divider(),
               ],
             );
           }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPart3Section(List<_PurposeOption> applicablePurposes) {
-    return _buildAccordionCard(
-      title: 'Part 3: Please check the purpose of your request',
-      isExpanded: _openSection == 'part3',
-      onToggle: () => _toggleSection('part3'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ...applicablePurposes.map((purpose) {
-            final isChecked = _selectedPurposes.contains(purpose.id) ||
-                _selectedPurposes.contains(purpose.name);
-            return CheckboxListTile(
-              title: Row(
-                children: [
-                  Expanded(child: Text(purpose.name)),
-                  if (purpose.level != 'service')
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        purpose.level == 'subselection' ? 'Sub-option' : 'Document',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              value: isChecked,
-              onChanged: (val) =>
-                  _handlePurposeToggle(purpose.id, val ?? false),
-              controlAffinity: ListTileControlAffinity.leading,
-            );
-          }),
-          CheckboxListTile(
-            title: const Text('Others (Specify)'),
-            value: _isOthersChecked,
-            onChanged: (val) {
-              setState(() {
-                _isOthersChecked = val ?? false;
-                if (!_isOthersChecked) {
-                  _customPurpose = '';
-                }
-              });
-            },
-            controlAffinity: ListTileControlAffinity.leading,
-          ),
-          if (_isOthersChecked)
-            Padding(
-              padding: const EdgeInsets.only(left: 48, top: 8),
-              child: EZInputField(
-                child: TextField(
-                  decoration: ThemeHelpers.textInputDecoration(
-                    labelText: 'Specify other purpose',
-                  ),
-                  onChanged: _handleCustomPurposeChange,
-                  controller: TextEditingController.fromValue(
-                    TextEditingValue(
-                      text: _customPurpose,
-                      selection: TextSelection.collapsed(
-                        offset: _customPurpose.length,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );

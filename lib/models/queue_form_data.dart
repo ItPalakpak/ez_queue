@@ -19,6 +19,7 @@ class QueueFormData {
   final String? idNumber;
   final int? courseId;
   final String? courseProgram;
+  final String? major;
   final bool isPWD;
   final String? pwdSpecification;
   final String? priorityIdNumber;
@@ -45,6 +46,7 @@ class QueueFormData {
     this.idNumber,
     this.courseId,
     this.courseProgram,
+    this.major,
     this.isPWD = false,
     this.pwdSpecification,
     this.priorityIdNumber,
@@ -73,6 +75,7 @@ class QueueFormData {
     String? idNumber,
     int? courseId,
     String? courseProgram,
+    String? major,
     bool? isPWD,
     String? pwdSpecification,
     String? priorityIdNumber,
@@ -99,6 +102,7 @@ class QueueFormData {
       idNumber: idNumber ?? this.idNumber,
       courseId: courseId ?? this.courseId,
       courseProgram: courseProgram ?? this.courseProgram,
+      major: major ?? this.major,
       isPWD: isPWD ?? this.isPWD,
       pwdSpecification: pwdSpecification ?? this.pwdSpecification,
       priorityIdNumber: priorityIdNumber ?? this.priorityIdNumber,

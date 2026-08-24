@@ -179,7 +179,7 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
       qrDataArr.add('Email: ${ticket.email}');
     }
     if (ticket.course != null && ticket.course!.isNotEmpty) {
-      qrDataArr.add('Course: ${ticket.course}');
+      qrDataArr.add('Course: ${ticket.course}${ticket.major != null && ticket.major!.isNotEmpty ? ' (${ticket.major})' : ''}');
     }
     // CHANGED: Append tracking token to QR data for secure ticket lookup
     if (ticket.trackingToken != null && ticket.trackingToken!.isNotEmpty) {
@@ -320,7 +320,15 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
             _buildDetailRow(context, 'User Type:', ticket.userType),
             if (ticket.course != null) ...[
               const SizedBox(height: EZSpacing.sm),
-              _buildDetailRow(context, 'Course/Program:', ticket.course!),
+              _buildDetailRow(
+                context,
+                'Course/Program:',
+                '${ticket.course!}${ticket.major != null && ticket.major!.isNotEmpty ? ' (${ticket.major})' : ''}',
+              ),
+              if (ticket.major != null && ticket.major!.isNotEmpty) ...[
+                const SizedBox(height: EZSpacing.sm),
+                _buildDetailRow(context, 'Major / Specialization:', ticket.major!),
+              ],
             ],
             if (ticketIdNumber != null) ...[
               const SizedBox(height: EZSpacing.sm),

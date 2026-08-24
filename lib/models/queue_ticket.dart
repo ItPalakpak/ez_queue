@@ -9,6 +9,7 @@ class QueueTicket {
   final String? phone;
   final String? email;
   final String? course;
+  final String? major;
   final String? purpose;
   final int quantity;
   final int departmentId;
@@ -33,6 +34,7 @@ class QueueTicket {
     this.phone,
     this.email,
     this.course,
+    this.major,
     this.purpose,
     required this.quantity,
     required this.departmentId,
@@ -66,6 +68,7 @@ class QueueTicket {
       phone: json['phone'],
       email: json['email'],
       course: json['course'],
+      major: json['major'],
       purpose: json['purpose'],
       quantity: json['quantity'] ?? 1,
       departmentId: json['department_id'] ?? 1, // Fallback to 1 if it's an old cached ticket payload on user device

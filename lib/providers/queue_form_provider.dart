@@ -54,6 +54,7 @@ class QueueFormNotifier extends StateNotifier<QueueFormData> {
     String? idNumber,
     int? courseId,
     String? courseProgram,
+    String? major,
     String? yearLevel,
     String? standing,
   }) {
@@ -63,6 +64,7 @@ class QueueFormNotifier extends StateNotifier<QueueFormData> {
       idNumber: idNumber,
       courseId: courseId,
       courseProgram: courseProgram,
+      major: major,
       yearLevel: yearLevel,
       standing: standing,
     );

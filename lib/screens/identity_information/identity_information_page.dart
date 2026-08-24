@@ -40,6 +40,7 @@ class _IdentityInformationPageState
 
   int? _selectedCourseId;
   String? _selectedCourseProgram;
+  String? _selectedMajor;
   String? _selectedYearLevel;
   String? _selectedStanding;
   Timer? _debounceTimer;
@@ -180,6 +181,15 @@ class _IdentityInformationPageState
           if (profile['course'] != null) {
             _selectedCourseProgram = profile['course'];
           }
+          if (profile['major'] != null) {
+            _selectedMajor = profile['major']?.toString();
+          }
+        });
+      }
+
+      if (profile['major'] != null && _selectedMajor == null) {
+        setState(() {
+          _selectedMajor = profile['major']?.toString();
         });
       }
 
@@ -340,6 +350,13 @@ class _IdentityInformationPageState
         });
         hasValidData = true;
       }
+    }
+
+    if (data['Major'] != null && data['Major']!.isNotEmpty) {
+      setState(() {
+        _selectedMajor = _sanitize(data['Major']!, 100);
+      });
+      hasValidData = true;
     }
 
     // Store contact info for next step
@@ -505,6 +522,16 @@ class _IdentityInformationPageState
         if (mounted) {
           setState(() {
             _selectedStanding = formData.standing;
+          });
+        }
+      });
+    }
+
+    if (formData.major != null && _selectedMajor == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _selectedMajor = formData.major;
           });
         }
       });
@@ -742,6 +769,11 @@ class _IdentityInformationPageState
                             hintText: 'Enter your last name',
                             textInputAction: TextInputAction.next,
                             maxLength: 100,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[a-zA-Z\s\-\.]'),
+                              ),
+                            ],
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Please enter your last name';
@@ -762,6 +794,11 @@ class _IdentityInformationPageState
                             hintText: 'Enter your first name',
                             textInputAction: TextInputAction.next,
                             maxLength: 100,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[a-zA-Z\s\-\.]'),
+                              ),
+                            ],
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Please enter your first name';
@@ -781,6 +818,11 @@ class _IdentityInformationPageState
                             hintText: 'Enter your middle name',
                             textInputAction: TextInputAction.next,
                             maxLength: 100,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[a-zA-Z\s\-\.]'),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: EZSpacing.lg),
 
@@ -794,6 +836,11 @@ class _IdentityInformationPageState
                             hintText: 'e.g., Jr., III',
                             textInputAction: TextInputAction.next,
                             maxLength: 50,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'[a-zA-Z\s\-\.]'),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: EZSpacing.xxl),
 
@@ -833,58 +880,152 @@ class _IdentityInformationPageState
                                     }
                                   });
                                 }
-                                return EZInputField(
-                                  isRequired: !_isCourseOptional(userType),
-                                  child: DropdownButtonFormField<int>(
-                                    initialValue: effectiveCourseId,
-                                    decoration:
-                                        ThemeHelpers.dropdownInputDecoration(
-                                          labelText: 'Course / Program',
-                                          hintText: 'Select your course',
-                                          prefixIcon: const Icon(
-                                            Icons.school_outlined,
+                                final selectedCourseObj = effectiveCourseId != null
+                                    ? courses.firstWhere(
+                                        (c) => c.id == effectiveCourseId,
+                                        orElse: () => courses.first,
+                                      )
+                                    : null;
+                                final majorsList = (selectedCourseObj?.major != null &&
+                                        selectedCourseObj!.major!.trim().isNotEmpty)
+                                    ? selectedCourseObj.major!
+                                        .split(',')
+                                        .map((m) => m.trim())
+                                        .where((m) => m.isNotEmpty)
+                                        .toList()
+                                    : <String>[];
+
+                                if (_selectedMajor != null &&
+                                    (majorsList.isEmpty || !majorsList.contains(_selectedMajor))) {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (mounted) {
+                                      setState(() {
+                                        _selectedMajor = null;
+                                      });
+                                    }
+                                  });
+                                }
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    EZInputField(
+                                      isRequired: !_isCourseOptional(userType),
+                                      child: DropdownButtonFormField<int>(
+                                        initialValue: effectiveCourseId,
+                                        decoration:
+                                            ThemeHelpers.dropdownInputDecoration(
+                                              labelText: 'Course / Program',
+                                              hintText: 'Select your course',
+                                              prefixIcon: const Icon(
+                                                Icons.school_outlined,
+                                              ),
+                                            ),
+                                        items: [
+                                          const DropdownMenuItem<int>(
+                                            value: null,
+                                            child: Text('-- Select your course --'),
+                                          ),
+                                          ...courses.map((course) {
+                                            return DropdownMenuItem<int>(
+                                              value: course.id,
+                                              child: Text(
+                                                '${course.courseCode} - ${course.courseName}',
+                                              ),
+                                            );
+                                          }),
+                                        ],
+                                        onChanged: (int? value) {
+                                          setState(() {
+                                            _selectedCourseId = value;
+                                            if (value != null) {
+                                              final c = courses.firstWhere(
+                                                (c) => c.id == value,
+                                              );
+                                              _selectedCourseProgram =
+                                                  '${c.courseCode} - ${c.courseName}';
+                                            } else {
+                                              _selectedCourseProgram = null;
+                                            }
+                                          });
+                                        },
+                                        isExpanded: true,
+                                        dropdownColor: Theme.of(
+                                          context,
+                                        ).colorScheme.surface,
+                                        menuMaxHeight: 300,
+                                        icon: Icon(
+                                          Icons.arrow_drop_down,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.secondary,
+                                        ),
+                                      ),
+                                    ),
+                                    if (majorsList.isNotEmpty) ...[
+                                      const SizedBox(height: EZSpacing.lg),
+                                      Text(
+                                        _isCourseOptional(userType)
+                                            ? 'Major / Specialization (Optional)'
+                                            : 'Major / Specialization *',
+                                        style: Theme.of(context).textTheme.titleLarge,
+                                      ),
+                                      const SizedBox(height: EZSpacing.md),
+                                      EZInputField(
+                                        isRequired: !_isCourseOptional(userType),
+                                        child: DropdownButtonFormField<String>(
+                                          initialValue: (_selectedMajor != null &&
+                                                  majorsList.contains(_selectedMajor))
+                                              ? _selectedMajor
+                                              : null,
+                                          decoration:
+                                              ThemeHelpers.dropdownInputDecoration(
+                                                labelText: 'Major / Specialization',
+                                                hintText: 'Select your major',
+                                                prefixIcon: const Icon(
+                                                  Icons.bookmark_outline,
+                                                ),
+                                              ),
+                                          items: [
+                                            const DropdownMenuItem<String>(
+                                              value: null,
+                                              child: Text(
+                                                '-- Select Major / Specialization --',
+                                              ),
+                                            ),
+                                            ...majorsList.map((m) => DropdownMenuItem<String>(
+                                              value: m,
+                                              child: Text(m),
+                                            )),
+                                          ],
+                                          onChanged: (String? val) {
+                                            setState(() {
+                                              _selectedMajor = val;
+                                            });
+                                          },
+                                          validator: (val) {
+                                            if (!_isCourseOptional(userType) &&
+                                                majorsList.isNotEmpty &&
+                                                (val == null || val.trim().isEmpty)) {
+                                              return 'Please select your major / specialization';
+                                            }
+                                            return null;
+                                          },
+                                          isExpanded: true,
+                                          dropdownColor: Theme.of(
+                                            context,
+                                          ).colorScheme.surface,
+                                          menuMaxHeight: 300,
+                                          icon: Icon(
+                                            Icons.arrow_drop_down,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.secondary,
                                           ),
                                         ),
-                                    items: [
-                                      const DropdownMenuItem<int>(
-                                        value: null,
-                                        child: Text('-- Select your course --'),
                                       ),
-                                      ...courses.map((course) {
-                                        return DropdownMenuItem<int>(
-                                          value: course.id,
-                                          child: Text(
-                                            '${course.courseCode} - ${course.courseName}',
-                                          ),
-                                        );
-                                      }),
                                     ],
-                                    onChanged: (int? value) {
-                                      setState(() {
-                                        _selectedCourseId = value;
-                                        if (value != null) {
-                                          final c = courses.firstWhere(
-                                            (c) => c.id == value,
-                                          );
-                                          _selectedCourseProgram =
-                                              '${c.courseCode} - ${c.courseName}';
-                                        } else {
-                                          _selectedCourseProgram = null;
-                                        }
-                                      });
-                                    },
-                                    isExpanded: true,
-                                    dropdownColor: Theme.of(
-                                      context,
-                                    ).colorScheme.surface,
-                                    menuMaxHeight: 300,
-                                    icon: Icon(
-                                      Icons.arrow_drop_down,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.secondary,
-                                    ),
-                                  ),
+                                  ],
                                 );
                               },
                               loading: () => const Center(
@@ -1147,6 +1288,7 @@ class _IdentityInformationPageState
                 : _idNumberController.text.trim(),
             courseId: _selectedCourseId,
             courseProgram: _selectedCourseProgram,
+            major: _selectedMajor,
             yearLevel: _selectedYearLevel,
             standing: _selectedStanding,
           );
