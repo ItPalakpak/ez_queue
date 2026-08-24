@@ -226,6 +226,51 @@ class LandingPage extends ConsumerWidget {
                                   ),
                                 ),
                                 const SizedBox(height: EZSpacing.sm),
+                              ] else ...[
+                                // CHANGED: Show informational banner when remote queuing is administratively disabled
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(EZSpacing.md),
+                                  margin: const EdgeInsets.only(bottom: EZSpacing.md),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest
+                                        .withValues(alpha: 0.5),
+                                    borderRadius: BorderRadius.circular(EZSpacing.sm),
+                                    border: Border.all(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .outlineVariant
+                                          .withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.info_outline,
+                                        size: 20,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: EZSpacing.sm),
+                                      Expanded(
+                                        child: Text(
+                                          'Remote ticket queuing is currently disabled. Please queue in-person at the kiosk.',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ],
 
                               // View Queue Button
