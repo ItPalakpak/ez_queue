@@ -49,6 +49,15 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   bool _isOthersChecked = false;
   String _customPurpose = '';
 
+  // CHANGED: Mutually exclusive single-open accordion state
+  String? _openSection = 'reminder';
+
+  void _toggleSection(String section) {
+    setState(() {
+      _openSection = _openSection == section ? null : section;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -56,6 +65,8 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
 
     // Load initial from provider if exists
     final formData = ref.read(queueFormProvider);
+    final userType = formData.userType;
+
     if (formData.selections.isNotEmpty) {
       _selections = List.from(formData.selections);
     }
@@ -81,6 +92,14 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
           ps.map((e) => Map<String, dynamic>.from(e as Map)),
         );
       }
+    }
+
+    // CHANGED: Automatically clear restricted fields based on client role
+    if (userType == 'alumni' || userType == 'faculty') {
+      _extraDetails['last_semester_attended'] = null;
+      _extraDetails['last_sy_attended'] = null;
+    } else if (userType == 'student') {
+      _extraDetails['date_of_graduation'] = null;
     }
   }
 
@@ -331,24 +350,13 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   }
 
   void _proceed() {
-    final uniquePurposesMap = <int, ApiServicePurpose>{};
-    for (var service in widget.services) {
-      for (var p in service.purposes) {
-        uniquePurposesMap[p.id] = p;
-      }
-    }
-    final uniquePurposes = uniquePurposesMap.values.toList();
+    // CHANGED: Support multi-level purposes (service, document, subselection)
+    final applicablePurposes = _getApplicablePurposes();
 
     final List<dynamic> finalPurposes = List.from(_selectedPurposes);
     final List<String> finalPurposesDisplay = _selectedPurposes.map((p) {
-      if (p is int) {
-        try {
-          final purposeObj = uniquePurposes.firstWhere((up) => up.id == p);
-          return purposeObj.name;
-        } catch (_) {
-          return p.toString();
-        }
-      }
+      final purposeObj = applicablePurposes.where((up) => up.id == p || up.name == p).firstOrNull;
+      if (purposeObj != null) return purposeObj.name;
       return p.toString();
     }).toList();
 
@@ -367,16 +375,31 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
         .join(', ');
 
     final updatedExtraDetails = Map<String, dynamic>.from(_extraDetails);
+    final userType = ref.read(queueFormProvider).userType;
+    if (userType == 'alumni' || userType == 'faculty') {
+      updatedExtraDetails['last_semester_attended'] = null;
+      updatedExtraDetails['last_sy_attended'] = null;
+    } else if (userType == 'student') {
+      updatedExtraDetails['date_of_graduation'] = null;
+    }
+
     updatedExtraDetails['purposes'] = finalPurposes;
     updatedExtraDetails['purposes_display'] = finalPurposesDisplay;
     updatedExtraDetails['custom_purpose'] = _customPurpose;
     updatedExtraDetails['previous_request_details'] = prevDetailsStr;
     updatedExtraDetails['previous_selections'] = _previousSelections;
 
+    // Attach chosen purposes to each selection
+    final updatedSelections = _selections.map((s) {
+      final copy = Map<String, dynamic>.from(s);
+      copy['purposes'] = finalPurposesDisplay;
+      return copy;
+    }).toList();
+
     ref
         .read(queueFormProvider.notifier)
         .updateDocumentSelections(
-          selections: _selections,
+          selections: updatedSelections,
           extraDetails: updatedExtraDetails,
         );
 
@@ -391,25 +414,76 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     }
   }
 
+  List<_PurposeOption> _getApplicablePurposes() {
+    final list = <_PurposeOption>[];
+    final seen = <String>{};
+
+    // 1. Purposes from selected subselections
+    for (var sel in _selections) {
+      final docId = sel['service_document_id'];
+      final subId = sel['document_subselection_id'];
+      if (docId != null && subId != null) {
+        final doc = widget.services.expand((s) => s.documents).where((d) => d.id == docId).firstOrNull;
+        if (doc != null) {
+          final sub = doc.subselections.where((s) => s.id == subId).firstOrNull;
+          if (sub != null) {
+            for (var p in sub.purposes) {
+              final name = p is Map ? (p['name']?.toString() ?? '') : p.toString();
+              final isActive = p is Map ? (p['is_active'] != false) : true;
+              if (isActive && name.isNotEmpty && !seen.contains(name.toLowerCase())) {
+                seen.add(name.toLowerCase());
+                list.add(_PurposeOption(id: p is Map && p['id'] != null ? p['id'] : name, name: name, level: 'subselection', context: '${doc.name} - ${sub.name}'));
+              }
+            }
+          }
+        }
+      }
+
+      // 2. Purposes from selected document
+      if (docId != null) {
+        final doc = widget.services.expand((s) => s.documents).where((d) => d.id == docId).firstOrNull;
+        if (doc != null) {
+          for (var p in doc.purposes) {
+            final name = p is Map ? (p['name']?.toString() ?? '') : p.toString();
+            final isActive = p is Map ? (p['is_active'] != false) : true;
+            if (isActive && name.isNotEmpty && !seen.contains(name.toLowerCase())) {
+              seen.add(name.toLowerCase());
+              list.add(_PurposeOption(id: p is Map && p['id'] != null ? p['id'] : name, name: name, level: 'document', context: doc.name));
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Service-level purposes
+    for (var service in widget.services) {
+      for (var p in service.purposes) {
+        if (!p.isActive) continue;
+        if (!seen.contains(p.name.toLowerCase())) {
+          seen.add(p.name.toLowerCase());
+          list.add(_PurposeOption(id: p.id, name: p.name, level: 'service', context: service.name));
+        }
+      }
+    }
+
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Deduplicate documents and purposes
+    // Deduplicate documents
     final uniqueDocsMap = <int, ApiServiceDocument>{};
-    final uniquePurposesMap = <int, ApiServicePurpose>{};
     for (var service in widget.services) {
       for (var doc in service.documents) {
         uniqueDocsMap[doc.id] = doc;
       }
-      for (var p in service.purposes) {
-        uniquePurposesMap[p.id] = p;
-      }
     }
     final uniqueDocs = uniqueDocsMap.values.toList();
-    final uniquePurposes = uniquePurposesMap.values.toList();
+    final applicablePurposes = _getApplicablePurposes();
 
     return Scaffold(
       body: Column(
@@ -432,10 +506,8 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                     _buildPart1Section(uniqueDocs),
                     const SizedBox(height: EZSpacing.lg),
                     _buildPart2Section(uniqueDocs),
-                    if (uniquePurposes.isNotEmpty) ...[
-                      const SizedBox(height: EZSpacing.lg),
-                      _buildPart3Section(uniquePurposes),
-                    ],
+                    const SizedBox(height: EZSpacing.lg),
+                    _buildPart3Section(applicablePurposes),
                   ],
                 ),
               ),
@@ -486,16 +558,68 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     );
   }
 
-  Widget _buildReminderSection() {
+  Widget _buildAccordionCard({
+    required String title,
+    required bool isExpanded,
+    required VoidCallback onToggle,
+    required Widget child,
+  }) {
+    final theme = Theme.of(context);
     return EZCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 14.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isExpanded) ...[
+            Divider(height: 1, color: theme.colorScheme.outlineVariant),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: child,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReminderSection() {
+    return _buildAccordionCard(
+      title: 'Reminder',
+      isExpanded: _openSection == 'reminder',
+      onToggle: () => _toggleSection('reminder'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Reminder',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
           RadioGroup<bool>(
             groupValue: _extraDetails['is_authorized_person'],
             onChanged: (val) => _handleExtraChange('is_authorized_person', val),
@@ -553,23 +677,33 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   }
 
   Widget _buildPart1Section(List<ApiServiceDocument> uniqueDocs) {
-    final showGraduation = (_extraDetails['last_semester_attended'] == null ||
-            _extraDetails['last_semester_attended'].toString().isEmpty) &&
-        (_extraDetails['last_sy_attended'] == null ||
-            _extraDetails['last_sy_attended'].toString().isEmpty);
+    final userType = ref.watch(queueFormProvider).userType;
+    final bool isAlumniOrFaculty = userType == 'alumni' || userType == 'faculty';
+    final bool isStudent = userType == 'student';
 
-    final showSemesterAndSy = _extraDetails['date_of_graduation'] == null ||
-        _extraDetails['date_of_graduation'].toString().isEmpty;
+    final showGraduation = isAlumniOrFaculty
+        ? true
+        : isStudent
+            ? false
+            : ((_extraDetails['last_semester_attended'] == null ||
+                    _extraDetails['last_semester_attended'].toString().isEmpty) &&
+                (_extraDetails['last_sy_attended'] == null ||
+                    _extraDetails['last_sy_attended'].toString().isEmpty));
 
-    return EZCard(
+    final showSemesterAndSy = isStudent
+        ? true
+        : isAlumniOrFaculty
+            ? false
+            : (_extraDetails['date_of_graduation'] == null ||
+                _extraDetails['date_of_graduation'].toString().isEmpty);
+
+    return _buildAccordionCard(
+      title: 'Part 1: Complete entries below',
+      isExpanded: _openSection == 'part1',
+      onToggle: () => _toggleSection('part1'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Part 1: Complete entries below',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
           if (showGraduation) ...[
             EZInputField(
               child: TextField(
@@ -597,18 +731,14 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
             const SizedBox(height: 16),
           ],
           if (showSemesterAndSy) ...[
-            const Text('If not, state the Last Semester & SY of Attendance:'),
+            const Text('If a student, state the Last Semester & SY of Attendance:'),
             const SizedBox(height: 8),
             EZInputField(
               child: DropdownButtonFormField<String>(
                 decoration: ThemeHelpers.textInputDecoration(
                   labelText: 'Semester',
                 ),
-                initialValue:
-                    _extraDetails['last_semester_attended']?.toString().isEmpty ??
-                        true
-                    ? null
-                    : _extraDetails['last_semester_attended'],
+                value: _extraDetails['last_semester_attended'],
                 items: const [
                   DropdownMenuItem(
                     value: '1st Semester',
@@ -630,10 +760,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                 decoration: ThemeHelpers.textInputDecoration(
                   labelText: 'School Year/Academic Year',
                 ),
-                initialValue:
-                    _extraDetails['last_sy_attended']?.toString().isEmpty ?? true
-                    ? null
-                    : _extraDetails['last_sy_attended'],
+                value: _extraDetails['last_sy_attended'],
                 items: _academics.map((ay) {
                   return DropdownMenuItem(value: ay.name, child: Text(ay.name));
                 }).toList(),
@@ -807,15 +934,13 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
   }
 
   Widget _buildPart2Section(List<ApiServiceDocument> uniqueDocs) {
-    return EZCard(
+    return _buildAccordionCard(
+      title: 'Part 2: Check document/s you need',
+      isExpanded: _openSection == 'part2',
+      onToggle: () => _toggleSection('part2'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Part 2: Check document/s you need',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
           ...uniqueDocs.map((doc) {
             final docSelections = _selections
                 .where((s) => s['service_document_id'] == doc.id)
@@ -874,7 +999,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                                   ThemeHelpers.textInputDecoration(
                                                     labelText: 'Academic Year',
                                                   ),
-                                              initialValue:
+                                              value:
                                                   subSelection!['academic_year_id'],
                                               items: _academics.map((ay) {
                                                 return DropdownMenuItem(
@@ -898,7 +1023,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                                   ThemeHelpers.textInputDecoration(
                                                     labelText: 'Semester',
                                                   ),
-                                              initialValue:
+                                              value:
                                                   subSelection['semester'],
                                               items: const [
                                                 DropdownMenuItem(
@@ -977,7 +1102,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                                     ThemeHelpers.textInputDecoration(
                                                       labelText: 'Academic Year',
                                                     ),
-                                                initialValue:
+                                                value:
                                                     subSelection!['academic_year_id'],
                                                 items: _academics.map((ay) {
                                                   return DropdownMenuItem(
@@ -1001,7 +1126,7 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
                                                     ThemeHelpers.textInputDecoration(
                                                       labelText: 'Semester',
                                                     ),
-                                                initialValue:
+                                                value:
                                                     subSelection['semester'],
                                                 items: const [
                                                   DropdownMenuItem(
@@ -1044,20 +1169,39 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     );
   }
 
-  Widget _buildPart3Section(List<ApiServicePurpose> uniquePurposes) {
-    return EZCard(
+  Widget _buildPart3Section(List<_PurposeOption> applicablePurposes) {
+    return _buildAccordionCard(
+      title: 'Part 3: Please check the purpose of your request',
+      isExpanded: _openSection == 'part3',
+      onToggle: () => _toggleSection('part3'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Part 3: Please check the purpose of your request',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          ...uniquePurposes.map((purpose) {
+          ...applicablePurposes.map((purpose) {
+            final isChecked = _selectedPurposes.contains(purpose.id) ||
+                _selectedPurposes.contains(purpose.name);
             return CheckboxListTile(
-              title: Text(purpose.name),
-              value: _selectedPurposes.contains(purpose.id),
+              title: Row(
+                children: [
+                  Expanded(child: Text(purpose.name)),
+                  if (purpose.level != 'service')
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        purpose.level == 'subselection' ? 'Sub-option' : 'Document',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              value: isChecked,
               onChanged: (val) =>
                   _handlePurposeToggle(purpose.id, val ?? false),
               controlAffinity: ListTileControlAffinity.leading,
@@ -1101,3 +1245,18 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
     );
   }
 }
+
+class _PurposeOption {
+  final dynamic id;
+  final String name;
+  final String level;
+  final String? context;
+
+  _PurposeOption({
+    required this.id,
+    required this.name,
+    required this.level,
+    this.context,
+  });
+}
+

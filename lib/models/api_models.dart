@@ -71,11 +71,13 @@ class ApiDocumentSubselection {
   final int id;
   final String name;
   final bool requiresAcademicPeriod;
+  final List<dynamic> purposes;
 
   ApiDocumentSubselection({
     required this.id,
     required this.name,
     this.requiresAcademicPeriod = false,
+    this.purposes = const [],
   });
 
   factory ApiDocumentSubselection.fromJson(Map<String, dynamic> json) {
@@ -83,6 +85,7 @@ class ApiDocumentSubselection {
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       name: json['name']?.toString() ?? '',
       requiresAcademicPeriod: json['requires_academic_period'] == 1 || json['requires_academic_period'] == true,
+      purposes: json['purposes'] is List ? json['purposes'] as List<dynamic> : const [],
     );
   }
 }
@@ -91,11 +94,13 @@ class ApiServiceDocument {
   final int id;
   final String name;
   final List<ApiDocumentSubselection> subselections;
+  final List<dynamic> purposes;
 
   ApiServiceDocument({
     required this.id,
     required this.name,
     this.subselections = const [],
+    this.purposes = const [],
   });
 
   factory ApiServiceDocument.fromJson(Map<String, dynamic> json) {
@@ -104,6 +109,7 @@ class ApiServiceDocument {
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       name: json['name']?.toString() ?? '',
       subselections: subs.map((e) => ApiDocumentSubselection.fromJson(e as Map<String, dynamic>)).toList(),
+      purposes: json['purposes'] is List ? json['purposes'] as List<dynamic> : const [],
     );
   }
 }
@@ -129,13 +135,15 @@ class ApiAcademicYear {
 class ApiServicePurpose {
   final int id;
   final String name;
+  final bool isActive;
 
-  ApiServicePurpose({required this.id, required this.name});
+  ApiServicePurpose({required this.id, required this.name, this.isActive = true});
 
   factory ApiServicePurpose.fromJson(Map<String, dynamic> json) {
     return ApiServicePurpose(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id']?.toString() ?? '0') ?? 0,
       name: json['name']?.toString() ?? '',
+      isActive: json['is_active'] != false,
     );
   }
 }

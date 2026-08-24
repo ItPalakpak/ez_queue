@@ -17,7 +17,8 @@ final themeModeProvider =
 
 /// Notifier for managing theme variant state with persistence.
 class ThemeVariantNotifier extends StateNotifier<AppThemeVariant> {
-  ThemeVariantNotifier() : super(AppThemeVariant.pureBold) {
+  // CHANGED: Default theme set to ci4Default
+  ThemeVariantNotifier() : super(AppThemeVariant.ci4Default) {
     _loadSavedTheme();
   }
 
@@ -29,13 +30,13 @@ class ThemeVariantNotifier extends StateNotifier<AppThemeVariant> {
       if (saved != null) {
         final variant = AppThemeVariant.values.firstWhere(
           (v) => v.name == saved,
-          orElse: () => AppThemeVariant.pureBold,
+          orElse: () => AppThemeVariant.ci4Default,
         );
         state = variant;
       }
     } catch (e) {
       // If loading fails, use default theme
-      state = AppThemeVariant.pureBold;
+      state = AppThemeVariant.ci4Default;
     }
   }
 
