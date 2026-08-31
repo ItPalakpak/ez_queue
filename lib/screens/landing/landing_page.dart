@@ -13,6 +13,7 @@ import 'package:ez_queue/services/api_service.dart';
 // CHANGED: import device token manager to link the tracked ticket to this device
 import 'package:ez_queue/services/device_token_manager.dart';
 import 'package:ez_queue/services/push_notification_service.dart';
+import 'package:ez_queue/models/queue_ticket.dart';
 import 'package:ez_queue/utils/theme_helpers.dart';
 import 'package:ez_queue/widgets/ez_dialog.dart';
 
@@ -473,6 +474,7 @@ class _TrackTicketFormState extends State<_TrackTicketForm> {
             'departmentName': ticketData['department_name'].toString(),
           },
         ).toString(),
+        extra: QueueTicket.fromJson(ticketData),
       );
     } catch (e) {
       if (!mounted) return;

@@ -6,6 +6,8 @@ import 'package:ez_queue/services/device_token_manager.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ez_queue/widgets/ez_dialog.dart';
 import 'package:ez_queue/widgets/ez_button.dart';
+import 'package:ez_queue/models/queue_ticket.dart';
+import 'package:ez_queue/widgets/tracked_ticket_details_modal.dart';
 
 /// Reusable top navigation bar widget used across all pages.
 ///
@@ -163,18 +165,43 @@ class _ActiveTicketsButtonState extends State<_ActiveTicketsButton> {
                       itemCount: tickets.length,
                       separatorBuilder: (context, index) => const Divider(),
                       itemBuilder: (context, index) {
-                        final ticket = tickets[index];
+                        final rawTicket = tickets[index];
+                        final ticketObj = QueueTicket.fromJson(rawTicket);
                         return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: EZSpacing.xs),
                           title: Text(
-                            ticket['ticket_number'] ?? 'Unknown',
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            ticketObj.ticketNumber.isNotEmpty
+                                ? ticketObj.ticketNumber
+                                : (rawTicket['ticket_number']?.toString() ?? 'Unknown'),
+                            style: const TextStyle(
+                              fontFamily: 'JetBrains Mono',
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
                           ),
-                          subtitle: Text(ticket['department_name'] ?? 'Department'),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                          subtitle: Text(
+                            ticketObj.serviceName.isNotEmpty
+                                ? '${ticketObj.departmentName} · ${ticketObj.serviceName}'
+                                : (rawTicket['department_name']?.toString() ?? 'Department'),
+                          ),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.receipt_long, size: 20),
+                                tooltip: 'View Ticket Details',
+                                onPressed: () {
+                                  TrackedTicketDetailsModal.show(context, ticketObj);
+                                },
+                              ),
+                              const Icon(Icons.arrow_forward_ios, size: 14),
+                            ],
+                          ),
                           onTap: () {
                             Navigator.of(context).pop(); // Close dialog
                             context.push(
-                              '/queue-display?ticketNumber=${ticket['ticket_number']}&departmentId=${ticket['department_id']}&departmentName=${ticket['department_name']}'
+                              '/queue-display?ticketNumber=${rawTicket['ticket_number']}&departmentId=${rawTicket['department_id']}&departmentName=${rawTicket['department_name']}',
+                              extra: ticketObj,
                             );
                           },
                         );

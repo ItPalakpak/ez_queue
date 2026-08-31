@@ -6,6 +6,8 @@ class ApiDepartment {
   final String code;
   final String? description;
   final bool allowMultipleServices;
+  // CHANGED: Support dynamic multi-service strategy mode
+  final String multiServiceMode;
   final String status;
   final String? queueCutoffTime;
   final int dailyTicketLimit;
@@ -21,6 +23,7 @@ class ApiDepartment {
     required this.code,
     this.description,
     this.allowMultipleServices = false,
+    this.multiServiceMode = 'disabled',
     this.status = 'active',
     this.queueCutoffTime,
     this.dailyTicketLimit = 0,
@@ -32,6 +35,10 @@ class ApiDepartment {
   });
 
   factory ApiDepartment.fromJson(Map<String, dynamic> json) {
+    final allowMult = json['allow_multiple_services'] == true ||
+        json['allow_multiple_services'] == 1 ||
+        json['allow_multiple_services'] == '1';
+
     return ApiDepartment(
       id: json['id'] is int
           ? json['id']
@@ -39,10 +46,8 @@ class ApiDepartment {
       name: json['name']?.toString() ?? '',
       code: json['code']?.toString() ?? '',
       description: json['description']?.toString(),
-      allowMultipleServices:
-          json['allow_multiple_services'] == true ||
-          json['allow_multiple_services'] == 1 ||
-          json['allow_multiple_services'] == '1',
+      allowMultipleServices: allowMult,
+      multiServiceMode: json['multi_service_mode']?.toString() ?? (allowMult ? 'independent' : 'disabled'),
       status: json['status']?.toString() ?? 'active',
       queueCutoffTime: json['queue_cutoff_time']?.toString(),
       dailyTicketLimit: json['daily_ticket_limit'] is int
@@ -246,22 +251,27 @@ class ApiQueueService {
 class ApiServicesResponse {
   final List<ApiQueueService> services;
   final bool allowMultipleServices;
+  // CHANGED: Expose dynamic multi-service mode
+  final String multiServiceMode;
 
   ApiServicesResponse({
     required this.services,
     this.allowMultipleServices = false,
+    this.multiServiceMode = 'disabled',
   });
 
   factory ApiServicesResponse.fromJson(Map<String, dynamic> json) {
     final List<dynamic> servicesJson = json['services'] ?? [];
+    final allowMult = json['allow_multiple_services'] == true ||
+        json['allow_multiple_services'] == 1 ||
+        json['allow_multiple_services'] == '1';
+
     return ApiServicesResponse(
       services: servicesJson
           .map((e) => ApiQueueService.fromJson(e as Map<String, dynamic>))
           .toList(),
-      allowMultipleServices:
-          json['allow_multiple_services'] == true ||
-          json['allow_multiple_services'] == 1 ||
-          json['allow_multiple_services'] == '1',
+      allowMultipleServices: allowMult,
+      multiServiceMode: json['multi_service_mode']?.toString() ?? (allowMult ? 'independent' : 'disabled'),
     );
   }
 }

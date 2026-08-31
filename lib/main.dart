@@ -17,6 +17,7 @@ import 'package:ez_queue/screens/confirmation/confirmation_page.dart';
 import 'package:ez_queue/screens/ticket_preview/ticket_preview_page.dart';
 import 'package:ez_queue/screens/queue_display/queue_display_page.dart';
 import 'package:ez_queue/screens/cancel_queue/cancel_queue_page.dart';
+import 'package:ez_queue/models/queue_ticket.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -108,6 +109,12 @@ final _router = GoRouter(
         final ticketNumber = state.uri.queryParameters['ticketNumber'];
         final departmentIdRaw = state.uri.queryParameters['departmentId'];
         final departmentName = state.uri.queryParameters['departmentName'];
+        // CHANGED: Support passing full QueueTicket instance via route extra
+        final extraTicket = state.extra is QueueTicket
+            ? state.extra as QueueTicket
+            : (state.extra is Map<String, dynamic>
+                ? QueueTicket.fromJson(state.extra as Map<String, dynamic>)
+                : null);
 
         return QueueDisplayPage(
           trackedTicketNumber: ticketNumber,
@@ -115,6 +122,7 @@ final _router = GoRouter(
               ? int.tryParse(departmentIdRaw)
               : null,
           trackedDepartmentName: departmentName,
+          trackedTicket: extraTicket,
         );
       },
     ),

@@ -335,6 +335,57 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
               const SizedBox(height: EZSpacing.sm),
               _buildDetailRow(context, 'Priority Queue:', 'Yes'),
             ],
+            // CHANGED: Display additional / add-on services on mobile ticket
+            if (ticket.additionalServices != null &&
+                ticket.additionalServices!.where((s) => s is Map && s['is_primary'] != true).isNotEmpty) ...[
+              const SizedBox(height: EZSpacing.md),
+              Divider(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+              ),
+              const SizedBox(height: EZSpacing.sm),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'INCLUDED ADD-ON SERVICES',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.1,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+              const SizedBox(height: EZSpacing.sm),
+              ...ticket.additionalServices!
+                  .where((s) => s is Map && s['is_primary'] != true)
+                  .map<Widget>((svcItem) {
+                final svc = svcItem as Map;
+                final svcName = svc['name']?.toString() ?? 'Add-on Service';
+                final svcPrefix = svc['prefix'] != null ? ' (${svc['prefix']})' : '';
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: EZSpacing.xs),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '• ',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          '$svcName$svcPrefix',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
             if (ticket.selections != null && ticket.selections!.isNotEmpty) ...[
               const SizedBox(height: EZSpacing.md),
               Divider(

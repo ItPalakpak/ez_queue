@@ -8,6 +8,8 @@ import 'package:ez_queue/widgets/top_nav_bar.dart';
 import 'package:ez_queue/widgets/ez_button.dart';
 import 'package:ez_queue/widgets/ez_card.dart';
 import 'package:ez_queue/widgets/auto_loop_carousel.dart';
+import 'package:ez_queue/widgets/tracked_ticket_details_modal.dart';
+import 'package:ez_queue/models/queue_ticket.dart';
 import 'package:go_router/go_router.dart';
 import 'package:ez_queue/theme/app_theme.dart';
 
@@ -16,12 +18,15 @@ class QueueDisplayPage extends ConsumerStatefulWidget {
   final String? trackedTicketNumber;
   final int? trackedDepartmentId;
   final String? trackedDepartmentName;
+  // CHANGED: Support passing full QueueTicket instance
+  final QueueTicket? trackedTicket;
 
   const QueueDisplayPage({
     super.key,
     this.trackedTicketNumber,
     this.trackedDepartmentId,
     this.trackedDepartmentName,
+    this.trackedTicket,
   });
 
   @override
@@ -33,10 +38,18 @@ class _QueueDisplayPageState extends ConsumerState<QueueDisplayPage> {
   String? _displayTicketNumber;
   int? _displayDepartmentId;
   String? _displayDepartmentName;
+  QueueTicket? _resolvedTicket;
 
   @override
   void initState() {
     super.initState();
+
+    if (widget.trackedTicket != null) {
+      _resolvedTicket = widget.trackedTicket;
+      _displayTicketNumber = widget.trackedTicket!.ticketNumber;
+      _displayDepartmentId = widget.trackedTicket!.departmentId;
+      _displayDepartmentName = widget.trackedTicket!.departmentName;
+    }
 
     // Resolve which ticket we are tracking securely
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -46,6 +59,9 @@ class _QueueDisplayPageState extends ConsumerState<QueueDisplayPage> {
           _displayTicketNumber = widget.trackedTicketNumber;
           _displayDepartmentId = widget.trackedDepartmentId;
           _displayDepartmentName = widget.trackedDepartmentName ?? 'Department';
+          if (widget.trackedTicket != null) {
+            _resolvedTicket = widget.trackedTicket;
+          }
         });
       } else {
         // Fallback to local tickets if not explicitly routed from Tracker
@@ -53,6 +69,7 @@ class _QueueDisplayPageState extends ConsumerState<QueueDisplayPage> {
         if (localTickets.isNotEmpty) {
           final first = localTickets.first;
           setState(() {
+            _resolvedTicket = first;
             _displayTicketNumber = first.ticketNumber;
             _displayDepartmentId = first.departmentId;
             _displayDepartmentName = first.departmentName;
@@ -706,7 +723,51 @@ class _QueueDisplayPageState extends ConsumerState<QueueDisplayPage> {
                           ),
                         ),
 
-                        const SizedBox(height: EZSpacing.xxl),
+                        const SizedBox(height: EZSpacing.md),
+
+                        // CHANGED: View full ticket details modal trigger
+                        SizedBox(
+                          width: double.infinity,
+                          child: EZButton(
+                            onPressed: () {
+                              final currentTicket = _resolvedTicket ??
+                                  ref.watch(queueTicketProvider).cast<QueueTicket?>().firstWhere(
+                                        (t) => t?.ticketNumber == _displayTicketNumber,
+                                        orElse: () => null,
+                                      );
+                              if (currentTicket != null) {
+                                TrackedTicketDetailsModal.show(context, currentTicket);
+                              } else {
+                                final fallbackTicket = QueueTicket(
+                                  id: 0,
+                                  ticketNumber: _displayTicketNumber ?? '--',
+                                  clientName: 'Client',
+                                  userType: 'client',
+                                  quantity: 1,
+                                  departmentId: _displayDepartmentId ?? 1,
+                                  departmentName: _displayDepartmentName ?? 'Department',
+                                  departmentCode: '',
+                                  serviceName: 'Queue Service',
+                                  servicePrefix: '',
+                                  isPriority: false,
+                                  status: 'waiting',
+                                  createdAt: DateTime.now(),
+                                );
+                                TrackedTicketDetailsModal.show(context, fallbackTicket);
+                              }
+                            },
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.receipt_long),
+                                SizedBox(width: EZSpacing.sm),
+                                Text('View Full Ticket Details'),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: EZSpacing.md),
 
                         // Cancel queue button (only show if this device generated the ticket)
                         if (ref

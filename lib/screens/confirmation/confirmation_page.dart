@@ -10,6 +10,8 @@ import 'package:ez_queue/widgets/ez_card.dart';
 import 'package:ez_queue/services/device_token_manager.dart';
 import 'package:ez_queue/services/push_notification_service.dart';
 import 'package:ez_queue/services/api_service.dart';
+import 'package:ez_queue/models/api_models.dart';
+import 'package:ez_queue/providers/api_providers.dart';
 import 'package:go_router/go_router.dart';
 
 /// Confirmation page where users can review and edit their details.
@@ -364,15 +366,27 @@ class ConfirmationPage extends ConsumerWidget {
 
       List<QueueTicket> generatedTickets = [];
 
-      for (int serviceId in formData.serviceIds) {
+      // CHANGED: Inspect active department multi-service strategy mode
+      final departmentsAsync = ref.read(apiDepartmentsProvider);
+      final currentDept = departmentsAsync.value?.firstWhere(
+        (d) => d.id == formData.departmentId,
+        orElse: () => ApiDepartment(id: formData.departmentId ?? 0, name: '', code: ''),
+      );
+      final multiMode = currentDept?.multiServiceMode ?? (currentDept?.allowMultipleServices == true ? 'independent' : 'disabled');
+
+      if (multiMode == 'primary_addon' || multiMode == 'bundled') {
         String? mappedUserType = formData.userType?.toLowerCase();
         if (mappedUserType == 'faculty/staff') {
           mappedUserType = 'faculty';
         }
+        final primaryId = formData.serviceIds.isNotEmpty ? formData.serviceIds.first : null;
+        final addonIds = formData.serviceIds.length > 1 ? formData.serviceIds.sublist(1) : <int>[];
 
         final payload = {
           'department_id': formData.departmentId,
-          'service_id': serviceId,
+          if (primaryId != null) 'service_id': primaryId,
+          'addon_service_ids': addonIds,
+          'service_ids': formData.serviceIds,
           'client_name': formData.fullName,
           'user_type': mappedUserType,
           if (formData.idNumber != null) 'student_id': formData.idNumber,
@@ -390,8 +404,8 @@ class ConfirmationPage extends ConsumerWidget {
           'fcm_token': fcmToken,
           if (formData.nameBreakdown != null) 'name_breakdown': formData.nameBreakdown,
           if (formData.selections.isNotEmpty) 'selections': formData.selections,
-          if (formData.customFields.containsKey(serviceId))
-            'custom_fields': formData.customFields[serviceId],
+          if (primaryId != null && formData.customFields.containsKey(primaryId))
+            'custom_fields': formData.customFields[primaryId],
           if (formData.extraDetails.isNotEmpty ||
               formData.yearLevel != null ||
               formData.standing != null)
@@ -404,6 +418,48 @@ class ConfirmationPage extends ConsumerWidget {
 
         final ticket = await apiService.createTicket(payload);
         generatedTickets.add(ticket);
+      } else {
+        for (int serviceId in formData.serviceIds) {
+          String? mappedUserType = formData.userType?.toLowerCase();
+          if (mappedUserType == 'faculty/staff') {
+            mappedUserType = 'faculty';
+          }
+
+          final payload = {
+            'department_id': formData.departmentId,
+            'service_id': serviceId,
+            'client_name': formData.fullName,
+            'user_type': mappedUserType,
+            if (formData.idNumber != null) 'student_id': formData.idNumber,
+            if (formData.idNumber != null) 'employee_id': formData.idNumber,
+            if (formData.contactNumber != null) 'phone': formData.contactNumber,
+            if (formData.email != null) 'email': formData.email,
+            if (formData.courseId != null) 'course_id': formData.courseId,
+            if (formData.major != null) 'major': formData.major,
+            if (formData.purpose != null) 'purpose': formData.purpose,
+            'priority_weight': formData.priorityWeight,
+            'is_priority': formData.priorityWeight > 1,
+            if (formData.priorityIdNumber != null)
+              'priority_id_number': formData.priorityIdNumber,
+            'device_token': deviceToken,
+            'fcm_token': fcmToken,
+            if (formData.nameBreakdown != null) 'name_breakdown': formData.nameBreakdown,
+            if (formData.selections.isNotEmpty) 'selections': formData.selections,
+            if (formData.customFields.containsKey(serviceId))
+              'custom_fields': formData.customFields[serviceId],
+            if (formData.extraDetails.isNotEmpty ||
+                formData.yearLevel != null ||
+                formData.standing != null)
+              'extra_details': {
+                ...formData.extraDetails,
+                if (formData.yearLevel != null) 'year_level': formData.yearLevel,
+                if (formData.standing != null) 'standing': formData.standing,
+              },
+          };
+
+          final ticket = await apiService.createTicket(payload);
+          generatedTickets.add(ticket);
+        }
       }
 
       // Hide loading overlay
