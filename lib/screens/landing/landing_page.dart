@@ -526,9 +526,10 @@ class _TrackTicketFormState extends State<_TrackTicketForm> {
                           color: Theme.of(context).colorScheme.secondary,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        // CHANGED: Use onSecondary so icon contrasts against secondary button color in dark/light modes
+                        child: Icon(
                           Icons.qr_code_scanner,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSecondary,
                           size: 18,
                         ),
                       ),

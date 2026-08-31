@@ -229,71 +229,81 @@ class _CancelQueuePageState extends ConsumerState<CancelQueuePage> {
       final tickets = ref.read(queueTicketProvider);
 
       // Show confirmation dialog
+      // CHANGED: Use StatefulBuilder to manage isCancelling state on EZButton
       showDialog(
         context: context,
-        builder: (dialogContext) => EZDialog(
-          title: const Text('Confirm Cancellation'),
-          content: Text(
-            'Are you sure you want to cancel ${tickets.length == 1 ? "this ticket" : "all ${tickets.length} tickets"}? This action cannot be undone.\n\n'
-            'Reason: $reason',
-          ),
-          actions: [
-            EZButton(
-              isSecondary: true,
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('No'),
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          bool isCancelling = false;
+          return StatefulBuilder(
+            builder: (context, setDialogState) => EZDialog(
+              title: const Text('Confirm Cancellation'),
+              content: Text(
+                'Are you sure you want to cancel ${tickets.length == 1 ? "this ticket" : "all ${tickets.length} tickets"}? This action cannot be undone.\n\n'
+                'Reason: $reason',
+              ),
+              actions: [
+                EZButton(
+                  isSecondary: true,
+                  onPressed: isCancelling ? null : () => Navigator.of(dialogContext).pop(),
+                  child: const Text('No'),
+                ),
+                const SizedBox(width: EZSpacing.sm),
+                EZButton(
+                  isDestructive: true,
+                  isLoading: isCancelling,
+                  onPressed: () async {
+                    setDialogState(() => isCancelling = true);
+                    final apiService = ApiService();
+                    String? errorMessage;
+
+                    try {
+                      for (final ticket in tickets) {
+                        await apiService.cancelTicket(ticket.id, reason);
+                      }
+                    } catch (e) {
+                      errorMessage = e.toString().replaceFirst('Exception: ', '');
+                    }
+
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop(); // Close the dialog
+
+                    if (errorMessage != null) {
+                      ref.read(queueTicketProvider.notifier).clearTickets();
+                      ref.read(queueFormProvider.notifier).reset();
+
+                      if (context.mounted) {
+                        context.go('/');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Cancellation failed: $errorMessage'),
+                            backgroundColor: Theme.of(context).colorScheme.error,
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    ref.read(queueTicketProvider.notifier).clearTickets();
+                    ref.read(queueFormProvider.notifier).reset();
+
+                    // Navigate back to landing page
+                    if (context.mounted) {
+                      context.go('/');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Queue cancelled successfully'),
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Yes, Cancel'),
+                ),
+              ],
             ),
-            EZButton(
-              onPressed: () async {
-                // CHANGED: actual API call to cancel each ticket with reason
-                final apiService = ApiService();
-                String? errorMessage;
-
-                try {
-                  for (final ticket in tickets) {
-                    await apiService.cancelTicket(ticket.id, reason);
-                  }
-                } catch (e) {
-                  errorMessage = e.toString().replaceFirst('Exception: ', '');
-                }
-
-                if (!dialogContext.mounted) return;
-                Navigator.of(dialogContext).pop(); // Close the dialog
-
-                if (errorMessage != null) {
-                  ref.read(queueTicketProvider.notifier).clearTickets();
-                  ref.read(queueFormProvider.notifier).reset();
-
-                  if (context.mounted) {
-                    context.go('/');
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Cancellation failed: $errorMessage'),
-                        backgroundColor: Theme.of(context).colorScheme.error,
-                      ),
-                    );
-                  }
-                  return;
-                }
-
-                ref.read(queueTicketProvider.notifier).clearTickets();
-                ref.read(queueFormProvider.notifier).reset();
-
-                // Navigate back to landing page
-                if (context.mounted) {
-                  context.go('/');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Queue cancelled successfully'),
-                      backgroundColor: Theme.of(context).colorScheme.error,
-                    ),
-                  );
-                }
-              },
-              child: const Text('Yes, Cancel'),
-            ),
-          ],
-        ),
+          );
+        },
       );
     }
   }

@@ -354,6 +354,8 @@ class ApiCourse {
   final String courseName;
   final String? major;
   final String status;
+  final String? collegeCode;
+  final String? collegeName;
 
   ApiCourse({
     required this.id,
@@ -361,9 +363,15 @@ class ApiCourse {
     required this.courseName,
     this.major,
     this.status = 'active',
+    this.collegeCode,
+    this.collegeName,
   });
 
   factory ApiCourse.fromJson(Map<String, dynamic> json) {
+    String? colName;
+    if (json['college'] is Map<String, dynamic>) {
+      colName = json['college']['college_name']?.toString();
+    }
     return ApiCourse(
       id: json['id'] is int
           ? json['id']
@@ -372,6 +380,8 @@ class ApiCourse {
       courseName: json['course_name']?.toString() ?? '',
       major: json['major']?.toString(),
       status: json['status']?.toString() ?? 'active',
+      collegeCode: json['college_code']?.toString(),
+      collegeName: colName,
     );
   }
 }

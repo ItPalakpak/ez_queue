@@ -24,6 +24,10 @@ class TopNavBar extends StatelessWidget {
   /// Whether to show the warning/notice button. Defaults to true.
   final bool showWarningButton;
 
+  // CHANGED: Added flag to conditionally hide theme customizer button
+  /// Whether to show the theme customizer button. Defaults to true.
+  final bool showThemeCustomizerButton;
+
   /// Custom back action. If null, defaults to `context.pop()`.
   final VoidCallback? onBack;
 
@@ -32,6 +36,7 @@ class TopNavBar extends StatelessWidget {
     this.showBackButton = true,
     this.showHomeButton = true,
     this.showWarningButton = true,
+    this.showThemeCustomizerButton = true,
     this.onBack,
   });
 
@@ -85,15 +90,17 @@ class TopNavBar extends StatelessWidget {
                       tooltip: 'Go to Home',
                     ),
                   const _ActiveTicketsButton(),
-                  IconButton(
-                    visualDensity: VisualDensity.compact,
-                    onPressed: () => context.push('/theme-customizer'),
-                    icon: Icon(
-                      Icons.palette,
-                      color: Theme.of(context).colorScheme.primary,
+                  // CHANGED: Conditionally render theme customizer button
+                  if (showThemeCustomizerButton)
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => context.push('/theme-customizer'),
+                      icon: Icon(
+                        Icons.palette,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      tooltip: 'Theme Customizer',
                     ),
-                    tooltip: 'Theme Customizer',
-                  ),
                 ],
               ),
             ),

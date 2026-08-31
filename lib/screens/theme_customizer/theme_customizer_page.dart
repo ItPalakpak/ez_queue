@@ -18,8 +18,8 @@ class ThemeCustomizerPage extends ConsumerWidget {
     return Scaffold(
       body: Column(
         children: [
-          // Top navigation bar
-          const TopNavBar(showHomeButton: true),
+          // CHANGED: Hide theme customizer button when on the ThemeCustomizerPage
+          const TopNavBar(showHomeButton: true, showThemeCustomizerButton: false),
 
           // Main content
           Expanded(
@@ -235,7 +235,6 @@ class ThemeCustomizerPage extends ConsumerWidget {
     final theme = ref.watch(appThemeProvider);
     final brightness = ref.watch(brightnessProvider);
     final currentVariant = ref.watch(themeVariantProvider);
-    final isDark = brightness == Brightness.dark;
     final logoPath = _getLogoPathForVariant(currentVariant, brightness);
 
     return EZCard(
@@ -293,7 +292,8 @@ class ThemeCustomizerPage extends ConsumerWidget {
               child: Text(
                 'Accent Color',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: isDark ? Colors.white : Colors.black,
+                  // CHANGED: Use theme onSecondary so text contrasts correctly with secondary color across all themes (including monochrome & CI4 dark mode)
+                  color: theme.colorScheme.onSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),

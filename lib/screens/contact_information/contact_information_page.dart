@@ -220,10 +220,11 @@ class _ContactInformationPageState
                                 ).colorScheme.primary.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Center(
-                                child: Text(
-                                  '📞',
-                                  style: TextStyle(fontSize: 32),
+                              child: Center(
+                                child: Icon(
+                                  Icons.phone_rounded,
+                                  size: 32,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                               ),
                             ),
@@ -337,7 +338,7 @@ class _ContactInformationPageState
                       // Queue Type / Priority selection (card style like React)
                       if (enablePriorityQueue) ...[
                         Text(
-                          '⭐ Queue Type',
+                          'Queue Type',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: EZSpacing.md),
@@ -411,21 +412,21 @@ class _ContactInformationPageState
     final options = [
       _PriorityOption(
         value: 1,
-        icon: '🕐',
+        icon: Icons.access_time_rounded,
         title: 'Regular Queue',
         subtitle: 'Standard waiting line',
         highlight: false,
       ),
       _PriorityOption(
         value: 2,
-        icon: '👵',
+        icon: Icons.elderly_rounded,
         title: 'Senior/Pregnant',
         subtitle: 'Priority Queue',
         highlight: true,
       ),
       _PriorityOption(
         value: 3,
-        icon: '♿',
+        icon: Icons.accessible_rounded,
         title: 'PWD',
         subtitle: 'Priority Queue',
         highlight: true,
@@ -462,9 +463,12 @@ class _ContactInformationPageState
                           : null,
                     ),
                     child: Center(
-                      child: Text(
+                      child: Icon(
                         option.icon,
-                        style: const TextStyle(fontSize: 24),
+                        size: 24,
+                        color: isSelected
+                            ? colorScheme.primary
+                            : colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -511,7 +515,8 @@ class _ContactInformationPageState
       builder: (context) => EZDialog(
         title: const Row(
           children: [
-            Text('⚠️ ', style: TextStyle(fontSize: 20)),
+            Icon(Icons.warning_amber_rounded, size: 22, color: Colors.amber),
+            SizedBox(width: EZSpacing.sm),
             Expanded(
               child: Text(
                 'Active Queue Detected',
@@ -689,7 +694,7 @@ class _ContactInformationPageState
 /// Priority option data model.
 class _PriorityOption {
   final int value;
-  final String icon;
+  final IconData icon;
   final String title;
   final String subtitle;
   final bool highlight;

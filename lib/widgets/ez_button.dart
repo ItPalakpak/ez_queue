@@ -8,6 +8,8 @@ class EZButton extends StatelessWidget {
   final bool isDestructive;
   final bool isSecondary;
   final double? width;
+  // CHANGED: Support isLoading state with disabled interaction and spinner
+  final bool isLoading;
 
   const EZButton({
     super.key,
@@ -17,6 +19,7 @@ class EZButton extends StatelessWidget {
     this.isDestructive = false,
     this.isSecondary = false,
     this.width,
+    this.isLoading = false,
   });
 
   @override
@@ -35,7 +38,7 @@ class EZButton extends StatelessWidget {
       fg = ext?.secondaryButtonText ?? theme.colorScheme.primary;
     }
 
-    if (onPressed == null) {
+    if (onPressed == null || isLoading) {
       bg = bg.withValues(alpha: 0.5);
     }
 
@@ -58,19 +61,32 @@ class EZButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onPressed,
+          onTap: isLoading ? null : onPressed,
           borderRadius: BorderRadius.circular(6),
           child: Container(
             width: width,
             padding: padding,
             alignment: Alignment.center,
-            child: DefaultTextStyle.merge(
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: fg,
-                fontWeight: FontWeight.w600,
-              ) ?? TextStyle(color: fg),
-              child: child,
-            ),
+            // CHANGED: Provide IconTheme matching foreground color so icons inside EZButton automatically inherit the correct contrasting color in all themes
+            child: isLoading
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(fg),
+                    ),
+                  )
+                : IconTheme.merge(
+                    data: IconThemeData(color: fg),
+                    child: DefaultTextStyle.merge(
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: fg,
+                        fontWeight: FontWeight.w600,
+                      ) ?? TextStyle(color: fg),
+                      child: child,
+                    ),
+                  ),
           ),
         ),
       ),

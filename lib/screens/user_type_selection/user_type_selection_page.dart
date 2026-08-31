@@ -20,7 +20,7 @@ class UserTypeSelectionPage extends ConsumerStatefulWidget {
 /// User type data model matching React kiosk structure.
 class _UserType {
   final String id;
-  final String icon;
+  final IconData icon;
   final String label;
   final String description;
 
@@ -37,25 +37,25 @@ class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
   static const List<_UserType> _userTypes = [
     _UserType(
       id: 'student',
-      icon: '🎓',
+      icon: Icons.school_rounded,
       label: 'Student',
       description: 'Currently enrolled student',
     ),
     _UserType(
       id: 'alumni',
-      icon: '👔',
+      icon: Icons.work_rounded,
       label: 'Alumni',
       description: 'Graduated alumni',
     ),
     _UserType(
       id: 'faculty',
-      icon: '🧑\u200d🏫',
+      icon: Icons.person_rounded,
       label: 'Faculty/Staff',
       description: 'Faculty or staff member',
     ),
     _UserType(
       id: 'visitor',
-      icon: '👥',
+      icon: Icons.groups_rounded,
       label: 'Visitor',
       description: 'Guest or visitor',
     ),
@@ -95,9 +95,10 @@ class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
                               shape: BoxShape.circle,
                             ),
                             child: Center(
-                              child: Text(
-                                '🏷️',
-                                style: TextStyle(fontSize: 32),
+                              child: Icon(
+                                Icons.label_rounded,
+                                size: 32,
+                                color: colorScheme.primary,
                               ),
                             ),
                           ),
@@ -178,9 +179,10 @@ class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
-                child: Text(
+                child: Icon(
                   userType.icon,
-                  style: const TextStyle(fontSize: 28),
+                  size: 28,
+                  color: colorScheme.primary,
                 ),
               ),
             ),
@@ -209,7 +211,7 @@ class _UserTypeSelectionPageState extends ConsumerState<UserTypeSelectionPage> {
             ),
             // Arrow
             Icon(
-              Icons.chevron_right,
+              Icons.chevron_right_rounded,
               color: colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ],

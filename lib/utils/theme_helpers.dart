@@ -25,28 +25,22 @@ class ThemeHelpers {
   }
 
   /// Create a ButtonStyle for ElevatedButton that uses theme-aware colors.
-  /// Button text will be black in light mode and white in dark mode.
   static ButtonStyle elevatedButtonStyle(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final brightness = Theme.of(context).brightness;
+    // CHANGED: Use onSecondary for proper contrast across all themes including monochrome & CI4 dark mode
     return ElevatedButton.styleFrom(
       backgroundColor: colorScheme.secondary,
-      foregroundColor: brightness == Brightness.dark
-          ? Colors.white
-          : Colors.black,
+      foregroundColor: colorScheme.onSecondary,
     );
   }
 
   /// Create a ButtonStyle for FilledButton that uses theme-aware colors.
-  /// Button text will be black in light mode and white in dark mode.
   static ButtonStyle filledButtonStyle(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final brightness = Theme.of(context).brightness;
+    // CHANGED: Use onSecondary for proper contrast across all themes including monochrome & CI4 dark mode
     return FilledButton.styleFrom(
       backgroundColor: colorScheme.secondary,
-      foregroundColor: brightness == Brightness.dark
-          ? Colors.white
-          : Colors.black,
+      foregroundColor: colorScheme.onSecondary,
     );
   }
 
@@ -76,12 +70,11 @@ class ThemeHelpers {
     );
   }
 
-  /// Get button text color based on theme brightness.
-  /// Returns black for light mode and white for dark mode.
-  /// This ensures proper contrast for buttons with accent/secondary background.
+  /// Get button text color based on theme.
+  /// Uses onSecondary color for proper contrast.
   static Color getButtonTextColor(BuildContext context) {
-    final brightness = Theme.of(context).brightness;
-    return brightness == Brightness.dark ? Colors.white : Colors.black;
+    // CHANGED: Use onSecondary for proper contrast across all themes including monochrome & CI4 dark mode
+    return Theme.of(context).colorScheme.onSecondary;
   }
 
   /// Create a TextStyle for button text that adapts to theme brightness.

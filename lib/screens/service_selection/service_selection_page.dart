@@ -110,8 +110,12 @@ class _ServiceSelectionPageState extends ConsumerState<ServiceSelectionPage> {
                               ).colorScheme.primary.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
-                            child: const Center(
-                              child: Text('📋', style: TextStyle(fontSize: 32)),
+                            child: Center(
+                              child: Icon(
+                                Icons.checklist_rounded,
+                                size: 32,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                           ),
                           const SizedBox(width: EZSpacing.lg),

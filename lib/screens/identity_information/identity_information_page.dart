@@ -43,7 +43,14 @@ class _IdentityInformationPageState
   String? _selectedMajor;
   String? _selectedYearLevel;
   String? _selectedStanding;
+  final Map<String, bool> _openColleges = {};
   Timer? _debounceTimer;
+
+  void _toggleCollegeAccordion(String collegeName) {
+    setState(() {
+      _openColleges[collegeName] = !(_openColleges[collegeName] ?? true);
+    });
+  }
 
   @override
   void initState() {
@@ -575,10 +582,11 @@ class _IdentityInformationPageState
                                         .withValues(alpha: 0.1),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Center(
-                                    child: Text(
-                                      '🪪',
-                                      style: TextStyle(fontSize: 32),
+                                  child: Center(
+                                    child: Icon(
+                                      Icons.badge_rounded,
+                                      size: 32,
+                                      color: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                 ),
@@ -623,9 +631,12 @@ class _IdentityInformationPageState
                                         ).colorScheme.secondary,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(
+                                      // CHANGED: Use onSecondary so icon contrasts against secondary button color in dark/light modes
+                                      child: Icon(
                                         Icons.qr_code_scanner,
-                                        color: Colors.white,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSecondary,
                                         size: 24,
                                       ),
                                     ),
@@ -906,59 +917,215 @@ class _IdentityInformationPageState
                                   });
                                 }
 
+                                // CHANGED: Group courses by college into interactive accordions
+                                final Map<String, List<ApiCourse>> groupedCourses = {};
+                                for (final course in courses) {
+                                  final colName = (course.collegeName != null &&
+                                          course.collegeName!.isNotEmpty)
+                                      ? course.collegeName!
+                                      : (course.collegeCode != null &&
+                                              course.collegeCode!.isNotEmpty
+                                          ? 'College (${course.collegeCode})'
+                                          : 'General Courses');
+                                  groupedCourses.putIfAbsent(colName, () => []).add(course);
+                                }
+
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     EZInputField(
                                       isRequired: !_isCourseOptional(userType),
-                                      child: DropdownButtonFormField<int>(
-                                        initialValue: effectiveCourseId,
-                                        decoration:
-                                            ThemeHelpers.dropdownInputDecoration(
-                                              labelText: 'Course / Program',
-                                              hintText: 'Select your course',
-                                              prefixIcon: const Icon(
-                                                Icons.school_outlined,
-                                              ),
-                                            ),
-                                        items: [
-                                          const DropdownMenuItem<int>(
-                                            value: null,
-                                            child: Text('-- Select your course --'),
+                                      child: Container(
+                                        constraints: const BoxConstraints(maxHeight: 340),
+                                        color: Theme.of(context).colorScheme.surface,
+                                        child: SingleChildScrollView(
+                                          padding: const EdgeInsets.all(EZSpacing.sm),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                                            children: [
+                                              if (_isCourseOptional(userType)) ...[
+                                                InkWell(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _selectedCourseId = null;
+                                                      _selectedCourseProgram = null;
+                                                    });
+                                                  },
+                                                  borderRadius: BorderRadius.circular(6),
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.symmetric(
+                                                      vertical: EZSpacing.sm,
+                                                      horizontal: EZSpacing.sm,
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(
+                                                          effectiveCourseId == null
+                                                              ? Icons.radio_button_checked
+                                                              : Icons.radio_button_unchecked,
+                                                          size: 18,
+                                                          color: effectiveCourseId == null
+                                                              ? Theme.of(context).colorScheme.primary
+                                                              : Theme.of(context)
+                                                                  .colorScheme
+                                                                  .onSurface
+                                                                  .withValues(alpha: 0.6),
+                                                        ),
+                                                        const SizedBox(width: EZSpacing.sm),
+                                                        Text.rich(
+                                                          const TextSpan(
+                                                            children: [
+                                                              TextSpan(
+                                                                text: 'None',
+                                                                style: TextStyle(
+                                                                  fontWeight: FontWeight.bold,
+                                                                ),
+                                                              ),
+                                                              TextSpan(text: ' (Minor Subject)'),
+                                                            ],
+                                                          ),
+                                                          style: Theme.of(context).textTheme.bodyMedium,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: EZSpacing.xs),
+                                              ],
+                                              ...groupedCourses.entries.map((entry) {
+                                                final colName = entry.key;
+                                                final groupCourses = entry.value;
+                                                final isOpen = _openColleges[colName] ?? true;
+
+                                                return Container(
+                                                  margin: const EdgeInsets.only(bottom: EZSpacing.sm),
+                                                  decoration: BoxDecoration(
+                                                    color: Theme.of(context).colorScheme.surface,
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    border: Border.all(
+                                                      color: Theme.of(context)
+                                                          .dividerColor
+                                                          .withValues(alpha: 0.3),
+                                                      width: 1,
+                                                    ),
+                                                  ),
+                                                  clipBehavior: Clip.antiAlias,
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                    children: [
+                                                      InkWell(
+                                                        onTap: () => _toggleCollegeAccordion(colName),
+                                                        child: Container(
+                                                          padding: const EdgeInsets.symmetric(
+                                                            vertical: EZSpacing.sm,
+                                                            horizontal: EZSpacing.md,
+                                                          ),
+                                                          color: Theme.of(context)
+                                                              .colorScheme
+                                                              .onSurface
+                                                              .withValues(alpha: 0.05),
+                                                          child: Row(
+                                                            children: [
+                                                              Icon(
+                                                                isOpen
+                                                                    ? Icons.keyboard_arrow_down
+                                                                    : Icons.keyboard_arrow_right,
+                                                                size: 20,
+                                                                color: Theme.of(context).colorScheme.onSurface,
+                                                              ),
+                                                              const SizedBox(width: EZSpacing.sm),
+                                                              Expanded(
+                                                                child: Text(
+                                                                  colName,
+                                                                  style: Theme.of(context)
+                                                                      .textTheme
+                                                                      .bodyMedium
+                                                                      ?.copyWith(
+                                                                        fontWeight: FontWeight.bold,
+                                                                      ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      if (isOpen)
+                                                        Container(
+                                                          color: Theme.of(context).colorScheme.surface,
+                                                          padding: const EdgeInsets.symmetric(
+                                                            vertical: EZSpacing.xs,
+                                                            horizontal: EZSpacing.xs,
+                                                          ),
+                                                          child: Column(
+                                                            children: groupCourses.map((course) {
+                                                              final isSelected =
+                                                                  effectiveCourseId == course.id;
+                                                              return InkWell(
+                                                                onTap: () {
+                                                                  setState(() {
+                                                                    _selectedCourseId = course.id;
+                                                                    _selectedCourseProgram =
+                                                                        '${course.courseCode} - ${course.courseName}';
+                                                                  });
+                                                                },
+                                                                borderRadius: BorderRadius.circular(6),
+                                                                child: Padding(
+                                                                  padding: const EdgeInsets.symmetric(
+                                                                    vertical: EZSpacing.sm,
+                                                                    horizontal: EZSpacing.sm,
+                                                                  ),
+                                                                  child: Row(
+                                                                    children: [
+                                                                      Icon(
+                                                                        isSelected
+                                                                            ? Icons.radio_button_checked
+                                                                            : Icons.radio_button_unchecked,
+                                                                        size: 18,
+                                                                        color: isSelected
+                                                                            ? Theme.of(context)
+                                                                                .colorScheme
+                                                                                .primary
+                                                                            : Theme.of(context)
+                                                                                .colorScheme
+                                                                                .onSurface
+                                                                                .withValues(alpha: 0.6),
+                                                                      ),
+                                                                      const SizedBox(width: EZSpacing.sm),
+                                                                      Expanded(
+                                                                        child: Text.rich(
+                                                                          TextSpan(
+                                                                            children: [
+                                                                              TextSpan(
+                                                                                text: course.courseCode,
+                                                                                style: const TextStyle(
+                                                                                  fontWeight:
+                                                                                      FontWeight.bold,
+                                                                                ),
+                                                                              ),
+                                                                              TextSpan(
+                                                                                text:
+                                                                                    ' - ${course.courseName}',
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                          style: Theme.of(context)
+                                                                              .textTheme
+                                                                              .bodyMedium,
+                                                                        ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                              );
+                                                            }).toList(),
+                                                          ),
+                                                        ),
+                                                    ],
+                                                  ),
+                                                );
+                                              }),
+                                            ],
                                           ),
-                                          ...courses.map((course) {
-                                            return DropdownMenuItem<int>(
-                                              value: course.id,
-                                              child: Text(
-                                                '${course.courseCode} - ${course.courseName}',
-                                              ),
-                                            );
-                                          }),
-                                        ],
-                                        onChanged: (int? value) {
-                                          setState(() {
-                                            _selectedCourseId = value;
-                                            if (value != null) {
-                                              final c = courses.firstWhere(
-                                                (c) => c.id == value,
-                                              );
-                                              _selectedCourseProgram =
-                                                  '${c.courseCode} - ${c.courseName}';
-                                            } else {
-                                              _selectedCourseProgram = null;
-                                            }
-                                          });
-                                        },
-                                        isExpanded: true,
-                                        dropdownColor: Theme.of(
-                                          context,
-                                        ).colorScheme.surface,
-                                        menuMaxHeight: 300,
-                                        icon: Icon(
-                                          Icons.arrow_drop_down,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.secondary,
                                         ),
                                       ),
                                     ),

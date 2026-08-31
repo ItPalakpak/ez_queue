@@ -30,6 +30,8 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
 
   // Form State
   Map<String, dynamic> _extraDetails = {
+    // CHANGED: Add birth_date state for credentials request
+    'birth_date': null,
     'is_authorized_person': false,
     'has_authorization_letter': false,
     'has_owner_id_photocopy': false,
@@ -710,6 +712,31 @@ class _DocumentSelectionPageState extends ConsumerState<DocumentSelectionPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // CHANGED: Add Birth Date selector for credentials request
+          EZInputField(
+            child: TextField(
+              readOnly: true,
+              onTap: () => _selectDate(context, 'birth_date'),
+              decoration: ThemeHelpers.textInputDecoration(
+                labelText: 'Birth date',
+              ).copyWith(
+                suffixIcon: _extraDetails['birth_date'] != null &&
+                        _extraDetails['birth_date']
+                            .toString()
+                            .isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () =>
+                            _handleExtraChange('birth_date', null),
+                      )
+                    : const Icon(Icons.calendar_today),
+              ),
+              controller: TextEditingController(
+                text: _extraDetails['birth_date']?.toString() ?? '',
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           if (showGraduation) ...[
             EZInputField(
               child: TextField(

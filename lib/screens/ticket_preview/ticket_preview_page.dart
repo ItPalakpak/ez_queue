@@ -94,29 +94,18 @@ class _TicketPreviewPageState extends ConsumerState<TicketPreviewPage> {
             children: [
               SizedBox(
                 width: double.infinity,
+                // CHANGED: Use standardized isLoading property on EZButton
                 child: EZButton(
-                  onPressed: _isSaving
-                      ? null
-                      : () => _saveTicketAsImage(context),
-                  child: _isSaving
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.white,
-                            ),
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.download),
-                            const SizedBox(width: EZSpacing.sm),
-                            Text('Save Ticket'),
-                          ],
-                        ),
+                  isLoading: _isSaving,
+                  onPressed: () => _saveTicketAsImage(context),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.download),
+                      const SizedBox(width: EZSpacing.sm),
+                      Text('Save Ticket'),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: EZSpacing.md),
